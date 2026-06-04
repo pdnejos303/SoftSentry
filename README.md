@@ -50,29 +50,6 @@ Agent (Go) ──HTTPS──▶ FastAPI (Python) ──▶ PostgreSQL
 
 ---
 
-## Documentation
-
-ทุก spec อยู่ใน `docs/`:
-
-| ไฟล์ | เนื้อหา |
-|------|---------|
-| [`docs/00-overview.md`](docs/00-overview.md) | Product overview, users, scope |
-| [`docs/01-tech-stack.md`](docs/01-tech-stack.md) | Tech choices + เหตุผล |
-| [`docs/02-architecture.md`](docs/02-architecture.md) | System diagram, component boundaries |
-| [`docs/03-data-model.md`](docs/03-data-model.md) | DB tables + relationships |
-| [`docs/04-api-contracts.md`](docs/04-api-contracts.md) | REST endpoints |
-| [`docs/05-agent-protocol.md`](docs/05-agent-protocol.md) | Agent↔Server protocol |
-| [`docs/06-security.md`](docs/06-security.md) | Auth, enrollment, secrets |
-| [`docs/07-dev-setup.md`](docs/07-dev-setup.md) | Local dev environment |
-| [`docs/08-deployment.md`](docs/08-deployment.md) | Production deploy |
-| [`docs/09-coding-conventions.md`](docs/09-coding-conventions.md) | Go/Python/TS style |
-| [`docs/10-testing-strategy.md`](docs/10-testing-strategy.md) | Test pyramid |
-| [`docs/modules/`](docs/modules/) | Spec ของ 9 modules |
-
-**สำหรับ Claude Code:** อ่าน [`CLAUDE.md`](CLAUDE.md) ก่อน
-
----
-
 ## Roadmap
 
 ดู [`ROADMAP.md`](ROADMAP.md) — แบ่งเป็น 5 phase
@@ -86,8 +63,6 @@ Agent (Go) ──HTTPS──▶ FastAPI (Python) ──▶ PostgreSQL
 ---
 
 ## Quick Start
-
-> วิธีรันแบบละเอียด (URL, login, troubleshoot) ดู [`docs/RUN.md`](docs/RUN.md)
 
 ```bash
 # รันทั้งระบบด้วย Docker คำสั่งเดียว (backend + worker + dashboard + postgres + redis)

@@ -16,6 +16,7 @@
     "reports": "レポート",
     "settings": "設定",
     "profile": "プロフィール",
+    "deploy": "エージェント配布",
     "users": "ユーザー",
     "auditLog": "監査ログ",
     "language": "言語",
@@ -101,6 +102,7 @@
     "prev": "前へ",
     "next": "次へ",
     "pageInfo": "{total} ページ中 {page} ページ · {count} 台のマシン",
+    "delete": "削除",
     "status": {
       "all": "すべて",
       "online": "オンライン",
@@ -113,7 +115,16 @@
       "status": "ステータス",
       "software": "ソフトウェア",
       "lastSeen": "最終確認",
-      "tags": "タグ"
+      "tags": "タグ",
+      "actions": "操作"
+    },
+    "deleteDialog": {
+      "title": "マシンを撤去しますか？",
+      "body": "\"{hostname}\" を SoftSentry から削除しますか？インベントリと履歴は集計対象から外れます。エージェントがまだインストールされ再度レポートすると、マシンは再登録されます。",
+      "cancel": "キャンセル",
+      "confirm": "削除",
+      "done": "マシンを削除しました",
+      "failed": "マシンを削除できませんでした"
     }
   },
   "machineDetail": {
@@ -162,6 +173,47 @@
       "type": "種類",
       "trigger": "トリガー",
       "software": "ソフトウェア"
+    }
+  },
+  "deploy": {
+    "title": "エージェント配布",
+    "subtitle": "ワンクリックのインストールリンクを作成し、社員に送るだけ。ダブルクリックで登録完了",
+    "adminOnly": "このページの閲覧には管理者権限が必要です。",
+    "createTitle": "インストールリンクを作成",
+    "label": "ラベル",
+    "labelPlaceholder": "例: 経理部ノートPC",
+    "expiry": "リンクの有効期限",
+    "expiryDays": "{days} 日後",
+    "expiryNever": "無期限",
+    "maxUses": "最大インストール数",
+    "usesUnlimited": "無制限",
+    "usesN": "{n} 台",
+    "server": "サーバーアドレス",
+    "serverHint": "登録済みマシンが接続するアドレス。マシンから到達できる LAN の IP かホスト名を指定してください — localhost は不可。",
+    "createButton": "リンクを作成",
+    "created": "インストールリンクを作成しました",
+    "createFailed": "リンクを作成できませんでした",
+    "linkReady": "このリンクを利用者に送ってください。ファイルをダウンロードしてダブルクリックすると、エージェントが自動でインストールされます。",
+    "copy": "コピー",
+    "copied": "リンクをコピーしました",
+    "copyFailed": "コピーできませんでした",
+    "download": "ダウンロード",
+    "smartScreen": "インストーラーはまだコード署名されていないため、Windows SmartScreen が警告する場合があります。「詳細情報」→「実行」を選択してください。",
+    "tokensTitle": "配布リンク",
+    "empty": "配布リンクはまだありません",
+    "statusActive": "有効",
+    "statusRevoked": "取り消し済み",
+    "statusExpired": "期限切れ",
+    "statusExhausted": "上限到達",
+    "revoke": "取り消す",
+    "revoked": "リンクを取り消しました",
+    "revokeFailed": "リンクを取り消せませんでした",
+    "col": {
+      "label": "ラベル",
+      "uses": "使用済みインストール",
+      "expires": "有効期限",
+      "status": "ステータス",
+      "actions": "操作"
     }
   },
   "policy": {

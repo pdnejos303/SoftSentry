@@ -16,6 +16,7 @@
     "reports": "รายงาน",
     "settings": "ตั้งค่า",
     "profile": "โปรไฟล์",
+    "deploy": "ติดตั้ง Agent",
     "users": "ผู้ใช้งาน",
     "auditLog": "บันทึกการตรวจสอบ",
     "language": "ภาษา",
@@ -101,6 +102,7 @@
     "prev": "ก่อนหน้า",
     "next": "ถัดไป",
     "pageInfo": "หน้า {page} จาก {total} · {count} เครื่อง",
+    "delete": "ลบ",
     "status": {
       "all": "ทั้งหมด",
       "online": "ออนไลน์",
@@ -113,7 +115,16 @@
       "status": "สถานะ",
       "software": "ซอฟต์แวร์",
       "lastSeen": "เห็นล่าสุด",
-      "tags": "แท็ก"
+      "tags": "แท็ก",
+      "actions": "จัดการ"
+    },
+    "deleteDialog": {
+      "title": "ปลดเครื่องนี้ออก?",
+      "body": "ลบ \"{hostname}\" ออกจาก SoftSentry? ข้อมูล inventory และประวัติจะไม่ถูกนับรวมในระบบอีก ถ้า agent ยังติดตั้งอยู่และส่งข้อมูลเข้ามาใหม่ เครื่องจะลงทะเบียนกลับมาเอง",
+      "cancel": "ยกเลิก",
+      "confirm": "ลบ",
+      "done": "ลบเครื่องแล้ว",
+      "failed": "ลบเครื่องไม่สำเร็จ"
     }
   },
   "machineDetail": {
@@ -162,6 +173,47 @@
       "type": "ประเภท",
       "trigger": "ตัวกระตุ้น",
       "software": "ซอฟต์แวร์"
+    }
+  },
+  "deploy": {
+    "title": "ติดตั้ง Agent",
+    "subtitle": "สร้างลิงก์ติดตั้งแบบคลิกเดียว ส่งให้พนักงาน แล้วดับเบิลคลิกติดตั้งได้เลย",
+    "adminOnly": "ต้องเป็น admin จึงจะเข้าหน้านี้ได้",
+    "createTitle": "สร้างลิงก์ติดตั้ง",
+    "label": "ป้ายกำกับ",
+    "labelPlaceholder": "เช่น โน้ตบุ๊กฝ่ายการเงิน",
+    "expiry": "ลิงก์หมดอายุ",
+    "expiryDays": "ใน {days} วัน",
+    "expiryNever": "ไม่หมดอายุ",
+    "maxUses": "จำนวนติดตั้งสูงสุด",
+    "usesUnlimited": "ไม่จำกัด",
+    "usesN": "{n} เครื่อง",
+    "server": "ที่อยู่เซิร์ฟเวอร์",
+    "serverHint": "ที่อยู่ที่เครื่องลูกจะติดต่อกลับ ใช้ IP หรือ hostname ในวง LAN ที่เครื่องเข้าถึงได้ — อย่าใช้ localhost",
+    "createButton": "สร้างลิงก์",
+    "created": "สร้างลิงก์ติดตั้งแล้ว",
+    "createFailed": "สร้างลิงก์ไม่สำเร็จ",
+    "linkReady": "ส่งลิงก์นี้ให้ผู้ใช้ โหลดไฟล์แล้วดับเบิลคลิก agent จะติดตั้งตัวเองให้",
+    "copy": "คัดลอก",
+    "copied": "คัดลอกลิงก์แล้ว",
+    "copyFailed": "คัดลอกไม่สำเร็จ",
+    "download": "ดาวน์โหลด",
+    "smartScreen": "ตัวติดตั้งยังไม่ได้เซ็นโค้ด Windows SmartScreen อาจเตือน ให้ผู้ใช้กด \"More info\" แล้ว \"Run anyway\"",
+    "tokensTitle": "ลิงก์ติดตั้ง",
+    "empty": "ยังไม่มีลิงก์ติดตั้ง",
+    "statusActive": "ใช้งานได้",
+    "statusRevoked": "ยกเลิกแล้ว",
+    "statusExpired": "หมดอายุ",
+    "statusExhausted": "ใช้ครบแล้ว",
+    "revoke": "ยกเลิก",
+    "revoked": "ยกเลิกลิงก์แล้ว",
+    "revokeFailed": "ยกเลิกลิงก์ไม่สำเร็จ",
+    "col": {
+      "label": "ป้ายกำกับ",
+      "uses": "ติดตั้งไปแล้ว",
+      "expires": "หมดอายุ",
+      "status": "สถานะ",
+      "actions": "จัดการ"
     }
   },
   "policy": {

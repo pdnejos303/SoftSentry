@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import type {
   CrossSoftwareItem,
@@ -94,6 +94,21 @@ export function useTriggerScan(uuid: string) {
     mutationFn: async () => {
       const { data } = await api.post(`/machines/${uuid}/trigger-scan`);
       return data;
+    },
+  });
+}
+
+// Admin: soft-delete (decommission) a machine. The backend sets deleted_at so
+// the endpoint disappears from every list; we drop it from the cache too.
+export function useDeleteMachine() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (uuid: string) => {
+      await api.delete(`/machines/${uuid}`);
+    },
+    onSuccess: (_data, uuid) => {
+      void qc.invalidateQueries({ queryKey: ["machines"] });
+      qc.removeQueries({ queryKey: ["machine", uuid] });
     },
   });
 }

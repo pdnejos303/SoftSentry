@@ -1,0 +1,130 @@
+{
+  "uid": "softsentry-agent-fleet",
+  "title": "SoftSentry — Agent Fleet Health",
+  "tags": ["softsentry", "agent"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": { "list": [] },
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "id": 1,
+      "type": "piechart",
+      "title": "Machines by status",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" },
+      "options": { "legend": { "displayMode": "table", "placement": "right", "values": ["value"] }, "pieType": "donut", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "online" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } } ] },
+          { "matcher": { "id": "byName", "options": "stale" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } } ] },
+          { "matcher": { "id": "byName", "options": "offline" }, "properties": [ { "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } } ] }
+        ]
+      },
+      "targets": [
+        { "refId": "A", "expr": "softsentry_machines", "legendFormat": "{{status}}", "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" } }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Fleet offline %",
+      "gridPos": { "h": 8, "w": 4, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 10 }, { "color": "red", "value": 25 } ] }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "expr": "100 * sum(softsentry_machines{status=\"offline\"}) / clamp_min(sum(softsentry_machines), 1)", "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" } }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Scan error rate",
+      "gridPos": { "h": 8, "w": 4, "x": 12, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 3,
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 0.01 } ] }
+        }
+      },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "expr": "sum(rate(softsentry_agent_scan_errors_total[15m]))", "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" } }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Online agents",
+      "gridPos": { "h": 8, "w": 4, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "fixed", "fixedColor": "green" } } },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "expr": "sum(softsentry_machines{status=\"online\"})", "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" } }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Scans/min (15m avg)",
+      "gridPos": { "h": 8, "w": 4, "x": 20, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 2 } },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "refId": "A", "expr": "60 * sum(rate(softsentry_agent_scans_total[15m]))", "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" } }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Scan ingest rate by type",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 15, "stacking": { "mode": "normal" } } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "expr": "60 * sum by (scan_type) (rate(softsentry_agent_scans_total[15m]))", "legendFormat": "{{scan_type}} (per min)", "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" } }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Scan duration (p50 / p95)",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 0 } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        { "refId": "A", "expr": "histogram_quantile(0.50, sum by (le) (rate(softsentry_agent_scan_duration_seconds_bucket[15m])))", "legendFormat": "p50", "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" } },
+        { "refId": "B", "expr": "histogram_quantile(0.95, sum by (le) (rate(softsentry_agent_scan_duration_seconds_bucket[15m])))", "legendFormat": "p95", "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" } }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Software entries per scan (p95)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 17 },
+      "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10 } } },
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" }, "tooltip": { "mode": "single" } },
+      "targets": [
+        { "refId": "A", "expr": "histogram_quantile(0.95, sum by (le) (rate(softsentry_agent_scan_software_count_bucket[1h])))", "legendFormat": "p95 software/scan", "datasource": { "type": "prometheus", "uid": "softsentry-prometheus" } }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,90 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e16]
+  - generic [ref=e17]:
+    - complementary [ref=e18]:
+      - generic [ref=e19]:
+        - img [ref=e20]
+        - generic [ref=e23]: SoftSentry
+      - navigation [ref=e24]:
+        - link "Machines" [ref=e25] [cursor=pointer]:
+          - /url: /en/machines
+          - img [ref=e26]
+          - text: Machines
+        - link "Software" [ref=e28] [cursor=pointer]:
+          - /url: /en/software
+          - img [ref=e29]
+          - text: Software
+    - generic [ref=e33]:
+      - banner [ref=e34]:
+        - generic [ref=e35]:
+          - generic [ref=e36]: admin@local
+          - button "Sign out" [ref=e37] [cursor=pointer]:
+            - img [ref=e38]
+            - text: Sign out
+      - main [ref=e41]:
+        - generic [ref=e42]:
+          - generic [ref=e43]:
+            - heading "Machines" [level=1] [ref=e44]
+            - paragraph [ref=e45]: All enrolled endpoints reporting to SoftSentry
+          - generic [ref=e46]:
+            - textbox "Search hostname..." [ref=e47]
+            - generic [ref=e48]:
+              - button "All" [ref=e49] [cursor=pointer]
+              - button "Online" [ref=e50] [cursor=pointer]
+              - button "Stale" [ref=e51] [cursor=pointer]
+              - button "Offline" [ref=e52] [cursor=pointer]
+          - table [ref=e55]:
+            - rowgroup [ref=e56]:
+              - row "Hostname OS Status Software Last seen Tags" [ref=e57]:
+                - columnheader "Hostname" [ref=e58]
+                - columnheader "OS" [ref=e59]
+                - columnheader "Status" [ref=e60]
+                - columnheader "Software" [ref=e61]
+                - columnheader "Last seen" [ref=e62]
+                - columnheader "Tags" [ref=e63]
+            - rowgroup [ref=e64]:
+              - row "DESKTOP-T4DPQLG windows 0.0 Stale 177 5/30/2026, 1:46:43 PM" [ref=e65]:
+                - cell "DESKTOP-T4DPQLG" [ref=e66]:
+                  - link "DESKTOP-T4DPQLG" [ref=e67] [cursor=pointer]:
+                    - /url: /en/machines/7b8c1229-9a99-4248-8b24-c1ccaa974837
+                - cell "windows 0.0" [ref=e68]
+                - cell "Stale" [ref=e69]:
+                  - generic [ref=e70]: Stale
+                - cell "177" [ref=e71]
+                - cell "5/30/2026, 1:46:43 PM" [ref=e72]
+                - cell [ref=e73]
+              - row "MBP-DESIGN-03 macos 14.4 Offline 4 5/30/2026, 12:38:44 PM design" [ref=e74]:
+                - cell "MBP-DESIGN-03" [ref=e75]:
+                  - link "MBP-DESIGN-03" [ref=e76] [cursor=pointer]:
+                    - /url: /en/machines/e2e09348-65e9-444e-88fc-23c4767c8284
+                - cell "macos 14.4" [ref=e77]
+                - cell "Offline" [ref=e78]:
+                  - generic [ref=e79]: Offline
+                - cell "4" [ref=e80]
+                - cell "5/30/2026, 12:38:44 PM" [ref=e81]
+                - cell "design" [ref=e82]:
+                  - generic [ref=e84]: design
+              - row "DESKTOP-HR-02 windows 10.0.22631 Offline 4 5/30/2026, 12:38:44 PM hr" [ref=e85]:
+                - cell "DESKTOP-HR-02" [ref=e86]:
+                  - link "DESKTOP-HR-02" [ref=e87] [cursor=pointer]:
+                    - /url: /en/machines/355e8491-6104-438c-b52d-dfe8a0493e55
+                - cell "windows 10.0.22631" [ref=e88]
+                - cell "Offline" [ref=e89]:
+                  - generic [ref=e90]: Offline
+                - cell "4" [ref=e91]
+                - cell "5/30/2026, 12:38:44 PM" [ref=e92]
+                - cell "hr" [ref=e93]:
+                  - generic [ref=e95]: hr
+              - row "DESKTOP-FINANCE-01 windows 10.0.22631 Offline 5 5/30/2026, 12:38:43 PM finance hq" [ref=e96]:
+                - cell "DESKTOP-FINANCE-01" [ref=e97]:
+                  - link "DESKTOP-FINANCE-01" [ref=e98] [cursor=pointer]:
+                    - /url: /en/machines/32524ce9-680d-4ee0-9e4b-39477195ff24
+                - cell "windows 10.0.22631" [ref=e99]
+                - cell "Offline" [ref=e100]:
+                  - generic [ref=e101]: Offline
+                - cell "5" [ref=e102]
+                - cell "5/30/2026, 12:38:43 PM" [ref=e103]
+                - cell "finance hq" [ref=e104]:
+                  - generic [ref=e105]:
+                    - generic [ref=e106]: finance
+                    - generic [ref=e107]: hq

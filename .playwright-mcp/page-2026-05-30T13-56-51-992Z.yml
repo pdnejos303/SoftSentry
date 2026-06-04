@@ -1,0 +1,18 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - heading "Sign in" [level=3] [ref=e5]
+        - paragraph [ref=e6]: Sign in to your SoftSentry dashboard
+      - generic [ref=e8]:
+        - generic [ref=e9]:
+          - text: Email
+          - textbox "Email" [ref=e10]
+        - generic [ref=e11]:
+          - text: Password
+          - textbox "Password" [ref=e12]
+        - generic [ref=e13]:
+          - checkbox "Remember me" [ref=e14]
+          - text: Remember me
+        - button "Sign in" [ref=e15] [cursor=pointer]
+  - alert [ref=e16]

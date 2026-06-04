@@ -1,0 +1,74 @@
+# ── Secrets / env ──────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ── Python ─────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+dist/
+build/
+.tox/
+
+# ── Node / Next.js ─────────────────────────────────────────────
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+.pnpm-store/
+
+# ── Go ─────────────────────────────────────────────────────────
+agent/bin/
+agent/dist/
+*.exe
+*.test
+*.prof
+vendor/
+
+# ── Docker ─────────────────────────────────────────────────────
+*.log
+
+# ── OS ─────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── IDE ────────────────────────────────────────────────────────
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+*.swp
+*.swo
+
+# ── Project local ──────────────────────────────────────────────
+reports/
+backups/
+data/
+infra/nginx/certs/*
+!infra/nginx/certs/.gitkeep
+agent/.softsentry/
+
+# ── Test artifacts ─────────────────────────────────────────────
+test-results/
+playwright-report/
+coverage/
+
+# ── Personal learning notes (ไม่ commit เข้า repo) ─────────────
+docs/LEARN-techstack-reference.md

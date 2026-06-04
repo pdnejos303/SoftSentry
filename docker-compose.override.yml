@@ -1,0 +1,27 @@
+# Local host-port remap for this machine, where another project (dataanalysic)
+# permanently holds host ports 8000 (api) and 6379 (redis). Auto-loaded by
+# `docker compose`. Container-internal ports are unchanged — services still
+# talk to each other via `backend:8000` / `redis:6379` / `postgres:5432`.
+#
+# `!override` REPLACES the base `ports:` list (Compose merges by appending by
+# default, which would re-introduce the conflicting binding). Requires Compose
+# v2.24+.
+#
+# Resulting host ports:  dashboard 3000 · backend 8001 · postgres 5432 · redis 6380
+services:
+  backend:
+    ports: !override
+      - "8001:8000"
+
+  redis:
+    ports: !override
+      - "6380:6379"
+
+  dashboard:
+    build:
+      args:
+        # NEXT_PUBLIC_* is baked into the client bundle at build time, so the
+        # browser-facing API URL must match the remapped backend host port.
+        NEXT_PUBLIC_API_URL: http://localhost:8001/api/v1
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8001/api/v1

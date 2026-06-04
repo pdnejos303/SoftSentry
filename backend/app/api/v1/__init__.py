@@ -10,6 +10,7 @@ from app.api.v1 import (
     audit_logs,
     auth,
     dashboard,
+    deploy,
     exports,
     licenses,
     machines,
@@ -27,6 +28,7 @@ api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(exports.router, tags=["exports"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(agents.router, prefix="/agents", tags=["agents"])
+api_router.include_router(deploy.router, prefix="/deploy", tags=["deploy"])
 api_router.include_router(machines.router, prefix="/machines", tags=["machines"])
 api_router.include_router(software.router, prefix="/software", tags=["software"])
 api_router.include_router(policy.whitelist_router, prefix="/whitelist", tags=["policy"])

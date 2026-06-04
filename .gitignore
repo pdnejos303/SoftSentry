@@ -58,9 +58,11 @@ desktop.ini
 *.swo
 
 # ── Project local ──────────────────────────────────────────────
-reports/
-backups/
-data/
+# anchor ด้วย / นำหน้า: ignore เฉพาะโฟลเดอร์ output ที่ repo root
+# (ไม่งั้นจะไปกิน source เช่น dashboard/components/reports/, backend/app/reports/)
+/reports/
+/backups/
+/data/
 infra/nginx/certs/*
 !infra/nginx/certs/.gitkeep
 agent/.softsentry/
@@ -70,5 +72,5 @@ test-results/
 playwright-report/
 coverage/
 
-# ── Personal learning notes (ไม่ commit เข้า repo) ─────────────
-docs/LEARN-techstack-reference.md
+# ── Docs (ไม่ commit เข้า repo — เก็บ local เท่านั้น) ──────────
+docs/

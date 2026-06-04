@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}{{ machine.hostname }} — Machine Report{% endblock %}
+
+{% block cover %}
+  <h1>{{ machine.hostname }}</h1>
+  <p class="subtitle">Endpoint Security Report</p>
+  <div class="meta">
+    <div>Report date: {{ generated_at | dt }}</div>
+    <div>OS: {{ machine.os }} {{ machine.os_version }}</div>
+  </div>
+{% endblock %}
+
+{% block content %}
+<section>
+  <h2>Machine info</h2>
+  <table>
+    <tbody>
+      <tr><td>Hostname</td><td>{{ machine.hostname }}</td></tr>
+      <tr><td>OS</td><td>{{ machine.os }} {{ machine.os_version }} ({{ machine.arch }})</td></tr>
+      <tr><td>Agent version</td><td>{{ machine.agent_version }}</td></tr>
+      <tr><td>Enrolled</td><td>{{ machine.enrolled_at | dt }}</td></tr>
+      <tr><td>Last scan</td><td>{{ machine.last_scan_at | dt }}</td></tr>
+      <tr><td>Tags</td><td>{{ machine.tags | join(", ") | dash }}</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Risk score</h2>
+  <p><span class="dot risk-{{ risk_color }}"></span>
+     <strong style="font-size:16pt">{{ machine.risk_score }}</strong> ({{ risk_color }})</p>
+  <table>
+    <thead><tr><th>Signal</th><th>Count</th><th>Weight</th></tr></thead>
+    <tbody>
+      <tr><td>CVE critical</td><td>{{ risk_breakdown.cve_critical }}</td><td>×5</td></tr>
+      <tr><td>CVE high</td><td>{{ risk_breakdown.cve_high }}</td><td>×3</td></tr>
+      <tr><td>Unauthorized</td><td>{{ risk_breakdown.unauthorized }}</td><td>×3</td></tr>
+      <tr><td>CVE medium</td><td>{{ risk_breakdown.cve_medium }}</td><td>×1</td></tr>
+      <tr><td>Unsigned</td><td>{{ risk_breakdown.unsigned }}</td><td>×1</td></tr>
+      <tr><td>CVE low</td><td>{{ risk_breakdown.cve_low }}</td><td>×0.5</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>Signature status</h2>
+  {% if signature_counts %}
+    <table>
+      <thead><tr><th>Status</th><th>Count</th></tr></thead>
+      <tbody>
+      {% for status, count in signature_counts.items() %}
+        <tr><td>{{ status }}</td><td>{{ count }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}<p class="empty">No software records.</p>{% endif %}
+</section>
+
+{% if vulnerabilities %}
+<section>
+  <h2>Vulnerabilities ({{ vulnerabilities_total }})</h2>
+  <table>
+    <thead><tr><th>CVE</th><th>Severity</th><th>Software</th><th>Installed</th><th>Recommended</th></tr></thead>
+    <tbody>
+    {% for v in vulnerabilities %}
+      <tr>
+        <td>{{ v.cve_id }}</td>
+        <td><span class="badge sev-{{ v.severity }}">{{ v.severity }}</span></td>
+        <td>{{ v.software_name }}</td>
+        <td>{{ v.software_version }}</td>
+        <td>{{ v.recommended_version | dash }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if alerts %}
+<section>
+  <h2>Alerts ({{ alerts_total }})</h2>
+  <table>
+    <thead><tr><th>Type</th><th>Severity</th><th>Status</th><th>Title</th></tr></thead>
+    <tbody>
+    {% for a in alerts %}
+      <tr>
+        <td>{{ a.type }}</td>
+        <td><span class="badge sev-{{ a.severity }}">{{ a.severity }}</span></td>
+        <td>{{ a.status }}</td>
+        <td>{{ a.title | dash }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+{% if history %}
+<section>
+  <h2>Recent history (30 days)</h2>
+  <table>
+    <thead><tr><th>When</th><th>Event</th><th>Software</th><th>Version</th></tr></thead>
+    <tbody>
+    {% for h in history %}
+      <tr>
+        <td>{{ h.occurred_at | dt }}</td>
+        <td>{{ h.event }}</td>
+        <td>{{ h.software_name }}</td>
+        <td>{{ h.software_version }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<section>
+  <h2>Software inventory ({{ software_total }})</h2>
+  {% if software %}
+    <table>
+      <thead><tr><th>Name</th><th>Version</th><th>Publisher</th><th>Signature</th></tr></thead>
+      <tbody>
+      {% for s in software %}
+        <tr>
+          <td>{{ s.name }}</td>
+          <td>{{ s.version }}</td>
+          <td>{{ s.publisher | dash }}</td>
+          <td>{{ s.signature_status | dash }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}<p class="empty">No software inventory.</p>{% endif %}
+</section>
+{% endblock %}

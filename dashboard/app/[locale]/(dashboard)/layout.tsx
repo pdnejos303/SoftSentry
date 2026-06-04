@@ -10,6 +10,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import {
   BadgeCheck,
   Bell,
+  DownloadCloud,
   FileText,
   KeyRound,
   LayoutDashboard,
@@ -59,6 +60,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     { href: "/settings/profile", label: t("profile"), icon: UserCircle },
     ...(isAdmin
       ? [
+          { href: "/deploy", label: t("deploy"), icon: DownloadCloud },
           { href: "/settings/users", label: t("users"), icon: Users },
           { href: "/settings/audit-log", label: t("auditLog"), icon: ScrollText },
         ]

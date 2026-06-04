@@ -16,6 +16,7 @@
     "reports": "Reports",
     "settings": "Settings",
     "profile": "Profile",
+    "deploy": "Deploy",
     "users": "Users",
     "auditLog": "Audit log",
     "language": "Language",
@@ -101,6 +102,7 @@
     "prev": "Previous",
     "next": "Next",
     "pageInfo": "Page {page} of {total} · {count} machines",
+    "delete": "Delete",
     "status": {
       "all": "All",
       "online": "Online",
@@ -113,7 +115,16 @@
       "status": "Status",
       "software": "Software",
       "lastSeen": "Last seen",
-      "tags": "Tags"
+      "tags": "Tags",
+      "actions": "Actions"
+    },
+    "deleteDialog": {
+      "title": "Decommission machine?",
+      "body": "Remove \"{hostname}\" from SoftSentry? Its inventory and history stop counting toward the fleet. If the agent is still installed and reports again, the machine will re-enroll.",
+      "cancel": "Cancel",
+      "confirm": "Delete",
+      "done": "Machine removed",
+      "failed": "Could not remove the machine"
     }
   },
   "machineDetail": {
@@ -162,6 +173,47 @@
       "type": "Type",
       "trigger": "Trigger",
       "software": "Software"
+    }
+  },
+  "deploy": {
+    "title": "Deploy agents",
+    "subtitle": "Create a one-click install link, send it to staff, and they just double-click to enroll",
+    "adminOnly": "You need admin access to view this page.",
+    "createTitle": "Create an install link",
+    "label": "Label",
+    "labelPlaceholder": "e.g. Finance laptops",
+    "expiry": "Link expires",
+    "expiryDays": "In {days} days",
+    "expiryNever": "Never",
+    "maxUses": "Max installs",
+    "usesUnlimited": "Unlimited",
+    "usesN": "{n} machines",
+    "server": "Server address",
+    "serverHint": "The address enrolled machines call back to. Use a LAN IP or hostname they can reach — not localhost.",
+    "createButton": "Create link",
+    "created": "Install link created",
+    "createFailed": "Could not create the link",
+    "linkReady": "Send this link to the user. They download the file, double-click it, and the agent installs itself.",
+    "copy": "Copy",
+    "copied": "Link copied",
+    "copyFailed": "Could not copy the link",
+    "download": "Download",
+    "smartScreen": "The installer isn't code-signed yet, so Windows SmartScreen may warn. The user clicks \"More info\" then \"Run anyway\".",
+    "tokensTitle": "Deployment links",
+    "empty": "No deployment links yet",
+    "statusActive": "Active",
+    "statusRevoked": "Revoked",
+    "statusExpired": "Expired",
+    "statusExhausted": "Used up",
+    "revoke": "Revoke",
+    "revoked": "Link revoked",
+    "revokeFailed": "Could not revoke the link",
+    "col": {
+      "label": "Label",
+      "uses": "Installs used",
+      "expires": "Expires",
+      "status": "Status",
+      "actions": "Actions"
     }
   },
   "policy": {

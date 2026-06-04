@@ -1,0 +1,11 @@
+{
+  "binaries": [
+    {
+      "version": "0.1.0",
+      "os": "windows",
+      "arch": "amd64",
+      "filename": "softsentry-agent-0.1.0-windows-amd64.exe",
+      "sha256": "51652e6219349bb4708d2f95b2a33a02c060e4a2c1707ccd6c23ac70653ea705"
+    }
+  ]
+}

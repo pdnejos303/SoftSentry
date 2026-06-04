@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { Trash2 } from "lucide-react";
 import { Link } from "@/i18n/routing";
+import { useAuth } from "@/lib/auth";
 import { useMachines, statusVariant, type MachineFilters } from "@/lib/inventory";
+import { DeleteMachineDialog } from "@/components/machines/DeleteMachineDialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -31,9 +34,14 @@ const PAGE_SIZE = 20;
 
 export default function MachinesPage() {
   const t = useTranslations("machines");
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
+  const [pendingDelete, setPendingDelete] = useState<{ uuid: string; hostname: string } | null>(
+    null,
+  );
   const debouncedQ = useDebounced(q);
 
   const filters: MachineFilters = {
@@ -45,6 +53,7 @@ export default function MachinesPage() {
   const { data, isLoading, isError } = useMachines(filters);
 
   const statuses = ["", "online", "stale", "offline"];
+  const cols = isAdmin ? 7 : 6;
 
   return (
     <div className="space-y-6">
@@ -99,27 +108,28 @@ export default function MachinesPage() {
               <TableHead className="text-right">{t("col.software")}</TableHead>
               <TableHead>{t("col.lastSeen")}</TableHead>
               <TableHead>{t("col.tags")}</TableHead>
+              {isAdmin && <TableHead className="w-16 text-right">{t("col.actions")}</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading &&
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  <TableCell colSpan={6}>
+                  <TableCell colSpan={cols}>
                     <Skeleton className="h-6 w-full" />
                   </TableCell>
                 </TableRow>
               ))}
             {isError && (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                <TableCell colSpan={cols} className="py-8 text-center text-muted-foreground">
                   {t("loadError")}
                 </TableCell>
               </TableRow>
             )}
             {data?.items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                <TableCell colSpan={cols} className="py-8 text-center text-muted-foreground">
                   {t("empty")}
                 </TableCell>
               </TableRow>
@@ -153,11 +163,30 @@ export default function MachinesPage() {
                     ))}
                   </div>
                 </TableCell>
+                {isAdmin && (
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setPendingDelete({ uuid: m.uuid, hostname: m.hostname })}
+                      title={t("delete")}
+                    >
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                      <span className="sr-only">{t("delete")}</span>
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      <DeleteMachineDialog
+        uuid={pendingDelete?.uuid ?? null}
+        hostname={pendingDelete?.hostname}
+        onOpenChange={(open) => !open && setPendingDelete(null)}
+      />
 
       {data && data.total_pages > 1 && (
         <div className="flex items-center justify-between text-sm">

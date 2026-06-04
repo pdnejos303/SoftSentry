@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
+import { useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { DeleteMachineDialog } from "@/components/machines/DeleteMachineDialog";
 import { useMachineVulnerabilities } from "@/lib/vulnerability";
 import type { VulnerabilityItem } from "@/lib/types";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
@@ -36,16 +38,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Trash2 } from "lucide-react";
 
 export default function MachineDetailPage() {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
   const t = useTranslations("machineDetail");
   const tm = useTranslations("machines");
+  const router = useRouter();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const { data: machine, isLoading } = useMachine(uuid);
   const trigger = useTriggerScan(uuid);
   const queryClient = useQueryClient();
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (isLoading || !machine) {
     return <Skeleton className="h-40 w-full" />;
@@ -81,8 +87,21 @@ export default function MachineDetailPage() {
             <RefreshCw className="mr-2 h-4 w-4" />
             {t("triggerScan")}
           </Button>
+          {isAdmin && (
+            <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+              <Trash2 className="mr-2 h-4 w-4" />
+              {tm("delete")}
+            </Button>
+          )}
         </div>
       </div>
+
+      <DeleteMachineDialog
+        uuid={deleteOpen ? uuid : null}
+        hostname={machine.hostname}
+        onOpenChange={setDeleteOpen}
+        onDeleted={() => router.replace("/machines")}
+      />
 
       <Tabs defaultValue="overview">
         <TabsList>

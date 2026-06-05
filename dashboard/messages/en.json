@@ -24,6 +24,7 @@
   },
   "login": {
     "title": "Sign in",
+    "heading": "Software Management",
     "subtitle": "Sign in to your SoftSentry dashboard",
     "email": "Email",
     "password": "Password",

@@ -24,6 +24,7 @@
   },
   "login": {
     "title": "เข้าสู่ระบบ",
+    "heading": "ระบบจัดการซอฟต์แวร์",
     "subtitle": "เข้าสู่ SoftSentry dashboard",
     "email": "อีเมล",
     "password": "รหัสผ่าน",

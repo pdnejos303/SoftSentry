@@ -24,6 +24,7 @@
   },
   "login": {
     "title": "サインイン",
+    "heading": "ソフトウェア管理",
     "subtitle": "SoftSentry ダッシュボードにサインイン",
     "email": "メールアドレス",
     "password": "パスワード",

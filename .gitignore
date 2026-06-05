@@ -44,6 +44,11 @@ agent/dist/
 *.prof
 vendor/
 
+# Built agent binaries are committed so they reach the server (the
+# agent-binaries dir is bind-mounted into the backend container). Negate the
+# *.exe rule above for this dir only — everywhere else *.exe stays ignored.
+!backend/agent-binaries/*.exe
+
 # ── Docker ─────────────────────────────────────────────────────
 *.log
 

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/softsentry/agent/internal/config"
@@ -96,12 +97,12 @@ func Run(ctx context.Context, opts Options) error {
 		fmt.Fprintf(errw, "read last scan time: %v\n", err)
 	}
 	dueIn := schedule.DueIn(lastScan, scanInterval, time.Now())
+	initialTrigger := ""
 	if dueIn == 0 {
-		trigger := "auto"
+		initialTrigger = "auto"
 		if lastScan.IsZero() {
-			trigger = "enroll"
+			initialTrigger = "enroll"
 		}
-		r.runScan(ctx, trigger)
 		dueIn = scanInterval
 	} else {
 		fmt.Fprintf(out, "Next auto-scan in %s (last scan %s ago).\n",
@@ -109,6 +110,11 @@ func Run(ctx context.Context, opts Options) error {
 	}
 
 	if opts.OneShot {
+		// One-shot stays fully synchronous (used by tests/debug): scan if due,
+		// then a single all-in-one heartbeat cycle.
+		if initialTrigger != "" {
+			r.runScan(ctx, initialTrigger)
+		}
 		restart := r.handleBeat(ctx)
 		fmt.Fprintln(out, "✓ one-shot run complete")
 		if restart {
@@ -117,27 +123,133 @@ func Run(ctx context.Context, opts Options) error {
 		return nil
 	}
 
-	fmt.Fprintf(out, "Agent running. Heartbeat every %s, auto-scan every %s. Press Ctrl+C to stop.\n",
-		interval, scanInterval)
+	return r.serve(ctx, interval, dueIn, initialTrigger)
+}
+
+// serve runs the long-lived agent. The heartbeat ticker runs on its own
+// goroutine (this one) and never performs slow work: every potentially
+// long-running operation — scan, queue flush, self-update — is handed to a
+// single background worker. Decoupling them is the whole point: a multi-minute
+// scan can no longer starve the heartbeat, so the backend keeps seeing the
+// agent as online (it ages to stale→offline after 5 min of silence) and a
+// server-requested manual scan is picked up on the very next beat instead of
+// waiting for an in-flight scan to finish.
+func (r *loop) serve(ctx context.Context, interval, dueIn time.Duration, initialTrigger string) error {
+	fmt.Fprintf(r.out, "Agent running. Heartbeat every %s, auto-scan every %s. Press Ctrl+C to stop.\n",
+		interval, r.scanInterval)
+
+	// Buffered to 1 + coalesced: at most one scan/update is ever pending, so a
+	// burst of requests while the worker is busy collapses into a single run.
+	work := make(chan workItem, 1)
+	restart := make(chan struct{}, 1)
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		r.worker(ctx, interval, work, restart)
+	}()
+	defer wg.Wait()
+
+	// Kick off the start-up scan (if due) via the worker so it doesn't delay
+	// the first heartbeat.
+	if initialTrigger != "" {
+		signalWork(work, workItem{scanTrigger: initialTrigger})
+	}
+
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	scanTimer := time.NewTimer(dueIn)
 	defer scanTimer.Stop()
-	if r.handleBeat(ctx) {
-		return ErrRestartRequired
-	}
+
+	// First beat immediately so the server registers us right away.
+	r.beat(ctx, work)
 	for {
 		select {
 		case <-ctx.Done():
-			fmt.Fprintln(out, "\nShutting down.")
+			fmt.Fprintln(r.out, "\nShutting down.")
 			return nil // graceful stop, not an error
+		case <-restart:
+			return ErrRestartRequired
 		case <-ticker.C:
-			if r.handleBeat(ctx) {
-				return ErrRestartRequired
-			}
+			r.beat(ctx, work)
 		case <-scanTimer.C:
-			r.runScan(ctx, "auto")
-			scanTimer.Reset(scanInterval)
+			signalWork(work, workItem{scanTrigger: "auto"})
+			scanTimer.Reset(r.scanInterval)
+		}
+	}
+}
+
+// workItem is a unit of background work handed from the heartbeat loop to the
+// worker. At most one field is set per item.
+type workItem struct {
+	scanTrigger string                 // "" = no scan ("auto"/"manual"/"enroll")
+	update      *transport.AgentUpdate // nil = no update offered
+}
+
+// signalWork enqueues work without ever blocking the heartbeat loop. The
+// channel is buffered to 1, so a request arriving while the worker is busy (or
+// while one is already pending) is dropped. Nothing is lost: the server
+// re-asserts manual_scan_requested / agent_update_available on every heartbeat
+// until the agent satisfies it.
+func signalWork(ch chan<- workItem, item workItem) {
+	select {
+	case ch <- item:
+	default:
+	}
+}
+
+// beat sends one heartbeat — a fast call (10s cap) that must never block on a
+// scan — and dispatches any server-requested work to the background worker.
+func (r *loop) beat(ctx context.Context, work chan<- workItem) {
+	beatCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	resp, err := r.client.Heartbeat(beatCtx, int64(time.Since(r.started).Seconds()))
+	cancel()
+	if err != nil {
+		fmt.Fprintf(r.errw, "heartbeat: %v\n", err)
+		return
+	}
+	if resp.ManualScanRequested {
+		fmt.Fprintln(r.errw, "→ manual scan requested by server")
+		signalWork(work, workItem{scanTrigger: "manual"})
+	}
+	if resp.AgentUpdateAvailable != nil {
+		signalWork(work, workItem{update: resp.AgentUpdateAvailable})
+	}
+}
+
+// worker is the single goroutine that performs every slow operation, keeping
+// the heartbeat loop responsive. Work is serialized: one scan/update at a time.
+// A periodic tick (at the heartbeat cadence) retries any queued uploads, taking
+// over the role flushQueue used to play inside each heartbeat.
+func (r *loop) worker(
+	ctx context.Context,
+	flushInterval time.Duration,
+	work <-chan workItem,
+	restart chan<- struct{},
+) {
+	flush := time.NewTicker(flushInterval)
+	defer flush.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-flush.C:
+			r.flushQueue(ctx)
+		case item := <-work:
+			if item.scanTrigger != "" {
+				r.flushQueue(ctx)
+				r.runScan(ctx, item.scanTrigger)
+			}
+			if item.update != nil && r.maybeUpdate(ctx, item.update) {
+				// New binary is in place — tell serve to exit so the service
+				// manager relaunches onto it, then stop the worker.
+				select {
+				case restart <- struct{}{}:
+				default:
+				}
+				return
+			}
 		}
 	}
 }

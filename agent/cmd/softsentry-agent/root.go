@@ -1,9 +1,22 @@
+// Command hierarchy:
+//
+//	softsentry-agent
+//	├── enroll     – one-time enrollment handshake (enrollment token → agent token)
+//	├── install    – register OS service + optionally enroll in one step
+//	├── uninstall  – deregister service, remove local state
+//	├── run        – long-running loop (heartbeat + scan); entry point for the service
+//	├── scan       – one-shot offline scan, prints JSON, no upload
+//	├── status     – show service state + enrollment info
+//	├── logs       – tail the service log file
+//	└── version    – print version and exit
 package main
 
 import (
 	"github.com/spf13/cobra"
 )
 
+// agentVersion is the canonical semver for this build. Bump here on release;
+// the transport package re-exports it for the User-Agent header.
 const agentVersion = "0.1.0"
 
 func rootCmd() *cobra.Command {

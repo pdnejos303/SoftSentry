@@ -23,15 +23,18 @@ immediate scan + upload. Use --one-shot to scan + heartbeat once and exit.`,
 				Out:     cmd.OutOrStdout(),
 				Err:     cmd.ErrOrStderr(),
 			}
-			// When started by the Windows SCM, run under the service control
-			// handler instead of the plain foreground loop. No-op elsewhere.
+			// On Windows, the binary is started by the SCM rather than a terminal.
+			// RunIfService detects that context and runs the Windows service control
+			// protocol (accepting Stop/Shutdown signals from the SCM) instead of the
+			// plain foreground loop. On macOS / foreground, it is a no-op.
 			if handled, err := service.RunIfService(opts); handled {
 				return err
 			}
 			err := runner.Run(cmd.Context(), opts)
 			if errors.Is(err, runner.ErrRestartRequired) {
-				// Foreground: exit cleanly; the service manager (or the user)
-				// relaunches onto the freshly installed binary.
+				// Self-update completed: the new binary is in place. Exit cleanly
+				// so the service manager's "restart on failure" recovery action (or
+				// the user) relaunches the process onto the updated binary.
 				cmd.Println("Agent updated — exiting so the new binary takes over on next start.")
 				return nil
 			}

@@ -4,6 +4,10 @@
 .env.*.local
 !.env.example
 
+# ── Server-only config (เครื่องนี้ใช้ local; ของ server แยก ไม่ขึ้น repo) ──
+.env.server
+docker-compose.forserver.yml
+
 # ── Python ─────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]

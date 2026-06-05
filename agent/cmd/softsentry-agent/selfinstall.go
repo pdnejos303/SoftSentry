@@ -51,15 +51,18 @@ func maybeSelfInstall(ctx context.Context) (handled bool, err error) {
 // embedded deployment token, and registers + starts the OS service.
 func runSelfInstall(ctx context.Context, exe string, emb installer.Embedded) error {
 	out := os.Stdout
-	fmt.Fprintln(out, "SoftSentry Agent — installer")
-	fmt.Fprintf(out, "Server: %s\n\n", emb.Config.ServerURL)
+	fmt.Fprintln(out, "============================================")
+	fmt.Fprintln(out, "  SoftSentry Agent — Installer")
+	fmt.Fprintf(out, "  Server: %s\n", emb.Config.ServerURL)
+	fmt.Fprintln(out, "============================================")
+	fmt.Fprintln(out)
 
 	if !installer.IsElevated() {
 		fmt.Fprintln(out, "Requesting administrator permission ...")
 		if err := installer.RelaunchElevated(exe, nil); err != nil {
 			return fmt.Errorf("could not get administrator permission: %w", err)
 		}
-		// The elevated instance continues; this one is done.
+		// The elevated instance continues in its own window; this one is done.
 		return nil
 	}
 
@@ -72,39 +75,57 @@ func runSelfInstall(ctx context.Context, exe string, emb installer.Embedded) err
 	}
 	dstExe := filepath.Join(installDir, exeName())
 
-	// If the agent is already installed, a previous instance is almost certainly
-	// running as a service and holding dstExe open — on Windows the OS locks a
-	// running .exe. Stop and remove the old service first so the binary unlocks
-	// and the displaced-file cleanup in replaceBinary can succeed cleanly. This
-	// is best-effort: it is NOT fatal if it fails, because replaceBinary tolerates
-	// a still-running old binary (rename-aside) and service.Install re-creates the
-	// service even if one remains — so a re-run / in-place upgrade always lands.
+	// Step 1 — replace any previous install. If the agent is already installed, a
+	// previous instance is almost certainly running as a service and holding
+	// dstExe open — on Windows the OS locks a running .exe. Stop and remove the
+	// old service first so the binary unlocks and the displaced-file cleanup in
+	// replaceBinary can succeed cleanly. Best-effort: NOT fatal if it fails,
+	// because replaceBinary tolerates a still-running old binary (rename-aside)
+	// and service.Install re-creates the service even if one remains.
+	step(out, 1, "Removing any previous version")
 	if st, err := service.Status(); err == nil && st != "not installed" {
-		fmt.Fprintf(out, "Existing install detected (%s) — replacing it ...\n", st)
 		if err := service.Uninstall(); err != nil {
-			fmt.Fprintf(out, "  (could not fully remove the old service: %v; continuing)\n", err)
+			fmt.Fprintf(out, "      (old service not fully removed: %v; continuing)\n", err)
 		}
 	}
+	stepDone(out)
 
-	fmt.Fprintf(out, "Installing to %s ...\n", dstExe)
+	// Step 2 — copy the agent into Program Files.
+	step(out, 2, "Installing files")
 	if err := replaceBinary(exe, dstExe, emb.OriginalLen); err != nil {
 		return fmt.Errorf("copy agent into place: %w", err)
 	}
+	stepDone(out)
 
-	fmt.Fprintln(out, "Enrolling this machine ...")
-	if err := enrollMachine(ctx, out, emb.Config.Token, emb.Config.ServerURL); err != nil {
+	// Step 3 — enroll this machine with the embedded deployment token.
+	step(out, 3, "Enrolling this machine")
+	if err := enrollMachine(ctx, io.Discard, emb.Config.Token, emb.Config.ServerURL); err != nil {
 		return fmt.Errorf("enroll: %w", err)
 	}
+	stepDone(out)
 
-	fmt.Fprintln(out, "Registering background service ...")
+	// Step 4 — register + start the background service.
+	step(out, 4, "Starting background service")
 	if err := service.Install(service.Config{ExePath: dstExe, Args: []string{"run"}}); err != nil {
 		return fmt.Errorf("install service: %w", err)
 	}
+	stepDone(out)
 
-	fmt.Fprintf(out, "\n✓ SoftSentry Agent installed and running as %q.\n", service.Name)
-	fmt.Fprintln(out, "  This machine will now appear in the SoftSentry dashboard.")
-	waitForExit(out)
+	fmt.Fprintln(out)
+	fmt.Fprintf(out, "  ✓ Done! SoftSentry Agent is installed and running.\n")
+	fmt.Fprintln(out, "    This machine will appear in the dashboard within a minute.")
+	closeWithCountdown(out, 8)
 	return nil
+}
+
+// step prints the start of a numbered install step (no newline) so stepDone can
+// append "done" on the same line — giving simple, legible progress.
+func step(w io.Writer, n int, label string) {
+	fmt.Fprintf(w, "  [%d/4] %-32s", n, label+" ...")
+}
+
+func stepDone(w io.Writer) {
+	fmt.Fprintln(w, "done")
 }
 
 // replaceBinary installs the new agent binary at dst even when a previous one
@@ -179,8 +200,34 @@ func exeName() string {
 	return "softsentry-agent"
 }
 
-// waitForExit keeps the console window open after a double-click install so the
-// user can read the result, then waits for Enter.
+// closeWithCountdown auto-closes the installer window after a short, visible
+// countdown — so a successful one-click install needs zero interaction and the
+// window never looks "hung" waiting for an Enter that the user must guess at.
+// Pressing Enter at any point closes it immediately.
+func closeWithCountdown(w io.Writer, seconds int) {
+	// Let an Enter keypress short-circuit the wait without blocking the countdown.
+	enter := make(chan struct{}, 1)
+	go func() {
+		_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
+		select {
+		case enter <- struct{}{}:
+		default:
+		}
+	}()
+	for s := seconds; s > 0; s-- {
+		fmt.Fprintf(w, "\r  This window closes in %2ds (or press Enter) ...", s)
+		select {
+		case <-enter:
+			fmt.Fprintln(w)
+			return
+		case <-time.After(time.Second):
+		}
+	}
+	fmt.Fprintln(w)
+}
+
+// waitForExit keeps the console window open after a *failed* install so the user
+// can read the error, then waits for Enter. (Success uses closeWithCountdown.)
 func waitForExit(w io.Writer) {
 	fmt.Fprint(w, "\nPress Enter to close ...")
 	_, _ = bufio.NewReader(os.Stdin).ReadString('\n')

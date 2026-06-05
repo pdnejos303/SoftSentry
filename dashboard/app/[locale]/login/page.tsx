@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/routing";
 import { useAuth } from "@/lib/auth";
@@ -43,53 +44,67 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative min-h-screen flex items-center justify-center bg-muted/30 p-4">
-      <div className="absolute right-4 top-4">
-        <LanguageSwitcher />
-      </div>
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>{t("title")}</CardTitle>
-          <CardDescription>{t("subtitle")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">{t("email")}</Label>
-              <Input
-                id="email"
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">{t("password")}</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-input"
-              />
-              {t("rememberMe")}
-            </label>
-            <Button type="submit" disabled={submitting} className="w-full">
-              {submitting ? t("submitting") : t("submit")}
-            </Button>
-          </form>
-        </CardContent>
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-slate-100 p-4">
+      <h1 className="text-4xl font-bold text-red-800">{t("heading")}</h1>
+      <Card className="relative grid w-full max-w-3xl rounded-2xl overflow-hidden p-0 shadow-2xl md:min-h-[500px] md:grid-cols-[2fr_3fr]">
+        <div className="absolute right-4 top-4 z-10">
+          <LanguageSwitcher />
+        </div>
+
+        <div className="relative bg-orange-200 hidden md:block">
+          <Image
+            src="/static/img/logo_runexy.png"
+            alt="Runexy Logo"
+            fill
+            priority
+            className="object-contain p-6"
+          />
+        </div>
+
+        <div className="flex flex-col justify-center p-8">
+          <CardHeader className="px-0">
+            <CardTitle>{t("title")}</CardTitle>
+            <CardDescription>{t("subtitle")}</CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">{t("email")}</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">{t("password")}</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="h-4 w-4 rounded border-input"
+                />
+                {t("rememberMe")}
+              </label>
+              <Button type="submit" disabled={submitting} className="w-full">
+                {submitting ? t("submitting") : t("submit")}
+              </Button>
+            </form>
+          </CardContent>
+        </div>
       </Card>
     </main>
   );

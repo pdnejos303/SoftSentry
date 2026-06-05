@@ -55,7 +55,9 @@ def _load_entries(binary_dir: str) -> list[BinaryEntry]:
     if not manifest.is_file():
         return []
     try:
-        data = json.loads(manifest.read_text(encoding="utf-8"))
+        # utf-8-sig tolerates a leading BOM (Windows PowerShell's `Out-File
+        # -Encoding utf8` writes one), which plain utf-8 + json.loads rejects.
+        data = json.loads(manifest.read_text(encoding="utf-8-sig"))
     except (json.JSONDecodeError, OSError):
         return []
     entries: list[BinaryEntry] = []

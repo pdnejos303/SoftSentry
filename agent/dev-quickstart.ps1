@@ -9,11 +9,11 @@
       .\dev-quickstart.ps1 -Reenroll       # บังคับ enroll ใหม่ (ออก token ใบใหม่)
 
   สำหรับเครื่อง endpoint จริง (production) ให้ใช้ `install` เป็น Windows Service แทน:
-      .\softsentry-agent.exe install --enrollment-token <tok> --server http://<server-ip>:8001
+      .\softsentry-agent.exe install --enrollment-token <tok> --server http://<server-ip>:47800
 #>
 param(
-    # backend จริงของ SoftSentry map อยู่ที่ host port 8001 (8000 ถูกแอปอื่นจองไว้ ดู docker-compose.override.yml)
-    [string]$Server   = "http://localhost:8001",
+    # backend ของ SoftSentry map อยู่ที่ host port 47800 (ดู docker-compose.yml / .env)
+    [string]$Server   = "http://localhost:47800",
     [string]$Email    = "admin@local",
     [string]$Password = "ChangeMe!2026",
     [switch]$Reenroll

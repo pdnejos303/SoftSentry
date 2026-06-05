@@ -37,6 +37,9 @@ async def _upsert_signature(
     if sig_in is None:
         return
 
+    # Try the FK first (O(1) PK lookup via identity map) before falling back to
+    # a full SELECT. The FK is always set on existing records after the first
+    # scan; the fallback handles reinstalls where the old row was soft-deleted.
     sig: SignatureRecord | None = None
     if record.signature_id is not None:
         sig = await session.get(SignatureRecord, record.signature_id)

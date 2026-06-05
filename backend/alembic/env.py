@@ -45,6 +45,10 @@ def do_run_migrations(connection) -> None:  # type: ignore[no-untyped-def]
 
 
 async def run_migrations_online() -> None:
+    # NullPool: Alembic runs migrations synchronously inside run_sync(), which
+    # creates its own connection context. A real pool would hand out a different
+    # connection than the one Alembic expects to own, causing "pool timeout"
+    # errors. NullPool means one connection per call, no pooling.
     connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",

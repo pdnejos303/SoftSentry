@@ -6,6 +6,10 @@ from redis.asyncio import Redis, from_url
 
 from app.core.config import settings
 
+# Module-level singleton (not @lru_cache) because the Redis object is a
+# connection *pool* that must be shared across every request in the process.
+# decode_responses=True means all values come back as Python str, not bytes —
+# callers never need to call .decode().
 _redis: Redis | None = None
 
 

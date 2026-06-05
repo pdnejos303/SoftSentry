@@ -49,6 +49,8 @@ class AccountInactive(AuthError):
 
 
 def _attempt_key(email: str, ip: str) -> str:
+    # SHA-256 normalizes the composite into a fixed-length key, preventing
+    # unusually long emails or special characters from injecting into Redis keys.
     safe = hashlib.sha256(f"{email.lower()}|{ip}".encode()).hexdigest()[:32]
     return f"{ATTEMPT_PREFIX}{safe}"
 
@@ -90,6 +92,8 @@ async def authenticate(
 async def _record_failure(redis: Redis, email: str, ip: str) -> None:
     attempt_key = _attempt_key(email, ip)
     count = await redis.incr(attempt_key)
+    # Set the TTL only on the first increment. Setting it on every call would
+    # allow a persistent attacker to slide the window forward indefinitely.
     if count == 1:
         await redis.expire(attempt_key, ATTEMPT_WINDOW_SECONDS)
     if count >= MAX_FAILED_ATTEMPTS:
@@ -132,6 +136,9 @@ async def rotate_refresh(
     if user_uuid is None:
         raise InvalidCredentials()
 
+    # Delete the old token before the DB lookup — one-time-use enforcement.
+    # If the DB query fails after this, the token is gone and the user must
+    # re-authenticate (security-over-UX trade-off).
     await redis.delete(key)
 
     # Stored in Redis as a string; the uuid column expects a UUID object.

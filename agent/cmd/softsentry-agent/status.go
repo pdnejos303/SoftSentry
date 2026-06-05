@@ -7,6 +7,10 @@ import (
 	"github.com/softsentry/agent/internal/service"
 )
 
+// statusCmd prints two independent pieces of state:
+//   - OS service state (running / stopped / not installed) — from the SCM / launchctl
+//   - Enrollment state — inferred from config.ServerURL being non-empty, which
+//     is only set after a successful enroll handshake
 func statusCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
@@ -22,6 +26,8 @@ func statusCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			// ServerURL is written by enrollMachine on first successful enroll;
+			// its absence is the canonical "not enrolled" signal (no separate flag needed).
 			if cfg.ServerURL == "" {
 				cmd.Println("Enrolled: no — run `softsentry-agent enroll` or `install --enrollment-token`")
 				return nil

@@ -23,17 +23,19 @@ func newAuthenticodeVerifier() *authenticodeVerifier {
 	return &authenticodeVerifier{cache: make(map[string]*Signature)}
 }
 
+// Lazy-load the two DLLs we need. NewLazySystemDLL resolves from System32 so
+// the DLL search path cannot be hijacked by a file in the working directory.
 var (
 	modWintrust          = windows.NewLazySystemDLL("wintrust.dll")
 	procWinVerifyTrust   = modWintrust.NewProc("WinVerifyTrust")
 	modCrypt32           = windows.NewLazySystemDLL("crypt32.dll")
-	procCryptQueryObject = modCrypt32.NewProc("CryptQueryObject")
-	procCryptMsgGetParam = modCrypt32.NewProc("CryptMsgGetParam")
-	procCertFindCert     = modCrypt32.NewProc("CertFindCertificateInStore")
-	procCertGetNameStr   = modCrypt32.NewProc("CertGetNameStringW")
-	procCertFreeCtx      = modCrypt32.NewProc("CertFreeCertificateContext")
-	procCertCloseStore   = modCrypt32.NewProc("CertCloseStore")
-	procCryptMsgClose    = modCrypt32.NewProc("CryptMsgClose")
+	procCryptQueryObject = modCrypt32.NewProc("CryptQueryObject")    // open PKCS#7 store from a file
+	procCryptMsgGetParam = modCrypt32.NewProc("CryptMsgGetParam")    // pull a parameter out of a PKCS#7 message
+	procCertFindCert     = modCrypt32.NewProc("CertFindCertificateInStore") // locate a cert in a store by CERT_INFO
+	procCertGetNameStr   = modCrypt32.NewProc("CertGetNameStringW")  // render a cert subject/issuer as a string
+	procCertFreeCtx      = modCrypt32.NewProc("CertFreeCertificateContext") // release a CERT_CONTEXT
+	procCertCloseStore   = modCrypt32.NewProc("CertCloseStore")      // release a HCERTSTORE
+	procCryptMsgClose    = modCrypt32.NewProc("CryptMsgClose")        // release a HCRYPTMSG
 )
 
 // WINTRUST_ACTION_GENERIC_VERIFY_V2 — the standard Authenticode policy GUID.
@@ -45,39 +47,49 @@ var actionGenericVerifyV2 = windows.GUID{
 }
 
 const (
-	wtdUINone            = 2
-	wtdRevokeNone        = 0
-	wtdChoiceFile        = 1
+	// WTD_UI_NONE — suppress any UI dialog during verification.
+	wtdUINone = 2
+	// WTD_REVOKE_NONE — skip online revocation check (acceptable for inventory; avoids network calls per-binary).
+	wtdRevokeNone = 0
+	// WTD_CHOICE_FILE — the union member in WINTRUST_DATA points to a WINTRUST_FILE_INFO.
+	wtdChoiceFile = 1
+	// WINTRUST_DATA.dwStateAction values: verify then close to free state.
 	wtdStateActionVerify = 1
 	wtdStateActionClose  = 2
-	wtdSaferFlag         = 0x100
+	// WTD_SAFER_FLAG — runs the SAFER (Software Restriction Policy) check; standard for file verification.
+	wtdSaferFlag = 0x100
 
-	// HRESULTs returned by WinVerifyTrust (winerror.h).
-	trustENoSignature = 0x800B0100
-	trustECertExpired = 0x800B0101
+	// HRESULTs returned by WinVerifyTrust (winerror.h / msdn).
+	trustENoSignature = 0x800B0100 // TRUST_E_NOSIGNATURE  – file has no embedded signature
+	trustECertExpired = 0x800B0101 // CERT_E_EXPIRED       – signing cert is past its NotAfter date
 )
 
+// wintrustFileInfo mirrors Win32 WINTRUST_FILE_INFO.
+// Field order and sizes must match the C layout exactly — passed by pointer
+// directly to WinVerifyTrust via unsafe.
 type wintrustFileInfo struct {
-	cbStruct       uint32
-	pcwszFilePath  *uint16
-	hFile          windows.Handle
-	pgKnownSubject *windows.GUID
+	cbStruct       uint32         // sizeof(WINTRUST_FILE_INFO) — required before call
+	pcwszFilePath  *uint16        // UTF-16 path to the file being verified
+	hFile          windows.Handle // optional pre-opened handle (0 = open from path)
+	pgKnownSubject *windows.GUID  // optional subject-type override (nil = auto-detect)
 }
 
+// wintrustData mirrors Win32 WINTRUST_DATA.
+// Field order and sizes must match the C layout exactly.
 type wintrustData struct {
-	cbStruct            uint32
-	pPolicyCallbackData uintptr
-	pSIPClientData      uintptr
-	dwUIChoice          uint32
-	fdwRevocationChecks uint32
-	dwUnionChoice       uint32
-	pFile               uintptr
-	dwStateAction       uint32
-	hWVTStateData       windows.Handle
-	pwszURLReference    *uint16
-	dwProvFlags         uint32
-	dwUIContext         uint32
-	pSignatureSettings  uintptr
+	cbStruct            uint32         // sizeof(WINTRUST_DATA)
+	pPolicyCallbackData uintptr        // policy-specific callback (nil)
+	pSIPClientData      uintptr        // SIP client data (nil)
+	dwUIChoice          uint32         // WTD_UI_NONE — suppress any dialog
+	fdwRevocationChecks uint32         // WTD_REVOKE_NONE — skip CRL/OCSP (avoids network call per binary)
+	dwUnionChoice       uint32         // WTD_CHOICE_FILE — union member is WINTRUST_FILE_INFO
+	pFile               uintptr        // pointer to wintrustFileInfo
+	dwStateAction       uint32         // WINTRUST_ACTION_VERIFY then _CLOSE to free state
+	hWVTStateData       windows.Handle // opaque state — must pass to the _CLOSE call
+	pwszURLReference    *uint16        // unused (nil)
+	dwProvFlags         uint32         // WTD_SAFER_FLAG — run SRP check
+	dwUIContext         uint32         // unused (0)
+	pSignatureSettings  uintptr        // WINTRUST_SIGNATURE_SETTINGS* — nil for default
 }
 
 // verify returns the signature status for the file at path. install paths are
@@ -169,19 +181,30 @@ func mapTrustResult(hr uint32) SignatureStatus {
 
 // --- best-effort signer name extraction (never fatal) ----------------------
 
+// CryptQueryObject / CryptMsgGetParam / CertFindCertificateInStore constants
+// (wincrypt.h). These let us walk the embedded PKCS#7 signature to get the
+// leaf signer's CN and the issuer CN without a heavyweight crypto library.
 const (
-	certQueryObjectFile            = 1
-	certQueryContentFlagPKCS7Embed = 0x400
-	certQueryFormatFlagBinary      = 2
-	cmsgSignerCertInfoParam        = 7
-	certNameSimpleDisplayType      = 4
-	certNameIssuerFlag             = 1
-	x509AsnEncoding                = 0x1
-	pkcs7AsnEncoding               = 0x10000
-	certFindSubjectCert            = 0x000B0000
-	certCloseStoreCheckFlag        = 0
+	certQueryObjectFile            = 1       // query a file path, not a blob
+	certQueryContentFlagPKCS7Embed = 0x400   // Authenticode embeds a PKCS#7 SignedData
+	certQueryFormatFlagBinary      = 2       // DER-encoded binary
+	cmsgSignerCertInfoParam        = 7       // CMSG_SIGNER_CERT_INFO_PARAM — gets CERT_INFO for signer[0]
+	certNameSimpleDisplayType      = 4       // CERT_NAME_SIMPLE_DISPLAY_TYPE — friendly CN string
+	certNameIssuerFlag             = 1       // CERT_NAME_ISSUER_FLAG — return issuer instead of subject
+	x509AsnEncoding                = 0x1     // X509_ASN_ENCODING
+	pkcs7AsnEncoding               = 0x10000 // PKCS_7_ASN_ENCODING
+	certFindSubjectCert            = 0x000B0000 // CERT_FIND_SUBJECT_CERT — match by CERT_INFO
+	certCloseStoreCheckFlag        = 0       // don't assert that all contexts have been freed
 )
 
+// extractSigner extracts the leaf signer CN and issuer CN from the Authenticode
+// signature embedded in path. It uses three Win32 calls:
+//  1. CryptQueryObject  – open the embedded PKCS#7 store and message
+//  2. CryptMsgGetParam  – get the CERT_INFO of the first (leaf) signer
+//  3. CertFindCertificateInStore + CertGetNameStringW – look up and render the name
+//
+// The whole function is wrapped in a recover() so any unexpected syscall panic
+// cannot crash the scan loop — extracting the name is best-effort only.
 func extractSigner(path string) (signer, issuer string) {
 	defer func() { _ = recover() }() // syscall plumbing must never crash a scan
 
@@ -190,6 +213,8 @@ func extractSigner(path string) (signer, issuer string) {
 		return "", ""
 	}
 
+	// Step 1: open the embedded PKCS#7 signature from the file.
+	// hStore is the embedded certificate store; hMsg is the PKCS#7 message.
 	var hStore, hMsg uintptr
 	ok, _, _ := procCryptQueryObject.Call(
 		certQueryObjectFile,
@@ -208,6 +233,7 @@ func extractSigner(path string) (signer, issuer string) {
 	defer procCertCloseStore.Call(hStore, certCloseStoreCheckFlag)
 	defer procCryptMsgClose.Call(hMsg)
 
+	// Step 2: get the CERT_INFO of signer[0] (two-call pattern: size then data).
 	var sz uint32
 	procCryptMsgGetParam.Call(hMsg, cmsgSignerCertInfoParam, 0, 0, uintptr(unsafe.Pointer(&sz)))
 	if sz == 0 {
@@ -222,6 +248,7 @@ func extractSigner(path string) (signer, issuer string) {
 		return "", ""
 	}
 
+	// Step 3: find the actual CERT_CONTEXT in the embedded store and render names.
 	cert, _, _ := procCertFindCert.Call(
 		hStore,
 		x509AsnEncoding|pkcs7AsnEncoding,
@@ -238,9 +265,12 @@ func extractSigner(path string) (signer, issuer string) {
 	return certName(cert, 0), certName(cert, certNameIssuerFlag)
 }
 
+// certName calls CertGetNameStringW twice: first to get the buffer size (n
+// includes the null terminator), then to fill it. flags=0 returns the subject;
+// flags=certNameIssuerFlag returns the issuer.
 func certName(cert uintptr, flags uintptr) string {
 	n, _, _ := procCertGetNameStr.Call(cert, certNameSimpleDisplayType, flags, 0, 0, 0)
-	if n <= 1 {
+	if n <= 1 { // n==1 means only the null terminator — empty name
 		return ""
 	}
 	out := make([]uint16, n)

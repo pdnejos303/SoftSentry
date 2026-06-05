@@ -1,3 +1,7 @@
+// scanner.go is the platform-agnostic entry point. New() is defined in the
+// build-tagged files (windows.go / darwin.go / unsupported.go) and returns
+// the OS-appropriate Scanner implementation. Shared types and post-processing
+// helpers (dedupe, sort) live in software.go.
 package scanner
 
 import (
@@ -23,8 +27,10 @@ type Scanner interface {
 	Scan(ctx context.Context) ([]Software, error)
 }
 
-// Run executes the platform Scanner and post-processes the result
-// (dedupe + stable sort) so callers get a clean, deterministic inventory.
+// Run is the single public call site. It:
+//  1. Dispatches to the platform Scanner (New)
+//  2. Deduplicates entries sharing (name, version, install_path)
+//  3. Sorts the result for deterministic output before returning
 func Run(ctx context.Context) (Result, error) {
 	started := time.Now()
 	sw, err := New().Scan(ctx)

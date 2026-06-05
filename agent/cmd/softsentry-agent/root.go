@@ -13,11 +13,17 @@ package main
 
 import (
 	"github.com/spf13/cobra"
+
+	"github.com/softsentry/agent/internal/transport"
 )
 
-// agentVersion is the canonical semver for this build. Bump here on release;
-// the transport package re-exports it for the User-Agent header.
-const agentVersion = "0.1.0"
+// agentVersion is the single source of truth for this build's version, shared
+// by the `version`/`--version` output, the enroll handshake, and the heartbeat.
+// It lives in (and is stamped into) transport.Version via -ldflags at build
+// time — see internal/transport/client.go. Keeping it to one var means the
+// version reported at enroll can never drift from the one reported at heartbeat
+// (a drift there is exactly what triggers a self-update restart loop).
+var agentVersion = transport.Version
 
 func rootCmd() *cobra.Command {
 	cmd := &cobra.Command{

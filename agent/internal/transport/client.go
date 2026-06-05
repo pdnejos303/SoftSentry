@@ -15,8 +15,18 @@ import (
 	"time"
 )
 
-// Version is set by main via -ldflags or compile-time constant.
-const Version = "0.1.0"
+// Version is the agent's build version. It is a var (not a const) so a release
+// build can stamp the real version into it via the linker, e.g.:
+//
+//	go build -ldflags "-X github.com/softsentry/agent/internal/transport.Version=1.2.0"
+//
+// This MUST match the version recorded for this binary in the backend's
+// agent-binary manifest.json. If the manifest claims a higher version than the
+// value baked in here, the backend offers an "update" the running binary can
+// never satisfy — every restart re-downloads and re-applies the same binary,
+// producing an endless restart loop. The build tooling (Makefile / build.ps1)
+// stamps this value and writes the matching manifest from the same source.
+var Version = "0.1.0"
 
 // Client wraps net/http with timeouts and SoftSentry-specific helpers.
 type Client struct {

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -316,12 +317,33 @@ func (r *loop) maybeUpdate(ctx context.Context, up *transport.AgentUpdate) bool 
 		fmt.Fprintln(r.errw, "⚠ update offered but agent path is unknown; skipping")
 		return false
 	}
+	// Loop-breaker: if we already applied this exact binary (same SHA-256) and
+	// the backend is *still* offering it, our reported version never advanced to
+	// what the manifest claims — i.e. the manifest's version is higher than the
+	// version baked into the binary. Re-applying it would only restart-loop
+	// ("online then exits, forever"). Skip it and stay online on the current
+	// build; a corrected binary (different content → different SHA-256) is still
+	// picked up normally.
+	if last, err := storage.LoadLastUpdate(); err != nil {
+		fmt.Fprintf(r.errw, "read last update marker: %v\n", err)
+	} else if up.SHA256 != "" && strings.EqualFold(up.SHA256, last) {
+		fmt.Fprintf(r.errw,
+			"⚠ server keeps offering %s but this binary already is that download and still reports %s; "+
+				"skipping to avoid a restart loop (fix: manifest version must match the binary's built version)\n",
+			up.Version, r.version)
+		return false
+	}
 	fmt.Fprintf(r.errw, "→ update available: %s (running %s); downloading ...\n", up.Version, r.version)
 	updCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 	if err := updater.Apply(updCtx, r.client, r.exePath, *up); err != nil {
 		fmt.Fprintf(r.errw, "⚠ auto-update failed (staying on %s): %v\n", r.version, err)
 		return false
+	}
+	// Remember what we just installed so the loop-breaker above can recognise a
+	// version/manifest mismatch after the restart instead of looping forever.
+	if err := storage.SaveLastUpdate(up.SHA256); err != nil {
+		fmt.Fprintf(r.errw, "record last update marker: %v\n", err)
 	}
 	fmt.Fprintf(r.out, "✓ updated to %s; restarting to apply\n", up.Version)
 	return true

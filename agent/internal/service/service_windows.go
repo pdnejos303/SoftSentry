@@ -22,6 +22,11 @@ import (
 // Install registers the SoftSentryAgent SCM service: auto-start, run as
 // LocalSystem (the default when ServiceStartName is empty), restart on failure
 // 3 times (spec 1.8). Requires an elevated (admin) process.
+//
+// Install is idempotent: if the service already exists (a re-run / in-place
+// upgrade) it is stopped, deleted, and re-created pointing at cfg.ExePath,
+// rather than failing. This is what lets the one-click installer replace a
+// previous (possibly broken) install with no manual steps.
 func Install(cfg Config) error {
 	m, err := mgr.Connect()
 	if err != nil {
@@ -29,19 +34,19 @@ func Install(cfg Config) error {
 	}
 	defer m.Disconnect()
 
+	// Remove any existing instance first so we can recreate it cleanly on the
+	// new binary (CreateService below would otherwise reject a duplicate name).
 	if s, err := m.OpenService(Name); err == nil {
+		err := stopAndDelete(s)
 		s.Close()
-		return fmt.Errorf("service %s is already installed", Name)
+		if err != nil {
+			return err
+		}
 	}
 
-	s, err := m.CreateService(Name, cfg.ExePath, mgr.Config{
-		DisplayName:  DisplayName,
-		Description:  Description,
-		StartType:    mgr.StartAutomatic,
-		ErrorControl: mgr.ErrorNormal,
-	}, cfg.Args...)
+	s, err := createService(m, cfg)
 	if err != nil {
-		return fmt.Errorf("create service: %w", err)
+		return err
 	}
 	defer s.Close()
 
@@ -73,8 +78,15 @@ func Uninstall() error {
 		return fmt.Errorf("service %s is not installed: %w", Name, err)
 	}
 	defer s.Close()
+	return stopAndDelete(s)
+}
 
-	// Best-effort stop; ignore "not running" errors, then wait for it to settle.
+// stopAndDelete stops a running service (best-effort, bounded wait so a service
+// that ignores Stop can't hang the installer) then deletes it. The SCM keeps the
+// name reserved until every open handle closes, so a follow-up CreateService can
+// briefly fail with ERROR_SERVICE_MARKED_FOR_DELETE — createService retries
+// around exactly that.
+func stopAndDelete(s *mgr.Service) error {
 	if st, err := s.Control(svc.Stop); err == nil {
 		deadline := time.Now().Add(15 * time.Second)
 		for st.State != svc.Stopped && time.Now().Before(deadline) {
@@ -84,11 +96,34 @@ func Uninstall() error {
 			}
 		}
 	}
-
 	if err := s.Delete(); err != nil {
 		return fmt.Errorf("delete service: %w", err)
 	}
 	return nil
+}
+
+// createService creates the SCM service, retrying while the name is still
+// "marked for deletion" from a just-deleted previous instance (the SCM frees the
+// name only once all handles to the old service close, which can lag the Delete
+// call by a moment). Any other error is returned immediately.
+func createService(m *mgr.Mgr, cfg Config) (*mgr.Service, error) {
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		s, err := m.CreateService(Name, cfg.ExePath, mgr.Config{
+			DisplayName:  DisplayName,
+			Description:  Description,
+			StartType:    mgr.StartAutomatic,
+			ErrorControl: mgr.ErrorNormal,
+		}, cfg.Args...)
+		if err == nil {
+			return s, nil
+		}
+		if errors.Is(err, windows.ERROR_SERVICE_MARKED_FOR_DELETE) && time.Now().Before(deadline) {
+			time.Sleep(300 * time.Millisecond)
+			continue
+		}
+		return nil, fmt.Errorf("create service: %w", err)
+	}
 }
 
 // Status reports the SCM service state. It connects with read-only rights

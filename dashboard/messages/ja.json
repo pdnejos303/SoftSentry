@@ -640,6 +640,7 @@
       "fullName": "氏名",
       "fullNameRequired": "氏名は必須です",
       "role": "ロール",
+      "roleDev": "開発者",
       "roleAdmin": "管理者",
       "roleViewer": "閲覧者",
       "passwordHint": "強力なパスワードが自動生成され、一度だけ表示されます。",

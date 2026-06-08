@@ -81,7 +81,7 @@ async def get_machine(
     "/{machine_uuid}",
     response_model=MachineDetail,
     summary="Admin: edit machine tags",
-    dependencies=[Depends(require_role("admin"))],
+    dependencies=[Depends(require_role("dev", "admin"))],
 )
 async def update_machine(
     machine_uuid: uuid_lib.UUID,
@@ -98,7 +98,7 @@ async def update_machine(
     "/{machine_uuid}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Admin: soft-delete a machine",
-    dependencies=[Depends(require_role("admin"))],
+    dependencies=[Depends(require_role("dev", "admin"))],
 )
 async def delete_machine(
     machine_uuid: uuid_lib.UUID,
@@ -114,7 +114,7 @@ async def delete_machine(
     response_model=TriggerScanResponse,
     status_code=status.HTTP_202_ACCEPTED,
     summary="Admin: request a scan on the agent's next heartbeat",
-    dependencies=[Depends(require_role("admin"))],
+    dependencies=[Depends(require_role("dev", "admin"))],
 )
 async def trigger_scan(
     machine_uuid: uuid_lib.UUID,

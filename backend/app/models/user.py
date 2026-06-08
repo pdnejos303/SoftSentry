@@ -10,13 +10,13 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.models.base import Base, TimestampMixin, UuidMixin
 
-UserRole = Literal["admin", "viewer"]
+UserRole = Literal["dev", "admin", "viewer"]
 
 
 class User(Base, UuidMixin, TimestampMixin):
     __tablename__ = "users"
     __table_args__ = (
-        CheckConstraint("role IN ('admin', 'viewer')", name="ck_users_role"),
+        CheckConstraint("role IN ('dev', 'admin', 'viewer')", name="ck_users_role"),
         # Non-unique index for lookups…
         Index("ix_users_email", "email"),
         # …plus a PARTIAL unique index so an email is unique only among live

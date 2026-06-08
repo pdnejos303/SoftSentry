@@ -1,4 +1,9 @@
-"""User management + audit log endpoint tests (Module 9)."""
+"""User management + audit log endpoint tests (Module 9).
+
+User management is a dev-only surface (admins are limited to Overview + Machines
++ Deploy), so the acting account here is a ``dev`` superuser. The last-admin
+invariant still protects the ``admin`` role, exercised with a separate target.
+"""
 
 from __future__ import annotations
 
@@ -41,14 +46,23 @@ def _auth(token: str) -> dict[str, str]:
 
 
 @pytest.mark.asyncio
-async def test_admin_can_list_users(client, session):
-    await _make_user(session, email="admin@local", role="admin")
-    token = await _token(client, "admin@local")
+async def test_dev_can_list_users(client, session):
+    await _make_user(session, email="dev@local", role="dev")
+    token = await _token(client, "dev@local")
     r = await client.get("/api/v1/users", headers=_auth(token))
     assert r.status_code == 200
     body = r.json()
     assert body["total"] >= 1
-    assert any(u["email"] == "admin@local" for u in body["items"])
+    assert any(u["email"] == "dev@local" for u in body["items"])
+
+
+@pytest.mark.asyncio
+async def test_admin_cannot_list_users(client, session):
+    # Admin is a limited role now — user management is dev-only.
+    await _make_user(session, email="admin@local", role="admin")
+    token = await _token(client, "admin@local")
+    r = await client.get("/api/v1/users", headers=_auth(token))
+    assert r.status_code == 403
 
 
 @pytest.mark.asyncio
@@ -65,8 +79,8 @@ async def test_viewer_cannot_create_user(client, session):
 
 @pytest.mark.asyncio
 async def test_create_user_generates_password_and_can_login(client, session):
-    await _make_user(session, email="admin@local", role="admin")
-    token = await _token(client, "admin@local")
+    await _make_user(session, email="dev@local", role="dev")
+    token = await _token(client, "dev@local")
     r = await client.post(
         "/api/v1/users",
         headers=_auth(token),
@@ -87,8 +101,8 @@ async def test_create_user_generates_password_and_can_login(client, session):
 
 @pytest.mark.asyncio
 async def test_create_duplicate_email_conflicts(client, session):
-    await _make_user(session, email="admin@local", role="admin")
-    token = await _token(client, "admin@local")
+    await _make_user(session, email="dev@local", role="dev")
+    token = await _token(client, "dev@local")
     first = await client.post(
         "/api/v1/users",
         headers=_auth(token),
@@ -105,8 +119,8 @@ async def test_create_duplicate_email_conflicts(client, session):
 
 @pytest.mark.asyncio
 async def test_create_weak_password_rejected(client, session):
-    await _make_user(session, email="admin@local", role="admin")
-    token = await _token(client, "admin@local")
+    await _make_user(session, email="dev@local", role="dev")
+    token = await _token(client, "dev@local")
     r = await client.post(
         "/api/v1/users",
         headers=_auth(token),
@@ -122,9 +136,9 @@ async def test_create_weak_password_rejected(client, session):
 
 @pytest.mark.asyncio
 async def test_update_user_role(client, session):
-    await _make_user(session, email="admin@local", role="admin")
+    await _make_user(session, email="dev@local", role="dev")
     target = await _make_user(session, email="bob@local", role="viewer")
-    token = await _token(client, "admin@local")
+    token = await _token(client, "dev@local")
     r = await client.patch(
         f"/api/v1/users/{target.uuid}",
         headers=_auth(token),
@@ -136,8 +150,9 @@ async def test_update_user_role(client, session):
 
 @pytest.mark.asyncio
 async def test_cannot_demote_last_admin(client, session):
+    await _make_user(session, email="dev@local", role="dev")
     admin = await _make_user(session, email="admin@local", role="admin")
-    token = await _token(client, "admin@local")
+    token = await _token(client, "dev@local")
     r = await client.patch(
         f"/api/v1/users/{admin.uuid}",
         headers=_auth(token),
@@ -148,17 +163,17 @@ async def test_cannot_demote_last_admin(client, session):
 
 @pytest.mark.asyncio
 async def test_cannot_delete_self(client, session):
-    admin = await _make_user(session, email="admin@local", role="admin")
-    token = await _token(client, "admin@local")
-    r = await client.delete(f"/api/v1/users/{admin.uuid}", headers=_auth(token))
+    dev = await _make_user(session, email="dev@local", role="dev")
+    token = await _token(client, "dev@local")
+    r = await client.delete(f"/api/v1/users/{dev.uuid}", headers=_auth(token))
     assert r.status_code == 409
 
 
 @pytest.mark.asyncio
 async def test_soft_delete_user_then_login_fails(client, session):
-    await _make_user(session, email="admin@local", role="admin")
+    await _make_user(session, email="dev@local", role="dev")
     target = await _make_user(session, email="leaver@example.com", role="viewer")
-    token = await _token(client, "admin@local")
+    token = await _token(client, "dev@local")
     r = await client.delete(f"/api/v1/users/{target.uuid}", headers=_auth(token))
     assert r.status_code == 204
 
@@ -178,9 +193,9 @@ async def test_soft_delete_user_then_login_fails(client, session):
 
 @pytest.mark.asyncio
 async def test_reset_password(client, session):
-    await _make_user(session, email="admin@local", role="admin")
+    await _make_user(session, email="dev@local", role="dev")
     target = await _make_user(session, email="carol@local", role="viewer")
-    token = await _token(client, "admin@local")
+    token = await _token(client, "dev@local")
     r = await client.post(
         f"/api/v1/users/{target.uuid}/reset-password", headers=_auth(token)
     )
@@ -195,8 +210,8 @@ async def test_reset_password(client, session):
 
 @pytest.mark.asyncio
 async def test_audit_log_records_login_and_user_create(client, session):
-    await _make_user(session, email="admin@local", role="admin")
-    token = await _token(client, "admin@local")  # records auth.login_success
+    await _make_user(session, email="dev@local", role="dev")
+    token = await _token(client, "dev@local")  # records auth.login_success
     await client.post(
         "/api/v1/users",
         headers=_auth(token),
@@ -212,11 +227,11 @@ async def test_audit_log_records_login_and_user_create(client, session):
 
 @pytest.mark.asyncio
 async def test_audit_log_records_login_failure(client, session):
-    await _make_user(session, email="admin@local", role="admin")
+    await _make_user(session, email="dev@local", role="dev")
     await client.post(
-        "/api/v1/auth/login", json={"email": "admin@local", "password": "WrongPass!1A"}
+        "/api/v1/auth/login", json={"email": "dev@local", "password": "WrongPass!1A"}
     )
-    token = await _token(client, "admin@local")
+    token = await _token(client, "dev@local")
     r = await client.get(
         "/api/v1/audit-logs", headers=_auth(token), params={"action": "auth.login_failure"}
     )
@@ -225,8 +240,12 @@ async def test_audit_log_records_login_failure(client, session):
 
 
 @pytest.mark.asyncio
-async def test_audit_log_admin_only(client, session):
+async def test_audit_log_dev_only(client, session):
+    # Both viewer and admin are denied the audit log; only dev may read it.
     await _make_user(session, email="viewer@local", role="viewer")
-    token = await _token(client, "viewer@local")
-    r = await client.get("/api/v1/audit-logs", headers=_auth(token))
-    assert r.status_code == 403
+    viewer = await _token(client, "viewer@local")
+    assert (await client.get("/api/v1/audit-logs", headers=_auth(viewer))).status_code == 403
+
+    await _make_user(session, email="admin@local", role="admin")
+    admin = await _token(client, "admin@local")
+    assert (await client.get("/api/v1/audit-logs", headers=_auth(admin))).status_code == 403

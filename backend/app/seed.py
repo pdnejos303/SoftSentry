@@ -13,30 +13,55 @@ from app.core.security import hash_password
 from app.models.user import User
 
 
+async def _seed_user(
+    session,
+    *,
+    email: str,
+    password: str,
+    full_name: str,
+    role: str,
+) -> None:
+    existing = (
+        await session.execute(select(User).where(User.email == email.lower()))
+    ).scalar_one_or_none()
+
+    if existing is not None:
+        print(f"{role} already exists: {existing.email} (uuid={existing.uuid})")
+        return
+
+    user = User(
+        email=email.lower(),
+        password_hash=hash_password(password),
+        full_name=full_name,
+        role=role,
+        is_active=True,
+    )
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    print(f"✓ Seeded {role}: {user.email} (uuid={user.uuid})")
+
+
 async def seed_admin() -> None:
     async with SessionLocal() as session:
-        existing = (
-            await session.execute(
-                select(User).where(User.email == settings.initial_admin_email.lower())
-            )
-        ).scalar_one_or_none()
-
-        if existing is not None:
-            print(f"Admin already exists: {existing.email} (uuid={existing.uuid})")
-            return
-
-        admin = User(
-            email=settings.initial_admin_email.lower(),
-            password_hash=hash_password(settings.initial_admin_password),
+        # Initial admin (limited role: Overview + Machines + Deploy).
+        await _seed_user(
+            session,
+            email=settings.initial_admin_email,
+            password=settings.initial_admin_password,
             full_name="Initial Admin",
             role="admin",
-            is_active=True,
         )
-        session.add(admin)
-        await session.commit()
-        await session.refresh(admin)
-        print(f"✓ Seeded admin: {admin.email} (uuid={admin.uuid})")
-        print("  Login with password from INITIAL_ADMIN_PASSWORD env var.")
+        # Dev superuser — sees and does everything. NOTE: this default password is
+        # intentionally weak for local/dev convenience; change it before any
+        # non-local deployment.
+        await _seed_user(
+            session,
+            email="dev@dev",
+            password="01Password",  # noqa: S106  (dev-only seed credential)
+            full_name="Developer",
+            role="dev",
+        )
 
 
 def main() -> int:

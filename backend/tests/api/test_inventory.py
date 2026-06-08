@@ -32,7 +32,7 @@ async def _login(client, email: str, password: str) -> str:
 
 
 async def _admin_token(client, session) -> str:
-    pw = await _make_user(session, email="admin@local", role="admin")
+    pw = await _make_user(session, email="admin@local", role="dev")
     return await _login(client, "admin@local", pw)
 
 

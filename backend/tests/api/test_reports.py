@@ -46,7 +46,7 @@ def _hdr(access: str) -> dict:
 
 
 async def _admin(client, session) -> str:
-    await _user(session, "admin@local", "admin")
+    await _user(session, "admin@local", "dev")
     return await _login(client, "admin@local")
 
 

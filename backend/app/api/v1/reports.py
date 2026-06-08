@@ -34,7 +34,7 @@ from app.workers.report_jobs import enqueue_report
 router = APIRouter()
 
 # The acting admin, bound (not discarded) so mutations can be audit-attributed.
-AdminUser = Annotated[User, Depends(require_role("admin"))]
+AdminUser = Annotated[User, Depends(require_role("dev"))]
 
 
 # ── Generation + listing ─────────────────────────────────────────────────────

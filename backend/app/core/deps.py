@@ -64,6 +64,16 @@ async def get_current_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
+# Role groups — keep these in sync with dashboard/lib/permissions.ts.
+#   dev    — superuser, may access everything
+#   admin  — Overview + Machines + Deploy only, full actions within that scope
+#   viewer — broad read-only (everything except Deploy / Users / Audit Log)
+ALL_ROLES = ("dev", "admin", "viewer")
+DEV = ("dev",)
+DEV_ADMIN = ("dev", "admin")
+DEV_VIEWER = ("dev", "viewer")
+
+
 def require_role(*allowed: str) -> Callable[..., Awaitable[User]]:
     async def dep(current: CurrentUser) -> User:
         if current.role not in allowed:

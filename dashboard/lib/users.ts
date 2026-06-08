@@ -6,7 +6,8 @@ import type { Paginated } from "./types";
 
 // ── Types (mirror backend app/schemas/users.py) ───────────────────────────────
 
-export type Role = "admin" | "viewer";
+export type { Role } from "./permissions";
+import type { Role } from "./permissions";
 
 export interface DashUser {
   uuid: string;
@@ -159,7 +160,7 @@ export function useAuditActions() {
 // ── Presentation helpers (pure — unit-tested in users.test.ts) ────────────────
 
 export function roleVariant(role: string): "default" | "muted" {
-  return role === "admin" ? "default" : "muted";
+  return role === "dev" || role === "admin" ? "default" : "muted";
 }
 
 export function statusVariant(isActive: boolean): "success" | "muted" {

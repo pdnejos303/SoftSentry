@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr
 
-Role = Literal["admin", "viewer"]
+Role = Literal["dev", "admin", "viewer"]
 
 
 class UserItem(BaseModel):

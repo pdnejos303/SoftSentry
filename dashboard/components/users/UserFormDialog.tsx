@@ -27,7 +27,7 @@ import {
 const schema = z.object({
   email: z.string().trim().email(),
   full_name: z.string().trim().min(1),
-  role: z.enum(["admin", "viewer"]),
+  role: z.enum(["dev", "admin", "viewer"]),
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -115,6 +115,7 @@ export function UserFormDialog({ open, onOpenChange, user, onCreated }: UserForm
             <Select id="role" {...register("role")}>
               <option value="viewer">{t("roleViewer")}</option>
               <option value="admin">{t("roleAdmin")}</option>
+              <option value="dev">{t("roleDev")}</option>
             </Select>
           </div>
 

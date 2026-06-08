@@ -83,6 +83,14 @@ func enrollMachine(ctx context.Context, out io.Writer, token, server string) err
 	if err := storage.SaveToken(resp.AgentToken); err != nil {
 		return err
 	}
+	// A (re-)enrollment gets a fresh agent token and a server-side machine record
+	// that has never received a scan. Drop any stale last_scan from a previous
+	// install so the next `run` treats this as a first scan and uploads inventory
+	// immediately — otherwise the machine appears online but with 0 software until
+	// the next scheduled auto-scan (up to scan_interval_hours later).
+	if err := storage.ClearLastScan(); err != nil {
+		return fmt.Errorf("reset scan schedule: %w", err)
+	}
 
 	fmt.Fprintf(out, "✓ Enrolled. Machine UUID: %s\n", resp.MachineUUID)
 	fmt.Fprintf(out, "  Token stored. Scan interval: %dh\n", cfg.ScanIntervalHours)

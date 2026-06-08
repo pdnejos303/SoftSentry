@@ -42,7 +42,7 @@ router = APIRouter()
     response_model=EnrollmentTokenCreated,
     status_code=status.HTTP_201_CREATED,
     summary="Admin: generate one-time enrollment token",
-    dependencies=[Depends(require_role("admin"))],
+    dependencies=[Depends(require_role("dev", "admin"))],
 )
 async def create_enrollment_token(
     payload: EnrollmentTokenCreateRequest,

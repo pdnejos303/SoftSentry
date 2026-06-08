@@ -27,7 +27,7 @@ from app.services import binary_service, enrollment_service, installer_service
 router = APIRouter()
 
 # The acting admin (kept for audit attribution).
-AdminUser = Annotated[User, Depends(require_role("admin"))]
+AdminUser = Annotated[User, Depends(require_role("dev", "admin"))]
 
 
 @router.post(

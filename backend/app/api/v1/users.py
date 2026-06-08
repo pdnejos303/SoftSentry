@@ -23,7 +23,7 @@ from app.services import audit_service, user_service
 router = APIRouter()
 
 # The acting admin (not discarded — needed for audit attribution).
-AdminUser = Annotated[User, Depends(require_role("admin"))]
+AdminUser = Annotated[User, Depends(require_role("dev"))]
 
 
 def _pages(total: int, page_size: int) -> int:

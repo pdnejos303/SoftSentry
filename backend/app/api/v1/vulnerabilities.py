@@ -91,7 +91,7 @@ async def dismiss_vulnerability(
     vuln_uuid: uuid_lib.UUID,
     payload: DismissRequest,
     session: DBSession,
-    user: Annotated[User, Depends(require_role("admin"))],
+    user: Annotated[User, Depends(require_role("dev"))],
     request: Request,
 ) -> VulnerabilityDetail:
     vuln = await _get_vuln_or_404(session, vuln_uuid)
@@ -115,7 +115,7 @@ async def dismiss_vulnerability(
 async def undismiss_vulnerability(
     vuln_uuid: uuid_lib.UUID,
     session: DBSession,
-    user: Annotated[User, Depends(require_role("admin"))],
+    user: Annotated[User, Depends(require_role("dev"))],
     request: Request,
 ) -> VulnerabilityDetail:
     vuln = await _get_vuln_or_404(session, vuln_uuid)
@@ -161,7 +161,7 @@ async def vuln_summary(session: DBSession, _: CurrentUser) -> VulnSummary:
 )
 async def trigger_cve_sync(
     session: DBSession,
-    user: Annotated[User, Depends(require_role("admin"))],
+    user: Annotated[User, Depends(require_role("dev"))],
     request: Request,
     full: bool = False,
 ) -> CveSyncResult:

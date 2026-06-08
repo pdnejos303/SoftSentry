@@ -27,7 +27,7 @@ from app.schemas.policy import (
 from app.services import policy_service
 
 # The acting admin (not discarded — needed for audit attribution).
-AdminUser = Annotated[User, Depends(require_role("admin"))]
+AdminUser = Annotated[User, Depends(require_role("dev"))]
 MAX_CSV_BYTES = 5 * 1024 * 1024  # 5MB (spec 4.3)
 
 _ENTRY_FIELDS = (

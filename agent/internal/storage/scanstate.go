@@ -36,6 +36,23 @@ func SaveLastScan(t time.Time) error {
 	return nil
 }
 
+// ClearLastScan removes the last-scan marker so the next run is treated as
+// never-scanned and performs an immediate enrollment scan (spec 1.1). Enrollment
+// calls this: a (re-)enrolled machine gets a fresh agent token / server-side
+// machine record, so it must re-scan right away rather than inheriting a stale
+// last_scan from a previous install — otherwise it shows online but with 0
+// software until the next scheduled scan. A missing file is not an error.
+func ClearLastScan() error {
+	p, err := lastScanPath()
+	if err != nil {
+		return err
+	}
+	if err := os.Remove(p); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("clear last scan: %w", err)
+	}
+	return nil
+}
+
 // LoadLastScan reads the last-scan timestamp. It returns the zero time (no
 // error) when the agent has never recorded a scan.
 func LoadLastScan() (time.Time, error) {

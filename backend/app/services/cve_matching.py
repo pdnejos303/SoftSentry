@@ -129,15 +129,26 @@ def version_in_range(version: str, rng: dict[str, object]) -> bool:
 
 
 def _product_match(sw_name: str, product: str) -> bool:
-    """True if the CVE product name is contained in (or equals) the software name."""
-    n = normalize_product(sw_name)
-    p = normalize_product(product)
-    if not p or not n:
+    """True if the CVE product identifies this software.
+
+    Matches when the normalized product equals the software name, or is a
+    trailing token-suffix of it — the vendor-prefixed display-name case where
+    NVD keys the bare product ("chrome") but the installed name carries the
+    vendor ("Google Chrome").
+
+    A product that is only a *leading* or interior token of the name is rejected.
+    This is the key false-positive guard (spec 5.2): "chrome" (Google Chrome
+    browser) must NOT attach to a different product whose name merely starts
+    with it — "Chrome Remote Desktop Host", "Python Launcher" vs "python" —
+    even when vendor and version overlap.
+    """
+    n = [t for t in normalize_product(sw_name).split(" ") if t]
+    p = [t for t in normalize_product(product).split(" ") if t]
+    if not n or not p:
         return False
-    if p == n:
+    if n == p:
         return True
-    # Whole-phrase containment in either direction (word-boundary aware).
-    return f" {p} " in f" {n} " or f" {n} " in f" {p} "
+    return len(p) < len(n) and n[-len(p) :] == p
 
 
 def _vendor_conflict(sw_publisher: str | None, vendor: str | None) -> bool:

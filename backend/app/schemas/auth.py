@@ -44,7 +44,7 @@ class UserOut(BaseModel):
     uuid: uuid_lib.UUID
     email: str
     full_name: str
-    role: Literal["admin", "viewer"]
+    role: Literal["dev", "admin", "viewer"]
     is_active: bool
     last_login_at: datetime | None
     created_at: datetime

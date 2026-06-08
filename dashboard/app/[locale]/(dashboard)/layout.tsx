@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/routing";
 import { useAuth } from "@/lib/auth";
+import { canAccessPath, type Role } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -33,9 +34,16 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
 
+  const role = user?.role as Role | undefined;
+
   useEffect(() => {
     if (status === "anonymous") router.replace("/login");
-  }, [status, router]);
+    // Demoted roles that deep-link (or get redirected) to a page they can't see
+    // land back on the Overview rather than hitting a bare 403 from the API.
+    else if (status === "authenticated" && role && !canAccessPath(role, pathname)) {
+      router.replace("/");
+    }
+  }, [status, role, pathname, router]);
 
   if (status !== "authenticated") {
     return (
@@ -45,8 +53,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  const isAdmin = user?.role === "admin";
-  const links = [
+  const allLinks = [
     { href: "/", label: t("overview"), icon: LayoutDashboard },
     { href: "/machines", label: t("machines"), icon: Monitor },
     { href: "/software", label: t("software"), icon: Package },
@@ -57,15 +64,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     { href: "/policy/blacklist", label: t("blacklist"), icon: ShieldBan },
     { href: "/alerts", label: t("alerts"), icon: Bell },
     { href: "/reports", label: t("reports"), icon: FileText },
+    { href: "/deploy", label: t("deploy"), icon: DownloadCloud },
     { href: "/settings/profile", label: t("profile"), icon: UserCircle },
-    ...(isAdmin
-      ? [
-          { href: "/deploy", label: t("deploy"), icon: DownloadCloud },
-          { href: "/settings/users", label: t("users"), icon: Users },
-          { href: "/settings/audit-log", label: t("auditLog"), icon: ScrollText },
-        ]
-      : []),
+    { href: "/settings/users", label: t("users"), icon: Users },
+    { href: "/settings/audit-log", label: t("auditLog"), icon: ScrollText },
   ];
+  // Visibility is derived from the shared route-access matrix so the nav and the
+  // path guard above can never drift apart.
+  const links = role ? allLinks.filter((l) => canAccessPath(role, l.href)) : [];
 
   return (
     <div className="flex min-h-screen">

@@ -18,7 +18,7 @@ async def _admin_access(client, session) -> str:
             email="admin@local",
             password_hash=hash_password(password),
             full_name="Admin",
-            role="admin",
+            role="dev",
             is_active=True,
         )
     )

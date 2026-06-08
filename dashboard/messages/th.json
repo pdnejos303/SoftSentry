@@ -640,6 +640,7 @@
       "fullName": "ชื่อ-นามสกุล",
       "fullNameRequired": "ต้องระบุชื่อ-นามสกุล",
       "role": "บทบาท",
+      "roleDev": "Dev",
       "roleAdmin": "Admin",
       "roleViewer": "Viewer",
       "passwordHint": "ระบบจะสร้างรหัสผ่านที่แข็งแรงให้อัตโนมัติและแสดงครั้งเดียว",

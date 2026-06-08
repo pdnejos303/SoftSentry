@@ -17,7 +17,7 @@ from app.services.csv_export import iter_csv
 
 router = APIRouter()
 
-AdminUser = Annotated[User, Depends(require_role("admin"))]
+AdminUser = Annotated[User, Depends(require_role("dev"))]
 
 
 def _pages(total: int, page_size: int) -> int:

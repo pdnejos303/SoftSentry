@@ -165,3 +165,29 @@ def test_picks_best_confidence_across_affected_entries():
 @pytest.mark.parametrize("missing", [None, ""])
 def test_empty_affected_yields_no_match(missing):
     assert match_software("Anything", "Vendor", "1.0", {"affected": missing}) is None
+
+
+# ── product identity (false-positive mitigation, spec 5.2) ────────────────────
+
+
+def test_bare_product_does_not_leak_onto_different_product():
+    # A Google Chrome *browser* CVE (product "chrome", vendor "google") must not
+    # attach to "Chrome Remote Desktop Host": the product is only a *leading*
+    # token of the name, same vendor, overlapping 149.x versioning.
+    cve = _cve([{"product": "chrome", "vendor": "google", "version_end_excluding": "150.0"}])
+    assert match_software("Chrome Remote Desktop Host", "Google LLC", "149.0", cve) is None
+
+
+def test_vendor_prefixed_display_name_matches_product_suffix():
+    # "Google Chrome" ⊃ product "chrome" as a trailing suffix → still a real match.
+    cve = _cve([{"product": "chrome", "vendor": "google", "version_end_excluding": "150.0"}])
+    result = match_software("Google Chrome", "Google LLC", "149.0", cve)
+    assert result is not None
+    assert result["match_confidence"] == "high"
+
+
+def test_descriptor_suffix_name_does_not_match_bare_product():
+    # "Python Launcher" (py.exe) is a distinct product from CPython ("python");
+    # its own 3.12.x build number must not pull in interpreter CVEs.
+    cve = _cve([{"product": "python", "vendor": "python", "version_end_excluding": "3.13"}])
+    assert match_software("Python Launcher", "Python Software Foundation", "3.12", cve) is None

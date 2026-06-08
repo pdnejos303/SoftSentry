@@ -10,12 +10,13 @@ import {
   type ReactNode,
 } from "react";
 import { api, setAccessToken } from "./api";
+import type { Role } from "./permissions";
 
 type User = {
   uuid: string;
   email: string;
   full_name: string;
-  role: "admin" | "viewer";
+  role: Role;
 };
 
 type AuthState = {

@@ -25,7 +25,7 @@ from app.schemas.license import (
 from app.services import license_service
 
 # The acting admin (not discarded — needed for audit attribution).
-AdminUser = Annotated[User, Depends(require_role("admin"))]
+AdminUser = Annotated[User, Depends(require_role("dev"))]
 
 # license_key is a secret (encrypted at rest) — never copy it into an audit row.
 _AUDIT_FIELDS = ("software_name", "vendor", "purchased_count", "seat_type", "expiry_date")
@@ -85,7 +85,7 @@ async def compliance_summary(session: DBSession, _: CurrentUser) -> ComplianceSu
     "/refresh-counts",
     response_model=RefreshResult,
     summary="Admin: recompute counts + reconcile license alerts now",
-    dependencies=[Depends(require_role("admin"))],
+    dependencies=[Depends(require_role("dev"))],
 )
 async def refresh_counts(session: DBSession, admin: AdminUser, request: Request) -> RefreshResult:
     result = await license_service.reconcile_alerts(session)

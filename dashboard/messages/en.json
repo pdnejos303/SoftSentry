@@ -24,7 +24,7 @@
   },
   "login": {
     "title": "Sign in",
-    "heading": "Software Management",
+    "heading": "Software Asset Management(SAM)",
     "subtitle": "Sign in to your SoftSentry dashboard",
     "email": "Email",
     "password": "Password",

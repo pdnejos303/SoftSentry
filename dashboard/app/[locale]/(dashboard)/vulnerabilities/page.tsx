@@ -5,12 +5,12 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { RefreshCw } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { useTriggerCveSync, useVulnerabilities } from "@/lib/vulnerability";
+import { useTriggerCveSync, useVulnerabilityGroups } from "@/lib/vulnerability";
 import type { VulnerabilityItem } from "@/lib/types";
 import { ExportButton } from "@/components/reports/ExportButton";
 import { SeverityFilter } from "@/components/vulnerabilities/SeverityFilter";
 import { VulnSummaryWidget } from "@/components/vulnerabilities/VulnSummaryWidget";
-import { VulnTable } from "@/components/vulnerabilities/VulnTable";
+import { VulnGroupTable } from "@/components/vulnerabilities/VulnGroupTable";
 import { CVEDetailModal } from "@/components/vulnerabilities/CVEDetailModal";
 import { DismissDialog } from "@/components/vulnerabilities/DismissDialog";
 import { Input } from "@/components/ui/input";
@@ -42,19 +42,23 @@ export default function VulnerabilitiesPage() {
   const [dismissVuln, setDismissVuln] = useState<VulnerabilityItem | null>(null);
   const debouncedQ = useDebounced(q);
 
-  const filters = useMemo(
+  // Filters shared by the grouped list and by each group's CVE expansion.
+  const baseFilters = useMemo(
     () => ({
-      page,
-      page_size: PAGE_SIZE,
       show_dismissed: showDismissed,
       ...(debouncedQ ? { q: debouncedQ } : {}),
       ...(severities.length ? { severity: severities.join(",") } : {}),
       ...(dateWindow !== "all" ? { matched: dateWindow } : {}),
     }),
-    [page, debouncedQ, severities, dateWindow, showDismissed],
+    [debouncedQ, severities, dateWindow, showDismissed],
   );
 
-  const { data, isLoading } = useVulnerabilities(filters);
+  const filters = useMemo(
+    () => ({ page, page_size: PAGE_SIZE, ...baseFilters }),
+    [page, baseFilters],
+  );
+
+  const { data, isLoading } = useVulnerabilityGroups(filters);
   const triggerSync = useTriggerCveSync();
 
   const toggleSeverity = (s: string) => {
@@ -154,10 +158,11 @@ export default function VulnerabilitiesPage() {
         </Button>
       </div>
 
-      <VulnTable
+      <VulnGroupTable
         items={data?.items}
         isLoading={isLoading}
         isAdmin={isAdmin}
+        baseFilters={baseFilters}
         onOpen={setOpenVuln}
         onDismiss={setDismissVuln}
       />
@@ -165,7 +170,7 @@ export default function VulnerabilitiesPage() {
       {data && data.total_pages > 1 && (
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
-            {t("pageInfo", { page: data.page, total: data.total_pages, count: data.total })}
+            {t("pageInfoGroups", { page: data.page, total: data.total_pages, count: data.total })}
           </span>
           <div className="flex gap-2">
             <Button

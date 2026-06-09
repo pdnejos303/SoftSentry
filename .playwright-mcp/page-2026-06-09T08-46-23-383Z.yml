@@ -1,0 +1,389 @@
+- generic [active] [ref=e1]:
+  - alert [ref=e5]
+  - generic [ref=e27]:
+    - complementary [ref=e28]:
+      - generic [ref=e29]:
+        - img [ref=e30]
+        - generic [ref=e33]: SoftSentry
+      - navigation [ref=e34]:
+        - link "Overview" [ref=e35] [cursor=pointer]:
+          - /url: /en
+          - img [ref=e36]
+          - text: Overview
+        - link "Machines" [ref=e41] [cursor=pointer]:
+          - /url: /en/machines
+          - img [ref=e42]
+          - text: Machines
+        - link "Software" [ref=e44] [cursor=pointer]:
+          - /url: /en/software
+          - img [ref=e45]
+          - text: Software
+        - link "Signatures" [ref=e49] [cursor=pointer]:
+          - /url: /en/signatures
+          - img [ref=e50]
+          - text: Signatures
+        - link "Vulnerabilities" [ref=e53] [cursor=pointer]:
+          - /url: /en/vulnerabilities
+          - img [ref=e54]
+          - text: Vulnerabilities
+        - link "Licenses" [ref=e56] [cursor=pointer]:
+          - /url: /en/licenses
+          - img [ref=e57]
+          - text: Licenses
+        - link "Whitelist" [ref=e60] [cursor=pointer]:
+          - /url: /en/policy/whitelist
+          - img [ref=e61]
+          - text: Whitelist
+        - link "Blacklist" [ref=e64] [cursor=pointer]:
+          - /url: /en/policy/blacklist
+          - img [ref=e65]
+          - text: Blacklist
+        - link "Alerts" [ref=e68] [cursor=pointer]:
+          - /url: /en/alerts
+          - img [ref=e69]
+          - text: Alerts
+        - link "Reports" [ref=e72] [cursor=pointer]:
+          - /url: /en/reports
+          - img [ref=e73]
+          - text: Reports
+        - link "Deploy" [ref=e76] [cursor=pointer]:
+          - /url: /en/deploy
+          - img [ref=e77]
+          - text: Deploy
+        - link "Profile" [ref=e81] [cursor=pointer]:
+          - /url: /en/settings/profile
+          - img [ref=e82]
+          - text: Profile
+        - link "Users" [ref=e86] [cursor=pointer]:
+          - /url: /en/settings/users
+          - img [ref=e87]
+          - text: Users
+        - link "Audit log" [ref=e92] [cursor=pointer]:
+          - /url: /en/settings/audit-log
+          - img [ref=e93]
+          - text: Audit log
+    - generic [ref=e96]:
+      - banner [ref=e97]:
+        - generic [ref=e98]:
+          - generic [ref=e99]: dev@dev
+          - generic [ref=e100]:
+            - combobox "Language" [ref=e101]:
+              - option "ไทย"
+              - option "English" [selected]
+              - option "日本語"
+            - img
+          - button "Sign out" [ref=e102] [cursor=pointer]:
+            - img [ref=e103]
+            - text: Sign out
+      - main [ref=e106]:
+        - generic [ref=e107]:
+          - generic [ref=e108]:
+            - generic [ref=e109]:
+              - heading "Overview" [level=1] [ref=e110]
+              - paragraph [ref=e111]: Fleet risk and health at a glance
+            - generic [ref=e112]:
+              - generic [ref=e113]: Live · auto-refresh 30s
+              - button "Refresh" [ref=e114] [cursor=pointer]:
+                - img [ref=e115]
+                - text: Refresh
+              - button "Pause" [ref=e120] [cursor=pointer]:
+                - img [ref=e121]
+                - text: Pause
+          - generic [ref=e124]:
+            - link "Machines 1" [ref=e125] [cursor=pointer]:
+              - /url: /en/machines
+              - generic [ref=e127]:
+                - generic [ref=e128]:
+                  - paragraph [ref=e129]: Machines
+                  - paragraph [ref=e130]: "1"
+                - img [ref=e132]
+            - link "Agents online 1 / 1" [ref=e134] [cursor=pointer]:
+              - /url: /en/machines
+              - generic [ref=e136]:
+                - generic [ref=e137]:
+                  - paragraph [ref=e138]: Agents online
+                  - paragraph [ref=e139]: 1 / 1
+                - img [ref=e141]
+            - link "Software (unique) 140" [ref=e145] [cursor=pointer]:
+              - /url: /en/software
+              - generic [ref=e147]:
+                - generic [ref=e148]:
+                  - paragraph [ref=e149]: Software (unique)
+                  - paragraph [ref=e150]: "140"
+                - img [ref=e152]
+            - link "Vulnerabilities 23C / 51H / 100M" [ref=e156] [cursor=pointer]:
+              - /url: /en/vulnerabilities
+              - generic [ref=e158]:
+                - generic [ref=e159]:
+                  - paragraph [ref=e160]: Vulnerabilities
+                  - paragraph [ref=e161]: 23C / 51H / 100M
+                - img [ref=e163]
+          - generic [ref=e165]:
+            - generic [ref=e166]:
+              - heading "Severity distribution" [level=3] [ref=e168]
+              - generic [ref=e170]:
+                - generic [ref=e171]:
+                  - img [ref=e174]:
+                    - generic [ref=e175]:
+                      - img [ref=e177] [cursor=pointer]
+                      - img [ref=e179] [cursor=pointer]
+                      - img [ref=e181] [cursor=pointer]
+                  - generic:
+                    - generic: "174"
+                    - generic: Total
+                - list [ref=e182]:
+                  - listitem [ref=e183]:
+                    - button "Critical 23 · 13%" [ref=e184] [cursor=pointer]:
+                      - generic [ref=e185]: Critical
+                      - generic [ref=e187]: 23 · 13%
+                  - listitem [ref=e188]:
+                    - button "High 51 · 29%" [ref=e189] [cursor=pointer]:
+                      - generic [ref=e190]: High
+                      - generic [ref=e192]: 51 · 29%
+                  - listitem [ref=e193]:
+                    - button "Medium 100 · 57%" [ref=e194] [cursor=pointer]:
+                      - generic [ref=e195]: Medium
+                      - generic [ref=e197]: 100 · 57%
+                  - listitem [ref=e198]:
+                    - button "Low 0 · 0%" [ref=e199] [cursor=pointer]:
+                      - generic [ref=e200]: Low
+                      - generic [ref=e202]: 0 · 0%
+            - generic [ref=e203]:
+              - heading "Signature distribution" [level=3] [ref=e205]
+              - generic [ref=e207]:
+                - img [ref=e211]:
+                  - generic [ref=e212]:
+                    - img [ref=e214] [cursor=pointer]
+                    - img [ref=e216] [cursor=pointer]
+                    - img [ref=e218] [cursor=pointer]
+                - list [ref=e219]:
+                  - listitem [ref=e220]:
+                    - button "Unknown 74 · 53%" [ref=e221] [cursor=pointer]:
+                      - generic [ref=e222]: Unknown
+                      - generic [ref=e224]: 74 · 53%
+                  - listitem [ref=e225]:
+                    - button "Unsigned 9 · 6%" [ref=e226] [cursor=pointer]:
+                      - generic [ref=e227]: Unsigned
+                      - generic [ref=e229]: 9 · 6%
+                  - listitem [ref=e230]:
+                    - button "Valid 57 · 41%" [ref=e231] [cursor=pointer]:
+                      - generic [ref=e232]: Valid
+                      - generic [ref=e234]: 57 · 41%
+            - generic [ref=e235]:
+              - heading "License compliance" [level=3] [ref=e237]
+              - generic [ref=e239]:
+                - generic [ref=e240]:
+                  - img [ref=e243]:
+                    - img [ref=e246] [cursor=pointer]
+                  - generic:
+                    - generic: 0%
+                    - generic: Compliant
+                - list [ref=e247]:
+                  - listitem [ref=e248]:
+                    - button "Expiring soon 1" [ref=e249] [cursor=pointer]:
+                      - generic [ref=e250]: Expiring soon
+                      - generic [ref=e252]: "1"
+          - generic [ref=e253]:
+            - heading "Vulnerability trend (last 30 days)" [level=3] [ref=e255]
+            - img [ref=e259]:
+              - generic [ref=e263]:
+                - generic [ref=e265]: May 11
+                - generic [ref=e267]: May 13
+                - generic [ref=e269]: May 15
+                - generic [ref=e271]: May 17
+                - generic [ref=e273]: May 19
+                - generic [ref=e275]: May 21
+                - generic [ref=e277]: May 23
+                - generic [ref=e279]: May 25
+                - generic [ref=e281]: May 27
+                - generic [ref=e283]: May 29
+                - generic [ref=e285]: May 31
+                - generic [ref=e287]: Jun 2
+                - generic [ref=e289]: Jun 3
+                - generic [ref=e291]: Jun 4
+                - generic [ref=e293]: Jun 5
+                - generic [ref=e295]: Jun 6
+                - generic [ref=e297]: Jun 7
+                - generic [ref=e299]: Jun 8
+                - generic [ref=e301]: Jun 9
+              - generic [ref=e303]:
+                - generic [ref=e305]: "0"
+                - generic [ref=e307]: "25"
+                - generic [ref=e309]: "50"
+                - generic [ref=e311]: "75"
+                - generic [ref=e313]: "100"
+          - generic [ref=e320]:
+            - generic [ref=e321]:
+              - heading "Top 10 risky machines" [level=3] [ref=e323]
+              - img [ref=e327]:
+                - generic [ref=e329]:
+                  - generic [ref=e331]: "0"
+                  - generic [ref=e333]: "95"
+                  - generic [ref=e335]: "190"
+                  - generic [ref=e337]: "285"
+                  - generic [ref=e339]: "380"
+                - generic [ref=e343]: DESKTOP-T4DPQLG
+            - generic [ref=e349]:
+              - heading "Recent alerts" [level=3] [ref=e351]
+              - generic [ref=e353]:
+                - generic [ref=e354]:
+                  - generic [ref=e355]: Critical
+                  - generic [ref=e356]: Active
+                  - generic [ref=e357]:
+                    - text: "Critical vulnerability: Google Chrome 148.0.7778.218"
+                    - generic [ref=e358]: Google Chrome 148.0.7778.218
+                  - link "DESKTOP-T4DPQLG" [ref=e359] [cursor=pointer]:
+                    - /url: /en/machines/531a2364-ac3a-4098-977f-8b2bbb2f35a0
+                  - generic [ref=e360]: 1h ago
+                  - generic [ref=e361]:
+                    - button "Acknowledge" [ref=e362] [cursor=pointer]:
+                      - img [ref=e363]
+                      - text: Acknowledge
+                    - button "Resolve" [ref=e365] [cursor=pointer]:
+                      - img [ref=e366]
+                      - text: Resolve
+                - generic [ref=e369]:
+                  - generic [ref=e370]: Medium
+                  - generic [ref=e371]: Active
+                  - generic [ref=e372]:
+                    - text: "Unsigned software: osu!"
+                    - generic [ref=e373]: osu! latest
+                  - link "DESKTOP-T4DPQLG" [ref=e374] [cursor=pointer]:
+                    - /url: /en/machines/531a2364-ac3a-4098-977f-8b2bbb2f35a0
+                  - generic [ref=e375]: 23h ago
+                  - generic [ref=e376]:
+                    - button "Acknowledge" [ref=e377] [cursor=pointer]:
+                      - img [ref=e378]
+                      - text: Acknowledge
+                    - button "Resolve" [ref=e380] [cursor=pointer]:
+                      - img [ref=e381]
+                      - text: Resolve
+                - generic [ref=e384]:
+                  - generic [ref=e385]: Medium
+                  - generic [ref=e386]: Active
+                  - generic [ref=e387]:
+                    - text: "Unsigned software: Microsoft Help Viewer 2.3"
+                    - generic [ref=e388]: Microsoft Help Viewer 2.3 2.3.28307
+                  - link "DESKTOP-T4DPQLG" [ref=e389] [cursor=pointer]:
+                    - /url: /en/machines/531a2364-ac3a-4098-977f-8b2bbb2f35a0
+                  - generic [ref=e390]: 23h ago
+                  - generic [ref=e391]:
+                    - button "Acknowledge" [ref=e392] [cursor=pointer]:
+                      - img [ref=e393]
+                      - text: Acknowledge
+                    - button "Resolve" [ref=e395] [cursor=pointer]:
+                      - img [ref=e396]
+                      - text: Resolve
+                - generic [ref=e399]:
+                  - generic [ref=e400]: Medium
+                  - generic [ref=e401]: Active
+                  - generic [ref=e402]:
+                    - text: "Unsigned software: Laragon 6.0.0"
+                    - generic [ref=e403]: Laragon 6.0.0 6.0.0.220916
+                  - link "DESKTOP-T4DPQLG" [ref=e404] [cursor=pointer]:
+                    - /url: /en/machines/531a2364-ac3a-4098-977f-8b2bbb2f35a0
+                  - generic [ref=e405]: 23h ago
+                  - generic [ref=e406]:
+                    - button "Acknowledge" [ref=e407] [cursor=pointer]:
+                      - img [ref=e408]
+                      - text: Acknowledge
+                    - button "Resolve" [ref=e410] [cursor=pointer]:
+                      - img [ref=e411]
+                      - text: Resolve
+                - generic [ref=e414]:
+                  - generic [ref=e415]: Medium
+                  - generic [ref=e416]: Active
+                  - generic [ref=e417]:
+                    - text: "Unsigned software: Microsoft Visual Studio 2010 Tools for Office Runtime (x64)"
+                    - generic [ref=e418]: Microsoft Visual Studio 2010 Tools for Office Runtime (x64) 10.0.60910
+                  - link "DESKTOP-T4DPQLG" [ref=e419] [cursor=pointer]:
+                    - /url: /en/machines/531a2364-ac3a-4098-977f-8b2bbb2f35a0
+                  - generic [ref=e420]: 23h ago
+                  - generic [ref=e421]:
+                    - button "Acknowledge" [ref=e422] [cursor=pointer]:
+                      - img [ref=e423]
+                      - text: Acknowledge
+                    - button "Resolve" [ref=e425] [cursor=pointer]:
+                      - img [ref=e426]
+                      - text: Resolve
+                - generic [ref=e429]:
+                  - generic [ref=e430]: Medium
+                  - generic [ref=e431]: Active
+                  - generic [ref=e432]:
+                    - text: "Unsigned software: XXMI Launcher"
+                    - generic [ref=e433]: XXMI Launcher 2.1.9
+                  - link "DESKTOP-T4DPQLG" [ref=e434] [cursor=pointer]:
+                    - /url: /en/machines/531a2364-ac3a-4098-977f-8b2bbb2f35a0
+                  - generic [ref=e435]: 23h ago
+                  - generic [ref=e436]:
+                    - button "Acknowledge" [ref=e437] [cursor=pointer]:
+                      - img [ref=e438]
+                      - text: Acknowledge
+                    - button "Resolve" [ref=e440] [cursor=pointer]:
+                      - img [ref=e441]
+                      - text: Resolve
+                - generic [ref=e444]:
+                  - generic [ref=e445]: Medium
+                  - generic [ref=e446]: Active
+                  - generic [ref=e447]:
+                    - text: "Unsigned software: Android Studio"
+                    - generic [ref=e448]: Android Studio 2024.2
+                  - link "DESKTOP-T4DPQLG" [ref=e449] [cursor=pointer]:
+                    - /url: /en/machines/531a2364-ac3a-4098-977f-8b2bbb2f35a0
+                  - generic [ref=e450]: 23h ago
+                  - generic [ref=e451]:
+                    - button "Acknowledge" [ref=e452] [cursor=pointer]:
+                      - img [ref=e453]
+                      - text: Acknowledge
+                    - button "Resolve" [ref=e455] [cursor=pointer]:
+                      - img [ref=e456]
+                      - text: Resolve
+                - generic [ref=e459]:
+                  - generic [ref=e460]: Medium
+                  - generic [ref=e461]: Active
+                  - generic [ref=e462]:
+                    - text: "Unsigned software: 7-Zip 26.01 (x64)"
+                    - generic [ref=e463]: 7-Zip 26.01 (x64) 26.01
+                  - link "DESKTOP-T4DPQLG" [ref=e464] [cursor=pointer]:
+                    - /url: /en/machines/531a2364-ac3a-4098-977f-8b2bbb2f35a0
+                  - generic [ref=e465]: 23h ago
+                  - generic [ref=e466]:
+                    - button "Acknowledge" [ref=e467] [cursor=pointer]:
+                      - img [ref=e468]
+                      - text: Acknowledge
+                    - button "Resolve" [ref=e470] [cursor=pointer]:
+                      - img [ref=e471]
+                      - text: Resolve
+                - generic [ref=e474]:
+                  - generic [ref=e475]: Medium
+                  - generic [ref=e476]: Active
+                  - generic [ref=e477]:
+                    - text: "Unsigned software: AntiCheatExpert"
+                    - generic [ref=e478]: AntiCheatExpert 24.3.2511.846
+                  - link "DESKTOP-T4DPQLG" [ref=e479] [cursor=pointer]:
+                    - /url: /en/machines/531a2364-ac3a-4098-977f-8b2bbb2f35a0
+                  - generic [ref=e480]: 23h ago
+                  - generic [ref=e481]:
+                    - button "Acknowledge" [ref=e482] [cursor=pointer]:
+                      - img [ref=e483]
+                      - text: Acknowledge
+                    - button "Resolve" [ref=e485] [cursor=pointer]:
+                      - img [ref=e486]
+                      - text: Resolve
+                - generic [ref=e489]:
+                  - generic [ref=e490]: Medium
+                  - generic [ref=e491]: Active
+                  - generic [ref=e492]:
+                    - text: "Unsigned software: MICHIRU RPA"
+                    - generic [ref=e493]: MICHIRU RPA 1.2.2
+                  - link "DESKTOP-T4DPQLG" [ref=e494] [cursor=pointer]:
+                    - /url: /en/machines/531a2364-ac3a-4098-977f-8b2bbb2f35a0
+                  - generic [ref=e495]: 23h ago
+                  - generic [ref=e496]:
+                    - button "Acknowledge" [ref=e497] [cursor=pointer]:
+                      - img [ref=e498]
+                      - text: Acknowledge
+                    - button "Resolve" [ref=e500] [cursor=pointer]:
+                      - img [ref=e501]
+                      - text: Resolve
+  - generic [ref=e504]: "95"

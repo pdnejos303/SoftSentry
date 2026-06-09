@@ -61,3 +61,82 @@ func TestSortStableOrdersByNameThenVersion(t *testing.T) {
 		t.Fatalf("unexpected order: %+v", in)
 	}
 }
+
+// TestIsVerifiablePE ตรวจว่ารับเฉพาะนามสกุล PE ที่ตรวจ Authenticode ได้
+func TestIsVerifiablePE(t *testing.T) {
+	cases := map[string]bool{
+		`C:\app\app.exe`:       true,
+		`C:\app\lib.DLL`:       true, // case-insensitive
+		`C:\app\driver.sys`:    true,
+		`C:\app\setup.msi`:     false, // MSI ใช้ SIP คนละตัว
+		`C:\app\readme.txt`:    false,
+		`C:\app\InstallFolder`: false, // โฟลเดอร์ (ไม่มีนามสกุล)
+		"":                     false,
+	}
+	for path, want := range cases {
+		if got := isVerifiablePE(path); got != want {
+			t.Errorf("isVerifiablePE(%q) = %v, want %v", path, got, want)
+		}
+	}
+}
+
+// TestChooseExecutablePrefersDisplayNameMatch ตรวจว่าเลือก exe ที่ชื่อตรง DisplayName
+// และข้าม uninstaller แม้ uninstaller จะไฟล์ใหญ่กว่า
+func TestChooseExecutablePrefersDisplayNameMatch(t *testing.T) {
+	cands := []exeCandidate{
+		{Path: `C:\Prog\unins000.exe`, Size: 9_000_000}, // ตัวใหญ่สุดแต่เป็น uninstaller
+		{Path: `C:\Prog\MyApp.exe`, Size: 2_000_000},    // ตรงกับ DisplayName "My App"
+		{Path: `C:\Prog\helper.exe`, Size: 500_000},
+	}
+	got := chooseExecutable("My App", cands)
+	if got != `C:\Prog\MyApp.exe` {
+		t.Fatalf("chooseExecutable = %q, want MyApp.exe", got)
+	}
+}
+
+// TestChooseExecutableFallsBackToLargest ถ้าไม่มีตัวตรงชื่อ เลือกไฟล์ใหญ่สุดที่ไม่ใช่ตัวช่วย
+func TestChooseExecutableFallsBackToLargest(t *testing.T) {
+	cands := []exeCandidate{
+		{Path: `C:\Prog\setup.exe`, Size: 8_000_000}, // ตัวช่วย ถูกลดคะแนน
+		{Path: `C:\Prog\core.exe`, Size: 3_000_000},  // ใหญ่กว่า launcher
+		{Path: `C:\Prog\launcher.exe`, Size: 1_000_000},
+	}
+	got := chooseExecutable("Totally Unrelated", cands)
+	if got != `C:\Prog\core.exe` {
+		t.Fatalf("chooseExecutable = %q, want core.exe", got)
+	}
+}
+
+// TestChooseExecutableEmpty คืน "" เมื่อไม่มี candidate
+func TestChooseExecutableEmpty(t *testing.T) {
+	if got := chooseExecutable("App", nil); got != "" {
+		t.Fatalf("chooseExecutable(nil) = %q, want empty", got)
+	}
+}
+
+// TestAlgorithmName แปลง OID ที่รู้จัก และคืน OID เดิมเมื่อไม่รู้จัก
+func TestAlgorithmName(t *testing.T) {
+	if got := algorithmName("1.2.840.113549.1.1.11"); got != "sha256RSA" {
+		t.Errorf("sha256RSA OID = %q", got)
+	}
+	if got := algorithmName("9.9.9"); got != "9.9.9" {
+		t.Errorf("unknown OID should pass through, got %q", got)
+	}
+}
+
+// TestOrderChainLeafFirst เรียง chain ให้ leaf อยู่ตัวแรกและไล่ตาม issuer ขึ้นไป root
+func TestOrderChainLeafFirst(t *testing.T) {
+	// ลำดับ input สลับกัน: root, leaf, intermediate
+	nodes := []CertNode{
+		{Subject: "Root CA", Issuer: "Root CA"},      // self-signed root
+		{Subject: "Acme Corp", Issuer: "Acme CA"},    // leaf
+		{Subject: "Acme CA", Issuer: "Root CA"},      // intermediate
+	}
+	got := orderChain(nodes, "Acme Corp")
+	want := []string{"Acme Corp", "Acme CA", "Root CA"}
+	for i, w := range want {
+		if i >= len(got) || got[i].Subject != w {
+			t.Fatalf("orderChain order = %+v, want leaf-first %v", got, want)
+		}
+	}
+}

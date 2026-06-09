@@ -1,0 +1,149 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e6]:
+      - generic [ref=e7]:
+        - img [ref=e8]
+        - generic [ref=e11]: SoftSentry
+      - navigation [ref=e12]:
+        - link "Overview" [ref=e13] [cursor=pointer]:
+          - /url: /en
+          - img [ref=e14]
+          - text: Overview
+        - link "Machines" [ref=e19] [cursor=pointer]:
+          - /url: /en/machines
+          - img [ref=e20]
+          - text: Machines
+        - link "Software" [ref=e22] [cursor=pointer]:
+          - /url: /en/software
+          - img [ref=e23]
+          - text: Software
+        - link "Signatures" [ref=e27] [cursor=pointer]:
+          - /url: /en/signatures
+          - img [ref=e28]
+          - text: Signatures
+        - link "Vulnerabilities" [ref=e31] [cursor=pointer]:
+          - /url: /en/vulnerabilities
+          - img [ref=e32]
+          - text: Vulnerabilities
+        - link "Licenses" [ref=e34] [cursor=pointer]:
+          - /url: /en/licenses
+          - img [ref=e35]
+          - text: Licenses
+        - link "Whitelist" [ref=e38] [cursor=pointer]:
+          - /url: /en/policy/whitelist
+          - img [ref=e39]
+          - text: Whitelist
+        - link "Blacklist" [ref=e42] [cursor=pointer]:
+          - /url: /en/policy/blacklist
+          - img [ref=e43]
+          - text: Blacklist
+        - link "Alerts" [ref=e46] [cursor=pointer]:
+          - /url: /en/alerts
+          - img [ref=e47]
+          - text: Alerts
+        - link "Reports" [ref=e50] [cursor=pointer]:
+          - /url: /en/reports
+          - img [ref=e51]
+          - text: Reports
+        - link "Deploy" [ref=e54] [cursor=pointer]:
+          - /url: /en/deploy
+          - img [ref=e55]
+          - text: Deploy
+        - link "Profile" [ref=e59] [cursor=pointer]:
+          - /url: /en/settings/profile
+          - img [ref=e60]
+          - text: Profile
+        - link "Users" [ref=e64] [cursor=pointer]:
+          - /url: /en/settings/users
+          - img [ref=e65]
+          - text: Users
+        - link "Audit log" [ref=e70] [cursor=pointer]:
+          - /url: /en/settings/audit-log
+          - img [ref=e71]
+          - text: Audit log
+    - generic [ref=e74]:
+      - banner [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]: dev@dev
+          - generic [ref=e78]:
+            - combobox "Language" [ref=e79]:
+              - option "ไทย"
+              - option "English" [selected]
+              - option "日本語"
+            - img
+          - button "Sign out" [ref=e80] [cursor=pointer]:
+            - img [ref=e81]
+            - text: Sign out
+      - main [ref=e84]:
+        - generic [ref=e85]:
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - generic [ref=e88]:
+                - heading "DESKTOP-T4DPQLG" [level=1] [ref=e89]
+                - generic [ref=e90]: Online
+              - paragraph [ref=e91]: windows 10.0.26200 · amd64 · agent 0.1.0
+            - generic [ref=e92]:
+              - button "Generate report" [ref=e93] [cursor=pointer]:
+                - img [ref=e94]
+                - text: Generate report
+              - button "Trigger scan" [ref=e97] [cursor=pointer]:
+                - img [ref=e98]
+                - text: Trigger scan
+              - button "Delete" [ref=e103] [cursor=pointer]:
+                - img [ref=e104]
+                - text: Delete
+          - generic [ref=e107]:
+            - tablist [ref=e108]:
+              - tab "Overview" [ref=e109] [cursor=pointer]
+              - tab "Software" [ref=e110] [cursor=pointer]
+              - tab "Vulnerabilities" [active] [selected] [ref=e111] [cursor=pointer]
+              - tab "History" [ref=e112] [cursor=pointer]
+              - tab "Scans" [ref=e113] [cursor=pointer]
+            - generic [ref=e161]:
+              - generic [ref=e162]:
+                - paragraph [ref=e163]: 174 CVEs · 2 software
+                - button "Show dismissed" [ref=e164] [cursor=pointer]
+              - table [ref=e167]:
+                - rowgroup [ref=e168]:
+                  - row "Software Vulnerabilities Worst Recommended Matched" [ref=e169]:
+                    - columnheader "Software" [ref=e170]
+                    - columnheader "Vulnerabilities" [ref=e171]
+                    - columnheader "Worst" [ref=e172]
+                    - columnheader "Recommended" [ref=e173]
+                    - columnheader "Matched" [ref=e174]
+                - rowgroup [ref=e175]:
+                  - row "Google Chrome 148.0.7778.218 173 CVEs 23 Critical 50 High 100 Medium Critical 9.6 Update to 149.0.7827.53 1h ago" [ref=e176] [cursor=pointer]:
+                    - cell "Google Chrome 148.0.7778.218" [ref=e177]:
+                      - generic [ref=e178]:
+                        - img [ref=e179]
+                        - generic [ref=e181]: Google Chrome
+                        - generic [ref=e182]: 148.0.7778.218
+                    - cell "173 CVEs 23 Critical 50 High 100 Medium" [ref=e183]:
+                      - generic [ref=e184]:
+                        - generic [ref=e185]: 173 CVEs
+                        - generic [ref=e186]: 23 Critical
+                        - generic [ref=e187]: 50 High
+                        - generic [ref=e188]: 100 Medium
+                    - cell "Critical 9.6" [ref=e189]:
+                      - generic [ref=e190]:
+                        - text: Critical
+                        - generic [ref=e191]: "9.6"
+                    - cell "Update to 149.0.7827.53" [ref=e192]
+                    - cell "1h ago" [ref=e193]
+                  - row "GitHub CLI 2.83.1 1 CVEs 1 High High 7.4 Update to 2.93.0 23h ago" [ref=e194] [cursor=pointer]:
+                    - cell "GitHub CLI 2.83.1" [ref=e195]:
+                      - generic [ref=e196]:
+                        - img [ref=e197]
+                        - generic [ref=e199]: GitHub CLI
+                        - generic [ref=e200]: 2.83.1
+                    - cell "1 CVEs 1 High" [ref=e201]:
+                      - generic [ref=e202]:
+                        - generic [ref=e203]: 1 CVEs
+                        - generic [ref=e204]: 1 High
+                    - cell "High 7.4" [ref=e205]:
+                      - generic [ref=e206]:
+                        - text: High
+                        - generic [ref=e207]: "7.4"
+                    - cell "Update to 2.93.0" [ref=e208]
+                    - cell "23h ago" [ref=e209]
+  - alert [ref=e5]

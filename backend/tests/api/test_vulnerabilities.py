@@ -313,6 +313,42 @@ async def test_vuln_summary_counts_by_severity(client, session):
 
 
 @pytest.mark.asyncio
+async def test_groups_collapse_one_software_to_one_row(client, session):
+    access = await _admin_access(client, session)
+    agent = await _enroll_agent(client, access)
+    # One outdated Chrome matching many CVEs of mixed severity.
+    await _seed_cve(session, "CVE-2024-C1", severity="critical", cvss=9.6, affected=_CHROME_AFFECTED)
+    await _seed_cve(session, "CVE-2024-C2", severity="critical", cvss=9.1, affected=_CHROME_AFFECTED)
+    await _seed_cve(session, "CVE-2024-H1", severity="high", cvss=8.8, affected=_CHROME_AFFECTED)
+    await _post_scan(client, agent, _scan(_sw("Google Chrome", "100.0")))
+
+    # Flat list returns one row per CVE …
+    flat = await _vulns(client, access)
+    assert flat["total"] == 3
+
+    # … but the grouped endpoint collapses them into a single software row.
+    r = await client.get(
+        "/api/v1/vulnerabilities/groups", headers={"Authorization": f"Bearer {access}"}
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["total"] == 1
+    g = body["items"][0]
+    assert g["software_name"] == "Google Chrome"
+    assert g["cve_count"] == 3
+    assert g["top_severity"] == "critical"
+    assert g["max_cvss"] == 9.6
+    assert g["recommended_version"] == "101.0"
+    counts = {c["severity"]: c["count"] for c in g["severity_counts"]}
+    assert counts == {"critical": 2, "high": 1}
+
+    # Expanding a group = the flat list filtered to that software's CVEs.
+    expanded = await _vulns(client, access, software_uuid=g["software_uuid"])
+    assert expanded["total"] == 3
+    assert {i["cve_id"] for i in expanded["items"]} == {"CVE-2024-C1", "CVE-2024-C2", "CVE-2024-H1"}
+
+
+@pytest.mark.asyncio
 async def test_per_machine_vulnerabilities(client, session):
     access = await _admin_access(client, session)
     agent = await _enroll_agent(client, access)

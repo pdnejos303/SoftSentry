@@ -16,11 +16,17 @@ from app.schemas.vulnerability import (
     CveDetail,
     CveSyncResult,
     DismissRequest,
+    SeverityCount,
     VulnerabilityDetail,
+    VulnerabilityGroup,
+    VulnerabilityGroupList,
     VulnerabilityItem,
     VulnerabilityList,
     VulnSummary,
 )
+
+# Worst-first severity order for rendering a group's severity breakdown.
+_SEVERITY_DISPLAY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 from app.services import vulnerability_service
 from app.workers.cve_sync import enqueue_cve_sync
 
@@ -36,6 +42,7 @@ async def list_vulnerabilities(
     _: CurrentUser,
     severity: str | None = None,  # comma-separated
     machine_uuid: uuid_lib.UUID | None = None,
+    software_uuid: uuid_lib.UUID | None = None,  # expand one group to its CVEs
     show_dismissed: bool = False,
     date_window: Annotated[str | None, Query(alias="matched")] = None,  # 7d|30d|90d|all
     q: str | None = None,
@@ -48,6 +55,7 @@ async def list_vulnerabilities(
         session,
         severities=severities,
         machine_uuid=machine_uuid,
+        software_uuid=software_uuid,
         show_dismissed=show_dismissed,
         date_window=date_window,
         q=q,
@@ -62,6 +70,66 @@ async def list_vulnerabilities(
         page=page,
         page_size=page_size,
         total_pages=total_pages,
+    )
+
+
+@router.get(
+    "/groups",
+    response_model=VulnerabilityGroupList,
+    summary="List vulnerabilities grouped by installed software",
+)
+async def list_vulnerability_groups(
+    session: DBSession,
+    _: CurrentUser,
+    severity: str | None = None,  # comma-separated
+    machine_uuid: uuid_lib.UUID | None = None,
+    show_dismissed: bool = False,
+    date_window: Annotated[str | None, Query(alias="matched")] = None,  # 7d|30d|90d|all
+    q: str | None = None,
+    min_confidence: str | None = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=200)] = 50,
+) -> VulnerabilityGroupList:
+    severities = [s.strip() for s in severity.split(",") if s.strip()] if severity else None
+    items, total = await vulnerability_service.list_vulnerability_groups(
+        session,
+        severities=severities,
+        machine_uuid=machine_uuid,
+        show_dismissed=show_dismissed,
+        date_window=date_window,
+        q=q,
+        min_confidence=min_confidence,
+        page=page,
+        page_size=page_size,
+    )
+    total_pages = (total + page_size - 1) // page_size
+    return VulnerabilityGroupList(
+        items=[_to_group(i) for i in items],
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+    )
+
+
+def _to_group(g: dict[str, object]) -> VulnerabilityGroup:
+    counts: dict[str, int] = g["severity_counts"]  # type: ignore[assignment]
+    severity_counts = [
+        SeverityCount(severity=s, count=c)
+        for s, c in sorted(counts.items(), key=lambda kv: _SEVERITY_DISPLAY_ORDER.get(kv[0], 99))
+    ]
+    return VulnerabilityGroup(
+        software_uuid=g["software_uuid"],  # type: ignore[arg-type]
+        software_name=g["software_name"],  # type: ignore[arg-type]
+        software_version=g["software_version"],  # type: ignore[arg-type]
+        machine_uuid=g["machine_uuid"],  # type: ignore[arg-type]
+        machine_hostname=g["machine_hostname"],  # type: ignore[arg-type]
+        cve_count=g["cve_count"],  # type: ignore[arg-type]
+        max_cvss=g["max_cvss"],  # type: ignore[arg-type]
+        top_severity=g["top_severity"],  # type: ignore[arg-type]
+        severity_counts=severity_counts,
+        recommended_version=g["recommended_version"],  # type: ignore[arg-type]
+        latest_matched_at=g["latest_matched_at"],  # type: ignore[arg-type]
     )
 
 

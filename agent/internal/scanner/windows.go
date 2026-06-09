@@ -6,9 +6,11 @@
 package scanner
 
 import (
-	"context" // ใช้สำหรับรองรับ context cancellation ระหว่างการสแกน
-	"strings" // ใช้ตัดแต่ง string และตรวจสอบนามสกุลไฟล์
-	"time"    // ใช้แปลงและตรวจสอบวันที่ติดตั้ง
+	"context"       // ใช้สำหรับรองรับ context cancellation ระหว่างการสแกน
+	"os"            // ใช้อ่านรายชื่อไฟล์ในโฟลเดอร์ติดตั้งเพื่อหา main exe
+	"path/filepath" // ใช้ประกอบ path ของไฟล์ในโฟลเดอร์
+	"strings"       // ใช้ตัดแต่ง string และตรวจสอบนามสกุลไฟล์
+	"time"          // ใช้แปลงและตรวจสอบวันที่ติดตั้ง
 
 	"golang.org/x/sys/windows/registry" // ใช้เข้าถึง Windows Registry API
 )
@@ -180,26 +182,80 @@ func regString(k registry.Key, name string) string {
 }
 
 // resolveExecutable เลือก filesystem path ที่จะใช้ตรวจสอบลายเซ็น
-// ให้ความสำคัญกับ DisplayIcon (มักเป็น .exe หลัก) ก่อน แล้วจึง InstallLocation
+// ลำดับความสำคัญ:
+//  1. DisplayIcon ถ้าเป็นไฟล์ .exe ของแอปเอง (น่าเชื่อถือที่สุด)
+//  2. ค้นหา main .exe ภายในโฟลเดอร์ InstallLocation (spec B1 — กรณีก่อนหน้าคืน
+//     โฟลเดอร์ทำให้ verify ตรวจไม่ได้ → ลายเซ็นหาย)
+//  3. คืน InstallLocation เดิม (โฟลเดอร์) ถ้าหา .exe ไม่เจอ — verify จะ skip เอง
+//
+// หมายเหตุ: DisplayIcon ที่ชี้ไป .dll ไม่ถูกใช้ เพราะมักเป็น system dll
+// (เช่น shell32.dll) ซึ่งจะทำให้ publisher ผิด
 // Parameter:
 //   - k: registry key ของแอปที่ต้องการ
 //
 // Return:
 //   - string: path ของ executable หรือ path ของโฟลเดอร์ติดตั้ง
 func resolveExecutable(k registry.Key) string {
-	if icon := regString(k, "DisplayIcon"); icon != "" {
-		// DisplayIcon มักอยู่ในรูป "C:\path\app.exe,0" — ต้องตัด icon index ออก
-		if idx := strings.LastIndex(icon, ","); idx > 1 {
-			icon = icon[:idx] // ตัดส่วน ",0" หรือ ",<n>" ที่ท้ายออก
-		}
-		icon = strings.Trim(icon, `"`) // ตัด quote รอบๆ path ออก
+	if icon := cleanIconPath(regString(k, "DisplayIcon")); icon != "" {
 		// ใช้ path นี้เฉพาะถ้าเป็นไฟล์ .exe เท่านั้น
 		if strings.HasSuffix(strings.ToLower(icon), ".exe") {
-			return icon // คืน path ของ .exe
+			return icon // คืน path ของ .exe ของแอปเอง
 		}
 	}
-	// ถ้าไม่มี DisplayIcon ที่ใช้ได้ ใช้ InstallLocation แทน (อาจเป็นโฟลเดอร์)
-	return strings.TrimSpace(regString(k, "InstallLocation"))
+
+	loc := strings.TrimSpace(regString(k, "InstallLocation"))
+	if loc == "" {
+		return "" // ไม่มีทั้ง DisplayIcon และ InstallLocation
+	}
+	// พยายามหา main .exe ในโฟลเดอร์ก่อน เพื่อให้ verify ตรวจลายเซ็นได้จริง
+	if exe := findMainExe(loc, regString(k, "DisplayName")); exe != "" {
+		return exe
+	}
+	return loc // หา .exe ไม่เจอ คืนโฟลเดอร์ (verify จะ skip)
+}
+
+// cleanIconPath ตัด icon index (",0") และ quote ออกจากค่า DisplayIcon
+// Parameter:
+//   - icon: ค่าดิบจาก registry DisplayIcon
+//
+// Return:
+//   - string: path ที่สะอาดแล้ว หรือ "" ถ้าว่าง
+func cleanIconPath(icon string) string {
+	if icon == "" {
+		return ""
+	}
+	// DisplayIcon มักอยู่ในรูป "C:\path\app.exe,0" — ตัด ,index ออก
+	if idx := strings.LastIndex(icon, ","); idx > 1 {
+		icon = icon[:idx]
+	}
+	return strings.Trim(strings.TrimSpace(icon), `"`)
+}
+
+// findMainExe อ่านไฟล์ระดับบนสุดของโฟลเดอร์ติดตั้งและเลือก .exe ที่น่าจะเป็น
+// โปรแกรมหลักผ่าน chooseExecutable (heuristic ชื่อตรง DisplayName / ไฟล์ใหญ่สุด)
+// Parameter:
+//   - dir: โฟลเดอร์ InstallLocation
+//   - displayName: ชื่อโปรแกรมจาก registry ใช้จับคู่ชื่อไฟล์
+//
+// Return:
+//   - string: path ของ main .exe หรือ "" ถ้าไม่พบ
+func findMainExe(dir, displayName string) string {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return "" // โฟลเดอร์อ่านไม่ได้/ไม่มีอยู่
+	}
+	cands := make([]exeCandidate, 0, len(entries))
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(strings.ToLower(e.Name()), ".exe") {
+			continue // สนใจเฉพาะไฟล์ .exe ระดับบนสุด
+		}
+		var size int64
+		if info, err := e.Info(); err == nil {
+			size = info.Size() // ใช้ขนาดเป็น tie-breaker
+		}
+		cands = append(cands, exeCandidate{Path: filepath.Join(dir, e.Name()), Size: size})
+	}
+	return chooseExecutable(displayName, cands)
 }
 
 // normalizeInstallDate แปลงวันที่จาก registry รูปแบบ YYYYMMDD เป็น YYYY-MM-DD

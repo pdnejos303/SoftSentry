@@ -423,7 +423,9 @@
       "machine": "เครื่อง",
       "recommended": "แนะนำ",
       "matched": "จับคู่เมื่อ",
-      "actions": "จัดการ"
+      "actions": "จัดการ",
+      "cveCount": "ช่องโหว่",
+      "worst": "รุนแรงสุด"
     },
     "detail": {
       "title": "รายละเอียดช่องโหว่",
@@ -449,7 +451,10 @@
       "confirm": "ปิดรายการ",
       "done": "ปิดช่องโหว่แล้ว",
       "failed": "อัปเดตช่องโหว่ไม่สำเร็จ"
-    }
+    },
+    "cveCount": "{count} ช่องโหว่",
+    "pageInfoGroups": "หน้า {page} จาก {total} · {count} ซอฟต์แวร์",
+    "groupedCount": "{cves} ช่องโหว่ · {software} ซอฟต์แวร์"
   },
   "licenses": {
     "title": "License",

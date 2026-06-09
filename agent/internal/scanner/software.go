@@ -3,7 +3,10 @@
 // ไฟล์นี้เก็บ type ที่ใช้ร่วมกันและ helper function (dedupe, sort)
 package scanner
 
-import "sort" // ใช้ฟังก์ชันเรียงลำดับมาตรฐานของ Go
+import (
+	"sort"    // ใช้ฟังก์ชันเรียงลำดับมาตรฐานของ Go
+	"strings" // ใช้ตัดแต่ง string และเปรียบเทียบนามสกุล/ชื่อไฟล์
+)
 
 // SignatureStatus คือ enum ที่แสดงสถานะลายเซ็นดิจิทัลของซอฟต์แวร์
 // ค่าเหล่านี้ต้องตรงกับที่ backend รับได้ (ดู backend app/schemas/scans.py SignatureStatus)
@@ -14,14 +17,28 @@ const (
 	SigExpired  SignatureStatus = "expired"  // ลายเซ็นหมดอายุแล้ว (cert NotAfter ผ่านไปแล้ว)
 	SigInvalid  SignatureStatus = "invalid"  // ลายเซ็นไม่ถูกต้อง เช่น ไฟล์ถูกแก้ไขหลังลงนาม
 	SigUnsigned SignatureStatus = "unsigned" // ไฟล์ไม่มีลายเซ็นดิจิทัล
+	SigUnknown  SignatureStatus = "unknown"  // ตรวจสอบไม่ได้ เช่น ไฟล์หาย/ถูกล็อก/อ่าน PE ไม่ได้ (spec 3.1 edge case 1)
 )
+
+// CertNode คือ certificate หนึ่งใบใน chain (leaf → intermediate → root)
+// JSON key ต้องตรงกับ dashboard CertChainNode (subject/issuer/valid_from/valid_to)
+type CertNode struct {
+	Subject   string `json:"subject,omitempty"`    // subject CN ของใบรับรองนี้
+	Issuer    string `json:"issuer,omitempty"`     // issuer CN (ผู้ออกใบรับรองนี้)
+	ValidFrom string `json:"valid_from,omitempty"` // วันเริ่มมีผล (YYYY-MM-DD)
+	ValidTo   string `json:"valid_to,omitempty"`   // วันหมดอายุ (YYYY-MM-DD)
+}
 
 // Signature เก็บผลลัพธ์การตรวจสอบลายเซ็น Authenticode (Windows) หรือ codesign (macOS)
 type Signature struct {
-	Status     SignatureStatus `json:"status"`                    // สถานะลายเซ็น: valid/expired/invalid/unsigned
-	Signer     string          `json:"signer,omitempty"`          // ชื่อผู้ลงนาม (leaf certificate CN)
-	Issuer     string          `json:"issuer,omitempty"`          // ชื่อ CA ที่ออกใบรับรอง (issuer CN)
-	Thumbprint string          `json:"cert_thumbprint,omitempty"` // fingerprint ของใบรับรอง (hex SHA-1)
+	Status     SignatureStatus `json:"status"`                       // สถานะลายเซ็น: valid/expired/invalid/unsigned/unknown
+	Signer     string          `json:"signer,omitempty"`             // ชื่อผู้ลงนาม (leaf certificate CN)
+	Issuer     string          `json:"issuer,omitempty"`             // ชื่อ CA ที่ออกใบรับรอง (issuer CN)
+	Thumbprint string          `json:"cert_thumbprint,omitempty"`    // fingerprint ของ leaf cert (hex SHA-1 ตัวพิมพ์ใหญ่)
+	ValidFrom  string          `json:"cert_valid_from,omitempty"`    // วันที่ leaf cert เริ่มมีผล (YYYY-MM-DD)
+	ValidTo    string          `json:"cert_valid_to,omitempty"`      // วันที่ leaf cert หมดอายุ (YYYY-MM-DD)
+	Algorithm  string          `json:"signature_algorithm,omitempty"` // อัลกอริทึมที่ใช้เซ็น เช่น sha256RSA
+	Chain      []CertNode      `json:"chain,omitempty"`              // certificate chain (leaf เป็นตัวแรก)
 }
 
 // Software คือข้อมูลแอปพลิเคชันที่ติดตั้งอยู่บนเครื่อง ตามที่ agent ตรวจพบ
@@ -61,6 +78,197 @@ func dedupe(in []Software) []Software {
 		out = append(out, s)   // เพิ่มรายการแรกที่พบเข้าผลลัพธ์
 	}
 	return out // คืนรายการที่ไม่มีซ้ำ
+}
+
+// verifiableExts คือนามสกุลไฟล์ PE ที่ WinVerifyTrust + CryptQueryObject
+// อ่าน embedded Authenticode ได้ด้วย logic เดียวกัน
+// .msi/.cab ใช้ SIP คนละตัว (signer extraction จะไม่ทำงานเหมือนกัน) จึงไม่รวมไว้
+var verifiableExts = map[string]struct{}{
+	".exe": {}, ".dll": {}, ".sys": {}, ".ocx": {}, ".cpl": {}, ".scr": {},
+}
+
+// isVerifiablePE คืน true ถ้า path ลงท้ายด้วยนามสกุล PE ที่ตรวจลายเซ็นได้
+// Parameter:
+//   - path: path ของไฟล์ที่ต้องการตรวจ
+//
+// Return:
+//   - bool: true ถ้าเป็นไฟล์ PE ที่ตรวจ Authenticode ได้
+func isVerifiablePE(path string) bool {
+	dot := strings.LastIndex(path, ".")
+	if dot < 0 {
+		return false // ไม่มีนามสกุล
+	}
+	_, ok := verifiableExts[strings.ToLower(path[dot:])]
+	return ok
+}
+
+// baseName คืนส่วนชื่อไฟล์จาก path โดยตัดทั้ง \ และ / (ใช้แทน filepath.Base
+// เพื่อให้ทดสอบได้บนทุก OS ไม่ขึ้นกับ separator ของแพลตฟอร์ม)
+// Parameter:
+//   - p: path ที่ต้องการตัดชื่อไฟล์
+//
+// Return:
+//   - string: ชื่อไฟล์ส่วนท้าย
+func baseName(p string) string {
+	if i := strings.LastIndexAny(p, `\/`); i >= 0 {
+		return p[i+1:]
+	}
+	return p
+}
+
+// exeCandidate คือ .exe หนึ่งไฟล์ที่พบในโฟลเดอร์ติดตั้ง พร้อมขนาดไฟล์
+type exeCandidate struct {
+	Path string // path เต็มของไฟล์ .exe
+	Size int64  // ขนาดไฟล์เป็น byte (ใช้เป็น tie-breaker)
+}
+
+// helperExePrefixes คือ prefix ของชื่อ .exe ที่มักเป็นตัวช่วย ไม่ใช่โปรแกรมหลัก
+// (uninstaller, installer, updater ฯลฯ) จึงถูกลดความสำคัญลงเมื่อเลือก main exe
+var helperExePrefixes = []string{
+	"unins", "uninst", "setup", "install", "update", "vcredist", "vc_redist", "crashpad", "crashreport",
+}
+
+// chooseExecutable เลือก .exe ที่น่าจะเป็นโปรแกรมหลักจากรายการที่พบใน
+// โฟลเดอร์ติดตั้ง — ตัวช่วย (installer/updater) ถูกลดคะแนน, .exe ที่ชื่อตรงกับ
+// DisplayName ได้คะแนนสูงสุด, ถ้าเสมอกันเลือกไฟล์ใหญ่กว่า
+// Parameter:
+//   - displayName: ชื่อโปรแกรมจาก registry DisplayName
+//   - cands: รายการ .exe ที่พบในโฟลเดอร์
+//
+// Return:
+//   - string: path ของ .exe ที่เลือก หรือ "" ถ้าไม่มี candidate
+func chooseExecutable(displayName string, cands []exeCandidate) string {
+	dn := normalizeName(displayName)
+	best := ""
+	bestScore := -1 << 30 // เริ่มต่ำสุดเพื่อให้ candidate แรกชนะเสมอ
+	var bestSize int64
+
+	for _, c := range cands {
+		name := strings.TrimSuffix(strings.ToLower(baseName(c.Path)), ".exe")
+		score := 0
+
+		// ตัวช่วยเช่น uninstaller ถูกลดคะแนนมาก
+		for _, p := range helperExePrefixes {
+			if strings.HasPrefix(name, p) {
+				score -= 100
+				break
+			}
+		}
+
+		// ชื่อตรงหรือใกล้เคียง DisplayName ได้คะแนนบวก
+		nb := normalizeName(name)
+		if dn != "" && nb != "" {
+			switch {
+			case dn == nb:
+				score += 50
+			case strings.Contains(dn, nb) || strings.Contains(nb, dn):
+				score += 25
+			}
+		}
+
+		// เลือกตามคะแนนก่อน ถ้าเสมอเลือกไฟล์ใหญ่กว่า
+		if score > bestScore || (score == bestScore && c.Size > bestSize) {
+			best, bestScore, bestSize = c.Path, score, c.Size
+		}
+	}
+	return best
+}
+
+// normalizeName แปลง string เป็นตัวพิมพ์เล็กและตัดอักขระที่ไม่ใช่ a-z0-9 ออก
+// เพื่อให้เทียบชื่อโปรแกรมกับชื่อไฟล์ได้แม้มีช่องว่าง/เครื่องหมายต่างกัน
+// Parameter:
+//   - s: string ต้นฉบับ
+//
+// Return:
+//   - string: ชื่อที่ normalize แล้ว
+func normalizeName(s string) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(s) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
+}
+
+// algNames map OID ของ signature algorithm เป็นชื่อที่อ่านง่าย (ตามที่ certmgr แสดง)
+var algNames = map[string]string{
+	"1.2.840.113549.1.1.5":  "sha1RSA",
+	"1.2.840.113549.1.1.11": "sha256RSA",
+	"1.2.840.113549.1.1.12": "sha384RSA",
+	"1.2.840.113549.1.1.13": "sha512RSA",
+	"1.2.840.113549.1.1.10": "RSASSA-PSS",
+	"1.2.840.113549.1.1.4":  "md5RSA",
+	"1.2.840.10045.4.3.2":   "sha256ECDSA",
+	"1.2.840.10045.4.3.3":   "sha384ECDSA",
+	"1.2.840.10045.4.3.4":   "sha512ECDSA",
+}
+
+// algorithmName แปลง OID เป็นชื่อ algorithm ที่อ่านง่าย ถ้าไม่รู้จักคืน OID เดิม
+// Parameter:
+//   - oid: OID string เช่น "1.2.840.113549.1.1.11"
+//
+// Return:
+//   - string: ชื่อ algorithm หรือ OID เดิมถ้าไม่อยู่ใน map
+func algorithmName(oid string) string {
+	if n, ok := algNames[oid]; ok {
+		return n
+	}
+	return oid
+}
+
+// orderChain เรียง certificate chain ให้ leaf อยู่ตัวแรก แล้วไล่ตาม issuer ขึ้นไป
+// (leaf → intermediate → root) โดยจับคู่ subject ของตัวถัดไปกับ issuer ของตัวปัจจุบัน
+// node ที่เชื่อมไม่ได้จะถูกต่อท้ายไว้เพื่อไม่ให้ข้อมูลหาย
+// Parameter:
+//   - nodes: รายการ cert ที่ดึงจาก embedded store (ลำดับไม่แน่นอน)
+//   - leafSubject: subject CN ของ leaf signer ที่ใช้เป็นจุดเริ่ม
+//
+// Return:
+//   - []CertNode: chain ที่เรียงแล้ว (leaf เป็นตัวแรก)
+func orderChain(nodes []CertNode, leafSubject string) []CertNode {
+	if len(nodes) <= 1 {
+		return nodes
+	}
+	used := make([]bool, len(nodes))
+
+	// หา leaf จาก subject ที่ตรงกับ signer ถ้าไม่เจอเริ่มจากตัวแรก
+	cur := -1
+	for i, n := range nodes {
+		if n.Subject == leafSubject && leafSubject != "" {
+			cur = i
+			break
+		}
+	}
+	if cur == -1 {
+		cur = 0
+	}
+
+	ordered := make([]CertNode, 0, len(nodes))
+	for cur != -1 {
+		used[cur] = true
+		ordered = append(ordered, nodes[cur])
+		issuer := nodes[cur].Issuer
+		if issuer == "" || issuer == nodes[cur].Subject {
+			break // self-signed root — จบ chain
+		}
+		next := -1
+		for i, n := range nodes {
+			if !used[i] && n.Subject == issuer {
+				next = i
+				break
+			}
+		}
+		cur = next
+	}
+
+	// ต่อ node ที่เชื่อมไม่ได้ไว้ท้ายสุด
+	for i, n := range nodes {
+		if !used[i] {
+			ordered = append(ordered, n)
+		}
+	}
+	return ordered
 }
 
 // sortStable เรียงซอฟต์แวร์ตามชื่อ (Name) ก่อน แล้วตามเวอร์ชัน (Version)

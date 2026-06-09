@@ -6,13 +6,15 @@
 package scanner
 
 import (
+	"encoding/hex"  // ใช้แปลง SHA-1 thumbprint เป็น hex string
 	"path/filepath" // ใช้แปลง path เป็น absolute path
 	"runtime"       // ใช้ KeepAlive เพื่อป้องกัน GC เก็บ pointer ก่อนเวลา
 	"strings"       // ใช้ตัดแต่ง string และตรวจสอบนามสกุล .exe
 	"sync"          // ใช้ Mutex สำหรับป้องกัน race condition ใน cache
+	"time"          // ใช้แปลง FILETIME ของ cert เป็นวันที่ YYYY-MM-DD
 	"unsafe"        // ใช้แปลง Go struct เป็น pointer ส่งให้ Win32 API
 
-	"golang.org/x/sys/windows" // ใช้ windows.GUID, windows.Handle และ UTF16 utility
+	"golang.org/x/sys/windows" // ใช้ windows.GUID, windows.Handle, typed CertContext และ UTF16 utility
 )
 
 // authenticodeVerifier ห่อหุ้ม WinVerifyTrust พร้อม path cache ต่อหนึ่งการสแกน
@@ -38,11 +40,10 @@ var (
 	modCrypt32           = windows.NewLazySystemDLL("crypt32.dll")                           // DLL สำหรับจัดการ certificate และ crypto
 	procCryptQueryObject = modCrypt32.NewProc("CryptQueryObject")                            // เปิด PKCS#7 store จากไฟล์
 	procCryptMsgGetParam = modCrypt32.NewProc("CryptMsgGetParam")                            // ดึง parameter จาก PKCS#7 message
-	procCertFindCert     = modCrypt32.NewProc("CertFindCertificateInStore")                  // ค้นหา certificate ใน store ด้วย CERT_INFO
 	procCertGetNameStr   = modCrypt32.NewProc("CertGetNameStringW")                          // แปลง subject/issuer ของ cert เป็น string
-	procCertFreeCtx      = modCrypt32.NewProc("CertFreeCertificateContext")                  // คืนหน่วยความจำ CERT_CONTEXT
 	procCertCloseStore   = modCrypt32.NewProc("CertCloseStore")                              // คืนหน่วยความจำ HCERTSTORE
 	procCryptMsgClose    = modCrypt32.NewProc("CryptMsgClose")                               // คืนหน่วยความจำ HCRYPTMSG
+	procCertGetCtxProp   = modCrypt32.NewProc("CertGetCertificateContextProperty")           // ดึง property เช่น SHA-1 hash ของ cert
 )
 
 // actionGenericVerifyV2 คือ GUID ของ Authenticode policy มาตรฐาน
@@ -72,6 +73,14 @@ const (
 	// HRESULTs ที่ WinVerifyTrust คืนค่ากลับมา (winerror.h / MSDN)
 	trustENoSignature = 0x800B0100 // TRUST_E_NOSIGNATURE — ไฟล์ไม่มีลายเซ็นฝังอยู่
 	trustECertExpired = 0x800B0101 // CERT_E_EXPIRED — ใบรับรองผู้ลงนามหมดอายุแล้ว
+
+	// HRESULTs ที่หมายถึง "ตรวจสอบไม่ได้" (ไม่ใช่ลายเซ็นเสีย) → map เป็น unknown
+	errFileNotFound          = 0x80070002 // ERROR_FILE_NOT_FOUND — ไฟล์หาย (เช่น ถูก uninstall)
+	errPathNotFound          = 0x80070003 // ERROR_PATH_NOT_FOUND — โฟลเดอร์หาย
+	errSharingViolation      = 0x80070020 // ERROR_SHARING_VIOLATION — ไฟล์ถูกล็อก/กำลังใช้งาน
+	cryptEFileError          = 0x80092003 // CRYPT_E_FILE_ERROR — อ่านไฟล์ไม่ได้
+	trustEProviderUnknown    = 0x800B0001 // TRUST_E_PROVIDER_UNKNOWN — ไม่มี provider ที่รองรับ
+	trustESubjectFormUnknown = 0x800B0003 // TRUST_E_SUBJECT_FORM_UNKNOWN — รูปแบบไฟล์ที่ตรวจไม่ได้
 )
 
 // wintrustFileInfo mirrors Win32 struct WINTRUST_FILE_INFO
@@ -114,9 +123,10 @@ func (v *authenticodeVerifier) verify(path string) *Signature {
 	// ตัด quote และ whitespace รอบๆ path ออก
 	path = strings.Trim(strings.TrimSpace(path), `"`)
 
-	// ตรวจสอบเฉพาะไฟล์ .exe เท่านั้น — path ว่างหรือไม่ใช่ .exe ให้คืน nil
-	if path == "" || !strings.HasSuffix(strings.ToLower(path), ".exe") {
-		return nil // ไม่ใช่ executable ที่ตรวจสอบได้ — ข้ามไป
+	// ตรวจสอบเฉพาะไฟล์ PE (exe/dll/sys/...) — path ว่างหรือไม่ใช่ PE ให้คืน nil
+	// (โฟลเดอร์ data-only package → ไม่มีไฟล์ให้ตรวจ → signature_id = NULL ตาม spec edge case 2)
+	if !isVerifiablePE(path) {
+		return nil // ไม่ใช่ไฟล์ที่ตรวจ Authenticode ได้ — ข้ามไป
 	}
 
 	// แปลง path เป็น absolute path เพื่อใช้เป็น cache key ที่แน่นอน
@@ -198,9 +208,17 @@ func (v *authenticodeVerifier) run(path string) *Signature {
 	// สร้าง Signature พร้อมสถานะที่ได้
 	sig := &Signature{Status: status}
 
-	// ดึงชื่อ signer และ issuer เฉพาะถ้าไฟล์มีลายเซ็น (ไม่ว่าถูกต้องหรือหมดอายุ)
-	if status != SigUnsigned {
-		sig.Signer, sig.Issuer = extractSigner(path) // ดึงชื่อ CN จาก PKCS#7 signature
+	// ดึงรายละเอียด certificate เฉพาะเมื่อไฟล์มีลายเซ็นให้อ่าน
+	// (unsigned = ไม่มี, unknown = อ่านไฟล์ไม่ได้อยู่แล้ว)
+	if status != SigUnsigned && status != SigUnknown {
+		d := extractCertDetails(path)
+		sig.Signer = d.signer
+		sig.Issuer = d.issuer
+		sig.Thumbprint = d.thumbprint
+		sig.ValidFrom = d.validFrom
+		sig.ValidTo = d.validTo
+		sig.Algorithm = d.algorithm
+		sig.Chain = d.chain
 	}
 	return sig // คืน Signature ที่สมบูรณ์
 }
@@ -220,6 +238,10 @@ func mapTrustResult(hr uint32) SignatureStatus {
 		return SigUnsigned
 	case trustECertExpired: // CERT_E_EXPIRED — ใบรับรองหมดอายุ
 		return SigExpired
+	case errFileNotFound, errPathNotFound, errSharingViolation,
+		cryptEFileError, trustEProviderUnknown, trustESubjectFormUnknown:
+		// ตรวจไม่ได้ (ไฟล์หาย/ล็อก/อ่าน PE ไม่ได้) — ไม่ใช่ลายเซ็นเสีย
+		return SigUnknown
 	default: // HRESULT อื่นๆ — ลายเซ็นไม่ถูกต้อง เช่น ไฟล์ถูกแก้ไข
 		return SigInvalid
 	}
@@ -241,30 +263,40 @@ const (
 	pkcs7AsnEncoding               = 0x10000   // PKCS_7_ASN_ENCODING — encoding PKCS#7
 	certFindSubjectCert            = 0x000B0000 // CERT_FIND_SUBJECT_CERT — ค้นหา cert ด้วย CERT_INFO
 	certCloseStoreCheckFlag        = 0          // ปิด store โดยไม่ assert ว่าทุก context ถูก free แล้ว
+	certSHA1HashPropID             = 3          // CERT_SHA1_HASH_PROP_ID — property id ของ SHA-1 thumbprint
+	maxChainCerts                  = 16         // จำกัดจำนวน cert ที่ enumerate กัน loop ผิดปกติ
 )
 
-// extractSigner ดึงชื่อ leaf signer CN และ issuer CN จาก Authenticode signature
-// ที่ฝังอยู่ในไฟล์ที่ path กำหนด โดยใช้ 3 Win32 call:
-//  1. CryptQueryObject  — เปิด embedded PKCS#7 store และ message
-//  2. CryptMsgGetParam  — ดึง CERT_INFO ของ signer ตัวแรก (leaf)
-//  3. CertFindCertificateInStore + CertGetNameStringW — ค้นหาและแปลงชื่อเป็น string
+// certDetails รวมข้อมูลทั้งหมดที่ดึงได้จาก embedded Authenticode signature
+type certDetails struct {
+	signer     string     // leaf subject CN
+	issuer     string     // leaf issuer CN
+	thumbprint string     // SHA-1 ของ leaf cert (hex ตัวพิมพ์ใหญ่)
+	algorithm  string     // signature algorithm เช่น sha256RSA
+	validFrom  string     // วันเริ่มมีผลของ leaf cert (YYYY-MM-DD)
+	validTo    string     // วันหมดอายุของ leaf cert (YYYY-MM-DD)
+	chain      []CertNode // chain ทั้งหมด (leaf เป็นตัวแรก)
+}
+
+// extractCertDetails ดึงข้อมูล certificate ทั้งหมดจาก embedded Authenticode
+// signature ของไฟล์ที่ path กำหนด: leaf CN/issuer/วันที่/algorithm/thumbprint
+// และ certificate chain ทั้งหมดใน embedded store
 //
 // ทั้งฟังก์ชันห่อด้วย recover() เพื่อให้ syscall panic ไม่ crash scan loop
-// การดึงชื่อเป็นแบบ best-effort เท่านั้น
+// (best-effort — field ที่ดึงไม่ได้จะเป็น "")
 // Parameter:
-//   - path: absolute path ของไฟล์ .exe ที่มีลายเซ็น
+//   - path: absolute path ของไฟล์ PE ที่มีลายเซ็น
 //
 // Return:
-//   - signer: ชื่อ CN ของ leaf signer
-//   - issuer: ชื่อ CN ของ CA ที่ออกใบรับรอง
-func extractSigner(path string) (signer, issuer string) {
+//   - certDetails: ข้อมูล certificate ที่ดึงได้ (field ว่างถ้าดึงไม่สำเร็จ)
+func extractCertDetails(path string) (out certDetails) {
 	// recover ทุก panic เพื่อให้ syscall plumbing ไม่ crash scan loop
 	defer func() { _ = recover() }()
 
 	// แปลง path เป็น UTF-16 pointer สำหรับส่งให้ Win32 API
 	wpath, err := windows.UTF16PtrFromString(path)
 	if err != nil {
-		return "", "" // แปลง path ล้มเหลว — คืนค่าว่าง
+		return // แปลง path ล้มเหลว — คืน certDetails ว่าง
 	}
 
 	// ขั้นตอนที่ 1: เปิด embedded PKCS#7 signature จากไฟล์
@@ -282,7 +314,7 @@ func extractSigner(path string) (signer, issuer string) {
 		0,                                            // output content type (ไม่ต้องการ)
 	)
 	if ok == 0 {
-		return "", "" // CryptQueryObject ล้มเหลว — ไฟล์อาจไม่มี PKCS#7 signature
+		return // CryptQueryObject ล้มเหลว — ไฟล์อาจไม่มี PKCS#7 signature
 	}
 
 	// คืนหน่วยความจำ store และ message เมื่อฟังก์ชันนี้จบ
@@ -294,7 +326,7 @@ func extractSigner(path string) (signer, issuer string) {
 	// เรียกครั้งแรกเพื่อรับขนาด buffer ที่ต้องการ (ส่ง 0 เป็น output buffer)
 	procCryptMsgGetParam.Call(hMsg, cmsgSignerCertInfoParam, 0, 0, uintptr(unsafe.Pointer(&sz)))
 	if sz == 0 {
-		return "", "" // ไม่มี signer หรือดึงขนาดไม่สำเร็จ
+		return // ไม่มี signer หรือดึงขนาดไม่สำเร็จ
 	}
 
 	// จัดสรร buffer ตามขนาดที่ได้
@@ -305,37 +337,121 @@ func extractSigner(path string) (signer, issuer string) {
 		uintptr(unsafe.Pointer(&buf[0])), uintptr(unsafe.Pointer(&sz)),
 	)
 	if r == 0 {
-		return "", "" // CryptMsgGetParam ล้มเหลว — ไม่สามารถดึง CERT_INFO ได้
+		return // CryptMsgGetParam ล้มเหลว — ไม่สามารถดึง CERT_INFO ได้
 	}
 
-	// ขั้นตอนที่ 3: ค้นหา CERT_CONTEXT จริงๆ ใน embedded store และแปลงชื่อเป็น string
-	cert, _, _ := procCertFindCert.Call(
-		hStore,                               // store ที่เปิดจาก PKCS#7 ข้างต้น
-		x509AsnEncoding|pkcs7AsnEncoding,     // รองรับทั้ง X.509 และ PKCS#7 encoding
-		0,                                    // ไม่มี flags เพิ่มเติม
-		certFindSubjectCert,                  // ค้นหาด้วย CERT_INFO (subject match)
-		uintptr(unsafe.Pointer(&buf[0])),     // CERT_INFO ที่ได้จากขั้นตอนที่ 2
-		0,                                    // เริ่มค้นหาจาก cert แรก
+	// ขั้นตอนที่ 3: หา CERT_CONTEXT ของ leaf ด้วย typed API (คืน *CertContext ตรงๆ
+	// เลี่ยงการ cast uintptr→pointer ที่ go vet เตือน unsafeptr)
+	leaf, err := windows.CertFindCertificateInStore(
+		windows.Handle(hStore),           // store ที่เปิดจาก PKCS#7 ข้างต้น
+		x509AsnEncoding|pkcs7AsnEncoding, // รองรับทั้ง X.509 และ PKCS#7 encoding
+		0,                                // ไม่มี flags เพิ่มเติม
+		certFindSubjectCert,              // ค้นหาด้วย CERT_INFO (subject match)
+		unsafe.Pointer(&buf[0]),          // CERT_INFO ที่ได้จากขั้นตอนที่ 2
+		nil,                              // เริ่มค้นหาจาก cert แรก
 	)
-	if cert == 0 {
-		return "", "" // ไม่พบ certificate ที่ตรงกับ CERT_INFO ใน store
+	if err != nil || leaf == nil {
+		return // ไม่พบ certificate ที่ตรงกับ CERT_INFO ใน store
 	}
-	defer procCertFreeCtx.Call(cert) // คืน CERT_CONTEXT เมื่อฟังก์ชันนี้จบ
+	defer windows.CertFreeCertificateContext(leaf) // คืน CERT_CONTEXT เมื่อฟังก์ชันนี้จบ
 
-	// ดึงชื่อ subject (signer) และ issuer จาก certificate
-	return certName(cert, 0), certName(cert, certNameIssuerFlag)
+	// อ่านข้อมูลทั้งหมดของ leaf cert
+	out.signer = certName(leaf, 0)
+	out.issuer = certName(leaf, certNameIssuerFlag)
+	out.thumbprint = certThumbprint(leaf)
+
+	// อ่าน CERT_INFO ผ่าน typed struct ของ x/sys/windows (ปลอดภัยต่อ struct layout
+	// และ architecture มากกว่าการคำนวณ offset เอง)
+	if leaf.CertInfo != nil {
+		info := leaf.CertInfo
+		out.validFrom = filetimeToDate(info.NotBefore)
+		out.validTo = filetimeToDate(info.NotAfter)
+		out.algorithm = algorithmName(windows.BytePtrToString(info.SignatureAlgorithm.ObjId))
+	}
+
+	// enumerate ทุก cert ใน embedded store เพื่อสร้าง chain (leaf เป็นตัวแรก)
+	out.chain = enumerateChain(hStore, out.signer)
+	return
+}
+
+// certThumbprint ดึง SHA-1 hash (thumbprint) ของ certificate แล้วคืนเป็น hex
+// ตัวพิมพ์ใหญ่ ตรงกับที่ certmgr/PowerShell แสดง
+// Parameter:
+//   - c: typed CERT_CONTEXT ของ certificate
+//
+// Return:
+//   - string: thumbprint hex 40 ตัว หรือ "" ถ้าดึงไม่สำเร็จ
+func certThumbprint(c *windows.CertContext) string {
+	sz := uint32(20)        // SHA-1 = 20 byte
+	buf := make([]byte, 20) // buffer สำหรับ hash
+	r, _, _ := procCertGetCtxProp.Call(
+		uintptr(unsafe.Pointer(c)), certSHA1HashPropID,
+		uintptr(unsafe.Pointer(&buf[0])), uintptr(unsafe.Pointer(&sz)),
+	)
+	if r == 0 || sz == 0 {
+		return "" // ดึง property ไม่สำเร็จ
+	}
+	return strings.ToUpper(hex.EncodeToString(buf[:sz]))
+}
+
+// filetimeToDate แปลง Windows FILETIME เป็นสตริงวันที่ YYYY-MM-DD (UTC)
+// คืน "" สำหรับค่าที่ไม่ถูกต้อง (เช่น 0 หรือก่อน Unix epoch)
+// Parameter:
+//   - ft: windows.Filetime จาก CERT_INFO (NotBefore/NotAfter)
+//
+// Return:
+//   - string: วันที่ YYYY-MM-DD หรือ ""
+func filetimeToDate(ft windows.Filetime) string {
+	ns := ft.Nanoseconds() // ns ตั้งแต่ Unix epoch
+	if ns <= 0 {
+		return ""
+	}
+	return time.Unix(0, ns).UTC().Format("2006-01-02")
+}
+
+// enumerateChain วนอ่านทุก certificate ใน embedded store แล้วสร้าง CertNode
+// จากนั้นเรียงด้วย orderChain ให้ leaf อยู่ตัวแรก
+// Parameter:
+//   - hStore: HCERTSTORE ของ embedded PKCS#7
+//   - leafSubject: subject CN ของ leaf ใช้เป็นจุดเริ่มของ chain
+//
+// Return:
+//   - []CertNode: chain ที่เรียงแล้ว
+func enumerateChain(hStore uintptr, leafSubject string) []CertNode {
+	var nodes []CertNode
+	var prev *windows.CertContext
+	// CertEnumCertificatesInStore free context ก่อนหน้าให้อัตโนมัติทุกครั้งที่เรียก
+	// ตัวสุดท้ายจะถูก free ตอน CertCloseStore — จึงไม่ต้อง free เอง
+	for range maxChainCerts {
+		c, err := windows.CertEnumCertificatesInStore(windows.Handle(hStore), prev)
+		if err != nil || c == nil {
+			break // ครบทุก cert แล้ว (ERROR_NO_MORE_FILES) หรือ error
+		}
+		node := CertNode{
+			Subject: certName(c, 0),
+			Issuer:  certName(c, certNameIssuerFlag),
+		}
+		if c.CertInfo != nil {
+			node.ValidFrom = filetimeToDate(c.CertInfo.NotBefore)
+			node.ValidTo = filetimeToDate(c.CertInfo.NotAfter)
+		}
+		nodes = append(nodes, node)
+		prev = c
+	}
+	return orderChain(nodes, leafSubject)
 }
 
 // certName เรียก CertGetNameStringW สองครั้ง:
 // ครั้งแรกเพื่อรับขนาด buffer (n รวม null terminator), ครั้งที่สองเพื่อรับข้อมูล
 // flags=0 คืน subject; flags=certNameIssuerFlag คืน issuer
 // Parameter:
-//   - cert: CERT_CONTEXT ที่ได้จาก CertFindCertificateInStore
+//   - c: typed CERT_CONTEXT ของ certificate
 //   - flags: 0 สำหรับ subject CN, certNameIssuerFlag สำหรับ issuer CN
 //
 // Return:
 //   - string: ชื่อ CN ที่อ่านได้ หรือ "" ถ้าไม่สำเร็จ
-func certName(cert uintptr, flags uintptr) string {
+func certName(c *windows.CertContext, flags uintptr) string {
+	cert := uintptr(unsafe.Pointer(c))
 	// เรียกครั้งแรกเพื่อรับขนาด buffer (n = จำนวน UTF-16 code unit รวม null terminator)
 	n, _, _ := procCertGetNameStr.Call(cert, certNameSimpleDisplayType, flags, 0, 0, 0)
 	if n <= 1 {

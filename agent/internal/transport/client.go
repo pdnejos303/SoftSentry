@@ -222,10 +222,23 @@ func (c *Client) Heartbeat(ctx context.Context, uptimeSeconds int64) (*Heartbeat
 // SignatureItem ตรงกับ backend SignatureIn schema
 // เก็บข้อมูล digital signature ของ software
 type SignatureItem struct {
-	Status         string `json:"status"`                    // สถานะ signature เช่น "valid", "invalid", "unsigned"
-	Signer         string `json:"signer,omitempty"`          // ชื่อผู้ลงนาม (ถ้ามี)
-	Issuer         string `json:"issuer,omitempty"`          // ชื่อ CA ที่ออก certificate (ถ้ามี)
-	CertThumbprint string `json:"cert_thumbprint,omitempty"` // fingerprint ของ certificate (ถ้ามี)
+	Status             string      `json:"status"`                        // สถานะ signature เช่น "valid", "invalid", "unsigned", "unknown"
+	Signer             string      `json:"signer,omitempty"`              // ชื่อผู้ลงนาม (ถ้ามี)
+	Issuer             string      `json:"issuer,omitempty"`              // ชื่อ CA ที่ออก certificate (ถ้ามี)
+	CertThumbprint     string      `json:"cert_thumbprint,omitempty"`     // SHA-1 fingerprint ของ leaf cert (ถ้ามี)
+	CertValidFrom      string      `json:"cert_valid_from,omitempty"`     // วันเริ่มมีผลของ leaf cert (YYYY-MM-DD)
+	CertValidTo        string      `json:"cert_valid_to,omitempty"`       // วันหมดอายุของ leaf cert (YYYY-MM-DD)
+	SignatureAlgorithm string      `json:"signature_algorithm,omitempty"` // algorithm ที่ใช้เซ็น เช่น sha256RSA
+	Chain              []ChainNode `json:"chain,omitempty"`               // certificate chain (leaf เป็นตัวแรก)
+}
+
+// ChainNode ตรงกับ element ใน backend SignatureIn.chain
+// เก็บข้อมูล certificate หนึ่งใบใน chain
+type ChainNode struct {
+	Subject   string `json:"subject,omitempty"`    // subject CN ของใบรับรองนี้
+	Issuer    string `json:"issuer,omitempty"`     // issuer CN
+	ValidFrom string `json:"valid_from,omitempty"` // วันเริ่มมีผล (YYYY-MM-DD)
+	ValidTo   string `json:"valid_to,omitempty"`   // วันหมดอายุ (YYYY-MM-DD)
 }
 
 // SoftwareItem ตรงกับ backend SoftwareIn schema

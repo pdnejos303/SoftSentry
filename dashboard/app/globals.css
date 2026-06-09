@@ -53,3 +53,27 @@
     @apply bg-background text-foreground antialiased;
   }
 }
+
+@layer components {
+  /*
+   * Donut + legend widgets adapt to their OWN card width (not the viewport),
+   * so they stack vertically when narrow (e.g. the 3-up overview grid, where a
+   * viewport media query would wrongly keep them side-by-side and crush the
+   * chart + legend text) and sit side-by-side only when the card is wide enough
+   * (e.g. the dedicated full-width pages).
+   */
+  .chart-split {
+    container-type: inline-size;
+  }
+  .chart-split-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  @container (min-width: 440px) {
+    .chart-split-body {
+      flex-direction: row;
+    }
+  }
+}

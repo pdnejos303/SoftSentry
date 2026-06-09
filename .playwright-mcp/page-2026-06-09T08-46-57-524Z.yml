@@ -1,0 +1,1709 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e6]:
+      - generic [ref=e7]:
+        - img [ref=e8]
+        - generic [ref=e11]: SoftSentry
+      - navigation [ref=e12]:
+        - link "Overview" [ref=e13] [cursor=pointer]:
+          - /url: /en
+          - img [ref=e14]
+          - text: Overview
+        - link "Machines" [ref=e19] [cursor=pointer]:
+          - /url: /en/machines
+          - img [ref=e20]
+          - text: Machines
+        - link "Software" [ref=e22] [cursor=pointer]:
+          - /url: /en/software
+          - img [ref=e23]
+          - text: Software
+        - link "Signatures" [ref=e27] [cursor=pointer]:
+          - /url: /en/signatures
+          - img [ref=e28]
+          - text: Signatures
+        - link "Vulnerabilities" [ref=e31] [cursor=pointer]:
+          - /url: /en/vulnerabilities
+          - img [ref=e32]
+          - text: Vulnerabilities
+        - link "Licenses" [ref=e34] [cursor=pointer]:
+          - /url: /en/licenses
+          - img [ref=e35]
+          - text: Licenses
+        - link "Whitelist" [ref=e38] [cursor=pointer]:
+          - /url: /en/policy/whitelist
+          - img [ref=e39]
+          - text: Whitelist
+        - link "Blacklist" [ref=e42] [cursor=pointer]:
+          - /url: /en/policy/blacklist
+          - img [ref=e43]
+          - text: Blacklist
+        - link "Alerts" [ref=e46] [cursor=pointer]:
+          - /url: /en/alerts
+          - img [ref=e47]
+          - text: Alerts
+        - link "Reports" [ref=e50] [cursor=pointer]:
+          - /url: /en/reports
+          - img [ref=e51]
+          - text: Reports
+        - link "Deploy" [ref=e54] [cursor=pointer]:
+          - /url: /en/deploy
+          - img [ref=e55]
+          - text: Deploy
+        - link "Profile" [ref=e59] [cursor=pointer]:
+          - /url: /en/settings/profile
+          - img [ref=e60]
+          - text: Profile
+        - link "Users" [ref=e64] [cursor=pointer]:
+          - /url: /en/settings/users
+          - img [ref=e65]
+          - text: Users
+        - link "Audit log" [ref=e70] [cursor=pointer]:
+          - /url: /en/settings/audit-log
+          - img [ref=e71]
+          - text: Audit log
+    - generic [ref=e74]:
+      - banner [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]: dev@dev
+          - generic [ref=e78]:
+            - combobox "Language" [ref=e79]:
+              - option "ไทย"
+              - option "English" [selected]
+              - option "日本語"
+            - img
+          - button "Sign out" [ref=e80] [cursor=pointer]:
+            - img [ref=e81]
+            - text: Sign out
+      - main [ref=e84]:
+        - generic [ref=e85]:
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - generic [ref=e88]:
+                - heading "DESKTOP-T4DPQLG" [level=1] [ref=e89]
+                - generic [ref=e90]: Online
+              - paragraph [ref=e91]: windows 10.0.26200 · amd64 · agent 0.1.0
+            - generic [ref=e92]:
+              - button "Generate report" [ref=e93] [cursor=pointer]:
+                - img [ref=e94]
+                - text: Generate report
+              - button "Trigger scan" [ref=e97] [cursor=pointer]:
+                - img [ref=e98]
+                - text: Trigger scan
+              - button "Delete" [ref=e103] [cursor=pointer]:
+                - img [ref=e104]
+                - text: Delete
+          - generic [ref=e107]:
+            - tablist [ref=e108]:
+              - tab "Overview" [ref=e109] [cursor=pointer]
+              - tab "Software" [ref=e110] [cursor=pointer]
+              - tab "Vulnerabilities" [selected] [ref=e111] [cursor=pointer]
+              - tab "History" [ref=e112] [cursor=pointer]
+              - tab "Scans" [ref=e113] [cursor=pointer]
+            - generic [ref=e161]:
+              - generic [ref=e162]:
+                - paragraph [ref=e163]: 174 CVEs · 2 software
+                - button "Show dismissed" [ref=e164] [cursor=pointer]
+              - table [ref=e167]:
+                - rowgroup [ref=e168]:
+                  - row "Software Vulnerabilities Worst Recommended Matched" [ref=e169]:
+                    - columnheader "Software" [ref=e170]
+                    - columnheader "Vulnerabilities" [ref=e171]
+                    - columnheader "Worst" [ref=e172]
+                    - columnheader "Recommended" [ref=e173]
+                    - columnheader "Matched" [ref=e174]
+                - rowgroup [ref=e175]:
+                  - row "Google Chrome 148.0.7778.218 173 CVEs 23 Critical 50 High 100 Medium Critical 9.6 Update to 149.0.7827.53 1h ago" [ref=e176] [cursor=pointer]:
+                    - cell "Google Chrome 148.0.7778.218" [ref=e177]:
+                      - generic [ref=e178]:
+                        - img [ref=e210]
+                        - generic [ref=e181]: Google Chrome
+                        - generic [ref=e182]: 148.0.7778.218
+                    - cell "173 CVEs 23 Critical 50 High 100 Medium" [ref=e183]:
+                      - generic [ref=e184]:
+                        - generic [ref=e185]: 173 CVEs
+                        - generic [ref=e186]: 23 Critical
+                        - generic [ref=e187]: 50 High
+                        - generic [ref=e188]: 100 Medium
+                    - cell "Critical 9.6" [ref=e189]:
+                      - generic [ref=e190]:
+                        - text: Critical
+                        - generic [ref=e191]: "9.6"
+                    - cell "Update to 149.0.7827.53" [ref=e192]
+                    - cell "1h ago" [ref=e193]
+                  - row [ref=e212]:
+                    - cell [ref=e213]:
+                      - list [ref=e214]:
+                        - listitem [ref=e215]:
+                          - button "CVE-2026-10966" [ref=e216] [cursor=pointer]
+                          - generic [ref=e217]:
+                            - text: Critical
+                            - generic [ref=e218]: "9.6"
+                          - generic [ref=e219]: "Inappropriate implementation in Codecs in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to potentially perform a sandbox escape via a crafted video file. (Chromium security severity: High)"
+                          - button "Dismiss" [ref=e220] [cursor=pointer]:
+                            - img [ref=e221]
+                            - text: Dismiss
+                        - listitem [ref=e224]:
+                          - button "CVE-2026-10972" [ref=e225] [cursor=pointer]
+                          - generic [ref=e226]:
+                            - text: Critical
+                            - generic [ref=e227]: "9.6"
+                          - generic [ref=e228]: "Use after free in Ozone in Google Chrome on Linux prior to 149.0.7827.53 allowed a remote attacker to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: High)"
+                          - button "Dismiss" [ref=e229] [cursor=pointer]:
+                            - img [ref=e230]
+                            - text: Dismiss
+                        - listitem [ref=e233]:
+                          - button "CVE-2026-11009" [ref=e234] [cursor=pointer]
+                          - generic [ref=e235]:
+                            - text: Critical
+                            - generic [ref=e236]: "9.6"
+                          - generic [ref=e237]: "Use after free in USB in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e238] [cursor=pointer]:
+                            - img [ref=e239]
+                            - text: Dismiss
+                        - listitem [ref=e242]:
+                          - button "CVE-2026-11021" [ref=e243] [cursor=pointer]
+                          - generic [ref=e244]:
+                            - text: Critical
+                            - generic [ref=e245]: "9.6"
+                          - generic [ref=e246]: "Insufficient validation of untrusted input in GPU in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e247] [cursor=pointer]:
+                            - img [ref=e248]
+                            - text: Dismiss
+                        - listitem [ref=e251]:
+                          - button "CVE-2026-11043" [ref=e252] [cursor=pointer]
+                          - generic [ref=e253]:
+                            - text: Critical
+                            - generic [ref=e254]: "9.6"
+                          - generic [ref=e255]: "Out of bounds write in ANGLE in Google Chrome on Mac prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e256] [cursor=pointer]:
+                            - img [ref=e257]
+                            - text: Dismiss
+                        - listitem [ref=e260]:
+                          - button "CVE-2026-11047" [ref=e261] [cursor=pointer]
+                          - generic [ref=e262]:
+                            - text: Critical
+                            - generic [ref=e263]: "9.6"
+                          - generic [ref=e264]: "Inappropriate implementation in Base in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e265] [cursor=pointer]:
+                            - img [ref=e266]
+                            - text: Dismiss
+                        - listitem [ref=e269]:
+                          - button "CVE-2026-11052" [ref=e270] [cursor=pointer]
+                          - generic [ref=e271]:
+                            - text: Critical
+                            - generic [ref=e272]: "9.6"
+                          - generic [ref=e273]: "Type Confusion in GPU in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e274] [cursor=pointer]:
+                            - img [ref=e275]
+                            - text: Dismiss
+                        - listitem [ref=e278]:
+                          - button "CVE-2026-11056" [ref=e279] [cursor=pointer]
+                          - generic [ref=e280]:
+                            - text: Critical
+                            - generic [ref=e281]: "9.6"
+                          - generic [ref=e282]: "Insufficient validation of untrusted input in SiteIsolation in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e283] [cursor=pointer]:
+                            - img [ref=e284]
+                            - text: Dismiss
+                        - listitem [ref=e287]:
+                          - button "CVE-2026-11063" [ref=e288] [cursor=pointer]
+                          - generic [ref=e289]:
+                            - text: Critical
+                            - generic [ref=e290]: "9.6"
+                          - generic [ref=e291]: "Insufficient validation of untrusted input in WebNN in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e292] [cursor=pointer]:
+                            - img [ref=e293]
+                            - text: Dismiss
+                        - listitem [ref=e296]:
+                          - button "CVE-2026-11070" [ref=e297] [cursor=pointer]
+                          - generic [ref=e298]:
+                            - text: Critical
+                            - generic [ref=e299]: "9.6"
+                          - generic [ref=e300]: "Insufficient validation of untrusted input in Chromoting in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker who had compromised the network process to potentially perform a sandbox escape via malicious network traffic. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e301] [cursor=pointer]:
+                            - img [ref=e302]
+                            - text: Dismiss
+                        - listitem [ref=e305]:
+                          - button "CVE-2026-11082" [ref=e306] [cursor=pointer]
+                          - generic [ref=e307]:
+                            - text: Critical
+                            - generic [ref=e308]: "9.6"
+                          - generic [ref=e309]: "Race in GPU in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e310] [cursor=pointer]:
+                            - img [ref=e311]
+                            - text: Dismiss
+                        - listitem [ref=e314]:
+                          - button "CVE-2026-11094" [ref=e315] [cursor=pointer]
+                          - generic [ref=e316]:
+                            - text: Critical
+                            - generic [ref=e317]: "9.6"
+                          - generic [ref=e318]: "Use after free in Codecs in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e319] [cursor=pointer]:
+                            - img [ref=e320]
+                            - text: Dismiss
+                        - listitem [ref=e323]:
+                          - button "CVE-2026-11112" [ref=e324] [cursor=pointer]
+                          - generic [ref=e325]:
+                            - text: Critical
+                            - generic [ref=e326]: "9.6"
+                          - generic [ref=e327]: "Insufficient validation of untrusted input in Chromoting in Google Chrome on Linux prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted Chrome Extension. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e328] [cursor=pointer]:
+                            - img [ref=e329]
+                            - text: Dismiss
+                        - listitem [ref=e332]:
+                          - button "CVE-2026-11113" [ref=e333] [cursor=pointer]
+                          - generic [ref=e334]:
+                            - text: Critical
+                            - generic [ref=e335]: "9.6"
+                          - generic [ref=e336]: "Insufficient validation of untrusted input in ANGLE in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e337] [cursor=pointer]:
+                            - img [ref=e338]
+                            - text: Dismiss
+                        - listitem [ref=e341]:
+                          - button "CVE-2026-11114" [ref=e342] [cursor=pointer]
+                          - generic [ref=e343]:
+                            - text: Critical
+                            - generic [ref=e344]: "9.6"
+                          - generic [ref=e345]: "Use after free in Device Trust in Google Chrome on Mac prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e346] [cursor=pointer]:
+                            - img [ref=e347]
+                            - text: Dismiss
+                        - listitem [ref=e350]:
+                          - button "CVE-2026-11119" [ref=e351] [cursor=pointer]
+                          - generic [ref=e352]:
+                            - text: Critical
+                            - generic [ref=e353]: "9.6"
+                          - generic [ref=e354]: "Inappropriate implementation in GPU in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e355] [cursor=pointer]:
+                            - img [ref=e356]
+                            - text: Dismiss
+                        - listitem [ref=e359]:
+                          - button "CVE-2026-11120" [ref=e360] [cursor=pointer]
+                          - generic [ref=e361]:
+                            - text: Critical
+                            - generic [ref=e362]: "9.6"
+                          - generic [ref=e363]: "Insufficient validation of untrusted input in Enterprise Reporting in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e364] [cursor=pointer]:
+                            - img [ref=e365]
+                            - text: Dismiss
+                        - listitem [ref=e368]:
+                          - button "CVE-2026-11131" [ref=e369] [cursor=pointer]
+                          - generic [ref=e370]:
+                            - text: Critical
+                            - generic [ref=e371]: "9.6"
+                          - generic [ref=e372]: "Use after free in Autofill in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e373] [cursor=pointer]:
+                            - img [ref=e374]
+                            - text: Dismiss
+                        - listitem [ref=e377]:
+                          - button "CVE-2026-11146" [ref=e378] [cursor=pointer]
+                          - generic [ref=e379]:
+                            - text: Critical
+                            - generic [ref=e380]: "9.6"
+                          - generic [ref=e381]: "Insufficient validation of untrusted input in Chromoting in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e382] [cursor=pointer]:
+                            - img [ref=e383]
+                            - text: Dismiss
+                        - listitem [ref=e386]:
+                          - button "CVE-2026-11152" [ref=e387] [cursor=pointer]
+                          - generic [ref=e388]:
+                            - text: Critical
+                            - generic [ref=e389]: "9.6"
+                          - generic [ref=e390]: "Object lifecycle issue in Dawn in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e391] [cursor=pointer]:
+                            - img [ref=e392]
+                            - text: Dismiss
+                        - listitem [ref=e395]:
+                          - button "CVE-2026-11163" [ref=e396] [cursor=pointer]
+                          - generic [ref=e397]:
+                            - text: Critical
+                            - generic [ref=e398]: "9.6"
+                          - generic [ref=e399]: "Use after free in Messages in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e400] [cursor=pointer]:
+                            - img [ref=e401]
+                            - text: Dismiss
+                        - listitem [ref=e404]:
+                          - button "CVE-2026-11167" [ref=e405] [cursor=pointer]
+                          - generic [ref=e406]:
+                            - text: Critical
+                            - generic [ref=e407]: "9.6"
+                          - generic [ref=e408]: "Inappropriate implementation in WebView in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e409] [cursor=pointer]:
+                            - img [ref=e410]
+                            - text: Dismiss
+                        - listitem [ref=e413]:
+                          - button "CVE-2026-11153" [ref=e414] [cursor=pointer]
+                          - generic [ref=e415]:
+                            - text: Critical
+                            - generic [ref=e416]: "9.1"
+                          - generic [ref=e417]: "Side-channel information leakage in Forms in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e418] [cursor=pointer]:
+                            - img [ref=e419]
+                            - text: Dismiss
+                        - listitem [ref=e422]:
+                          - button "CVE-2026-10952" [ref=e423] [cursor=pointer]
+                          - generic [ref=e424]:
+                            - text: High
+                            - generic [ref=e425]: "8.8"
+                          - generic [ref=e426]: "Use after free in Chrome for iOS in Google Chrome on iOS prior to 149.0.7827.53 allowed a remote attacker to potentially exploit heap corruption via a crafted HTML page. (Chromium security severity: High)"
+                          - button "Dismiss" [ref=e427] [cursor=pointer]:
+                            - img [ref=e428]
+                            - text: Dismiss
+                        - listitem [ref=e431]:
+                          - button "CVE-2026-10955" [ref=e432] [cursor=pointer]
+                          - generic [ref=e433]:
+                            - text: High
+                            - generic [ref=e434]: "8.8"
+                          - generic [ref=e435]: "Type Confusion in ANGLE in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker to potentially perform out of bounds memory access via a crafted HTML page. (Chromium security severity: High)"
+                          - button "Dismiss" [ref=e436] [cursor=pointer]:
+                            - img [ref=e437]
+                            - text: Dismiss
+                        - listitem [ref=e440]:
+                          - button "CVE-2026-10951" [ref=e441] [cursor=pointer]
+                          - generic [ref=e442]:
+                            - text: High
+                            - generic [ref=e443]: "8.8"
+                          - generic [ref=e444]: "Use after free in Autofill in Google Chrome on iOS prior to 149.0.7827.53 allowed a remote attacker who convinced a user to engage in specific UI gestures to potentially exploit heap corruption via a crafted HTML page. (Chromium security severity: High)"
+                          - button "Dismiss" [ref=e445] [cursor=pointer]:
+                            - img [ref=e446]
+                            - text: Dismiss
+                        - listitem [ref=e449]:
+                          - button "CVE-2026-10995" [ref=e450] [cursor=pointer]
+                          - generic [ref=e451]:
+                            - text: High
+                            - generic [ref=e452]: "8.8"
+                          - generic [ref=e453]: "Heap buffer overflow in TabStrip in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who convinced a user to engage in specific UI gestures to potentially exploit heap corruption via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e454] [cursor=pointer]:
+                            - img [ref=e455]
+                            - text: Dismiss
+                        - listitem [ref=e458]:
+                          - button "CVE-2026-11030" [ref=e459] [cursor=pointer]
+                          - generic [ref=e460]:
+                            - text: High
+                            - generic [ref=e461]: "8.8"
+                          - generic [ref=e462]: "Use after free in Network in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to potentially exploit heap corruption via malicious network traffic. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e463] [cursor=pointer]:
+                            - img [ref=e464]
+                            - text: Dismiss
+                        - listitem [ref=e467]:
+                          - button "CVE-2026-11041" [ref=e468] [cursor=pointer]
+                          - generic [ref=e469]:
+                            - text: High
+                            - generic [ref=e470]: "8.8"
+                          - generic [ref=e471]: "Insufficient validation of untrusted input in Media in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e472] [cursor=pointer]:
+                            - img [ref=e473]
+                            - text: Dismiss
+                        - listitem [ref=e476]:
+                          - button "CVE-2026-11071" [ref=e477] [cursor=pointer]
+                          - generic [ref=e478]:
+                            - text: High
+                            - generic [ref=e479]: "8.8"
+                          - generic [ref=e480]: "Use after free in Base in Google Chrome on Linux prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e481] [cursor=pointer]:
+                            - img [ref=e482]
+                            - text: Dismiss
+                        - listitem [ref=e485]:
+                          - button "CVE-2026-11079" [ref=e486] [cursor=pointer]
+                          - generic [ref=e487]:
+                            - text: High
+                            - generic [ref=e488]: "8.8"
+                          - generic [ref=e489]: "Insufficient validation of untrusted input in Codecs in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to perform an out of bounds memory write via a crafted video file. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e490] [cursor=pointer]:
+                            - img [ref=e491]
+                            - text: Dismiss
+                        - listitem [ref=e494]:
+                          - button "CVE-2026-11080" [ref=e495] [cursor=pointer]
+                          - generic [ref=e496]:
+                            - text: High
+                            - generic [ref=e497]: "8.8"
+                          - generic [ref=e498]: "Use after free in WebView in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker to potentially exploit heap corruption via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e499] [cursor=pointer]:
+                            - img [ref=e500]
+                            - text: Dismiss
+                        - listitem [ref=e503]:
+                          - button "CVE-2026-11085" [ref=e504] [cursor=pointer]
+                          - generic [ref=e505]:
+                            - text: High
+                            - generic [ref=e506]: "8.8"
+                          - generic [ref=e507]: "Integer overflow in GPU in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker to potentially perform out of bounds memory access via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e508] [cursor=pointer]:
+                            - img [ref=e509]
+                            - text: Dismiss
+                        - listitem [ref=e512]:
+                          - button "CVE-2026-11091" [ref=e513] [cursor=pointer]
+                          - generic [ref=e514]:
+                            - text: High
+                            - generic [ref=e515]: "8.8"
+                          - generic [ref=e516]: "Inappropriate implementation in Dawn in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to potentially perform out of bounds memory access via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e517] [cursor=pointer]:
+                            - img [ref=e518]
+                            - text: Dismiss
+                        - listitem [ref=e521]:
+                          - button "CVE-2026-11092" [ref=e522] [cursor=pointer]
+                          - generic [ref=e523]:
+                            - text: High
+                            - generic [ref=e524]: "8.8"
+                          - generic [ref=e525]: "Insufficient policy enforcement in DevTools in Google Chrome prior to 149.0.7827.53 allowed an attacker who convinced a user to install a malicious extension to perform privilege escalation via a crafted Chrome Extension. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e526] [cursor=pointer]:
+                            - img [ref=e527]
+                            - text: Dismiss
+                        - listitem [ref=e530]:
+                          - button "CVE-2026-11108" [ref=e531] [cursor=pointer]
+                          - generic [ref=e532]:
+                            - text: High
+                            - generic [ref=e533]: "8.8"
+                          - generic [ref=e534]: "Inappropriate implementation in NFC in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker to perform privilege escalation via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e535] [cursor=pointer]:
+                            - img [ref=e536]
+                            - text: Dismiss
+                        - listitem [ref=e539]:
+                          - button "CVE-2026-11116" [ref=e540] [cursor=pointer]
+                          - generic [ref=e541]:
+                            - text: High
+                            - generic [ref=e542]: "8.8"
+                          - generic [ref=e543]: "Use after free in Chromoting in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to execute arbitrary code via malicious network traffic. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e544] [cursor=pointer]:
+                            - img [ref=e545]
+                            - text: Dismiss
+                        - listitem [ref=e548]:
+                          - button "CVE-2026-11144" [ref=e549] [cursor=pointer]
+                          - generic [ref=e550]:
+                            - text: High
+                            - generic [ref=e551]: "8.8"
+                          - generic [ref=e552]: "Use after free in Media in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to execute arbitrary code inside a sandbox via a crafted video file. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e553] [cursor=pointer]:
+                            - img [ref=e554]
+                            - text: Dismiss
+                        - listitem [ref=e557]:
+                          - button "CVE-2026-11172" [ref=e558] [cursor=pointer]
+                          - generic [ref=e559]:
+                            - text: High
+                            - generic [ref=e560]: "8.8"
+                          - generic [ref=e561]: "Incorrect security UI in Contact Picker in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker to perform UI spoofing via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e562] [cursor=pointer]:
+                            - img [ref=e563]
+                            - text: Dismiss
+                        - listitem [ref=e566]:
+                          - button "CVE-2026-11175" [ref=e567] [cursor=pointer]
+                          - generic [ref=e568]:
+                            - text: High
+                            - generic [ref=e569]: "8.8"
+                          - generic [ref=e570]: "Incorrect security UI in Messages in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker to perform UI spoofing via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e571] [cursor=pointer]:
+                            - img [ref=e572]
+                            - text: Dismiss
+                        - listitem [ref=e575]:
+                          - button "CVE-2026-11177" [ref=e576] [cursor=pointer]
+                          - generic [ref=e577]:
+                            - text: High
+                            - generic [ref=e578]: "8.8"
+                          - generic [ref=e579]: "Use after free in Omnibox in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who convinced a user to engage in specific UI gestures to potentially exploit heap corruption via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e580] [cursor=pointer]:
+                            - img [ref=e581]
+                            - text: Dismiss
+                        - listitem [ref=e584]:
+                          - button "CVE-2026-11179" [ref=e585] [cursor=pointer]
+                          - generic [ref=e586]:
+                            - text: High
+                            - generic [ref=e587]: "8.8"
+                          - generic [ref=e588]: "Inappropriate implementation in ORB in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass site isolation via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e589] [cursor=pointer]:
+                            - img [ref=e590]
+                            - text: Dismiss
+                        - listitem [ref=e593]:
+                          - button "CVE-2026-11211" [ref=e594] [cursor=pointer]
+                          - generic [ref=e595]:
+                            - text: High
+                            - generic [ref=e596]: "8.8"
+                          - generic [ref=e597]: "Integer overflow in V8 in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to execute arbitrary code inside a sandbox via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e598] [cursor=pointer]:
+                            - img [ref=e599]
+                            - text: Dismiss
+                        - listitem [ref=e602]:
+                          - button "CVE-2026-11295" [ref=e603] [cursor=pointer]
+                          - generic [ref=e604]:
+                            - text: High
+                            - generic [ref=e605]: "8.8"
+                          - generic [ref=e606]: "Inappropriate implementation in WebView in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker to perform privilege escalation via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e607] [cursor=pointer]:
+                            - img [ref=e608]
+                            - text: Dismiss
+                        - listitem [ref=e611]:
+                          - button "CVE-2026-11301" [ref=e612] [cursor=pointer]
+                          - generic [ref=e613]:
+                            - text: High
+                            - generic [ref=e614]: "8.8"
+                          - generic [ref=e615]: "Inappropriate implementation in LiveCaption in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to potentially perform out of bounds memory access via malicious network traffic. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e616] [cursor=pointer]:
+                            - img [ref=e617]
+                            - text: Dismiss
+                        - listitem [ref=e620]:
+                          - button "CVE-2026-11303" [ref=e621] [cursor=pointer]
+                          - generic [ref=e622]:
+                            - text: High
+                            - generic [ref=e623]: "8.8"
+                          - generic [ref=e624]: "Use after free in PDFium in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to execute arbitrary code inside a sandbox via a crafted PDF file. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e625] [cursor=pointer]:
+                            - img [ref=e626]
+                            - text: Dismiss
+                        - listitem [ref=e629]:
+                          - button "CVE-2026-11304" [ref=e630] [cursor=pointer]
+                          - generic [ref=e631]:
+                            - text: High
+                            - generic [ref=e632]: "8.8"
+                          - generic [ref=e633]: "Use after free in PDFium in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to potentially exploit heap corruption via a crafted PDF file. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e634] [cursor=pointer]:
+                            - img [ref=e635]
+                            - text: Dismiss
+                        - listitem [ref=e638]:
+                          - button "CVE-2026-11305" [ref=e639] [cursor=pointer]
+                          - generic [ref=e640]:
+                            - text: High
+                            - generic [ref=e641]: "8.8"
+                          - generic [ref=e642]: "Use after free in PDFium in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to execute arbitrary code inside a sandbox via a crafted PDF file. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e643] [cursor=pointer]:
+                            - img [ref=e644]
+                            - text: Dismiss
+                        - listitem [ref=e647]:
+                          - button "CVE-2026-11306" [ref=e648] [cursor=pointer]
+                          - generic [ref=e649]:
+                            - text: High
+                            - generic [ref=e650]: "8.8"
+                          - generic [ref=e651]: "Use after free in PDFium in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to execute arbitrary code inside a sandbox via a crafted PDF file. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e652] [cursor=pointer]:
+                            - img [ref=e653]
+                            - text: Dismiss
+                        - listitem [ref=e656]:
+                          - button "CVE-2026-11307" [ref=e657] [cursor=pointer]
+                          - generic [ref=e658]:
+                            - text: High
+                            - generic [ref=e659]: "8.8"
+                          - generic [ref=e660]: "Use after free in PDFium in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to execute arbitrary code inside a sandbox via a crafted PDF file. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e661] [cursor=pointer]:
+                            - img [ref=e662]
+                            - text: Dismiss
+                        - listitem [ref=e665]:
+                          - button "CVE-2026-11158" [ref=e666] [cursor=pointer]
+                          - generic [ref=e667]:
+                            - text: High
+                            - generic [ref=e668]: "8.6"
+                          - generic [ref=e669]: "Insufficient validation of untrusted input in Downloads in Google Chrome on Mac prior to 149.0.7827.53 allowed a local attacker to potentially perform a sandbox escape via a crafted AppleScript command. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e670] [cursor=pointer]:
+                            - img [ref=e671]
+                            - text: Dismiss
+                        - listitem [ref=e674]:
+                          - button "CVE-2026-10953" [ref=e675] [cursor=pointer]
+                          - generic [ref=e676]:
+                            - text: High
+                            - generic [ref=e677]: "8.3"
+                          - generic [ref=e678]: "Use after free in Core in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: High)"
+                          - button "Dismiss" [ref=e679] [cursor=pointer]:
+                            - img [ref=e680]
+                            - text: Dismiss
+                        - listitem [ref=e683]:
+                          - button "CVE-2026-10940" [ref=e684] [cursor=pointer]
+                          - generic [ref=e685]:
+                            - text: High
+                            - generic [ref=e686]: "8.3"
+                          - generic [ref=e687]: "Race in Codecs in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: High)"
+                          - button "Dismiss" [ref=e688] [cursor=pointer]:
+                            - img [ref=e689]
+                            - text: Dismiss
+                        - listitem [ref=e692]:
+                          - button "CVE-2026-11010" [ref=e693] [cursor=pointer]
+                          - generic [ref=e694]:
+                            - text: High
+                            - generic [ref=e695]: "8.3"
+                          - generic [ref=e696]: "Use after free in WebShare in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e697] [cursor=pointer]:
+                            - img [ref=e698]
+                            - text: Dismiss
+                        - listitem [ref=e701]:
+                          - button "CVE-2026-11012" [ref=e702] [cursor=pointer]
+                          - generic [ref=e703]:
+                            - text: High
+                            - generic [ref=e704]: "8.3"
+                          - generic [ref=e705]: "Use after free in Serial in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e706] [cursor=pointer]:
+                            - img [ref=e707]
+                            - text: Dismiss
+                        - listitem [ref=e710]:
+                          - button "CVE-2026-11011" [ref=e711] [cursor=pointer]
+                          - generic [ref=e712]:
+                            - text: High
+                            - generic [ref=e713]: "8.1"
+                          - generic [ref=e714]: "Insufficient policy enforcement in Password Manager in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to bypass site isolation via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e715] [cursor=pointer]:
+                            - img [ref=e716]
+                            - text: Dismiss
+                        - listitem [ref=e719]:
+                          - button "CVE-2026-11015" [ref=e720] [cursor=pointer]
+                          - generic [ref=e721]:
+                            - text: High
+                            - generic [ref=e722]: "8.1"
+                          - generic [ref=e723]: "Out of bounds read in WebGPU in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to perform an out of bounds memory read via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e724] [cursor=pointer]:
+                            - img [ref=e725]
+                            - text: Dismiss
+                        - listitem [ref=e728]:
+                          - button "CVE-2026-11111" [ref=e729] [cursor=pointer]
+                          - generic [ref=e730]:
+                            - text: High
+                            - generic [ref=e731]: "8.1"
+                          - generic [ref=e732]: "Out of bounds read in ANGLE in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to perform an out of bounds memory read via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e733] [cursor=pointer]:
+                            - img [ref=e734]
+                            - text: Dismiss
+                        - listitem [ref=e737]:
+                          - button "CVE-2026-11169" [ref=e738] [cursor=pointer]
+                          - generic [ref=e739]:
+                            - text: High
+                            - generic [ref=e740]: "8.1"
+                          - generic [ref=e741]: "Inappropriate implementation in XML in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to inject arbitrary scripts or HTML (UXSS) via a crafted XML file. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e742] [cursor=pointer]:
+                            - img [ref=e743]
+                            - text: Dismiss
+                        - listitem [ref=e746]:
+                          - button "CVE-2026-11170" [ref=e747] [cursor=pointer]
+                          - generic [ref=e748]:
+                            - text: High
+                            - generic [ref=e749]: "8.1"
+                          - generic [ref=e750]: "Inappropriate implementation in Chromoting in Google Chrome on Linux prior to 149.0.7827.53 allowed a remote attacker to perform OS-level privilege escalation via malicious network traffic. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e751] [cursor=pointer]:
+                            - img [ref=e752]
+                            - text: Dismiss
+                        - listitem [ref=e755]:
+                          - button "CVE-2026-11231" [ref=e756] [cursor=pointer]
+                          - generic [ref=e757]:
+                            - text: High
+                            - generic [ref=e758]: "8.1"
+                          - generic [ref=e759]: "Inappropriate implementation in Safe Browsing in Google Chrome on Mac prior to 149.0.7827.53 allowed a remote attacker to execute arbitrary code via a malicious file. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e760] [cursor=pointer]:
+                            - img [ref=e761]
+                            - text: Dismiss
+                        - listitem [ref=e764]:
+                          - button "CVE-2026-10942" [ref=e765] [cursor=pointer]
+                          - generic [ref=e766]:
+                            - text: High
+                            - generic [ref=e767]: "7.8"
+                          - generic [ref=e768]: "Inappropriate implementation in UI in Google Chrome on Windows prior to 149.0.7827.53 allowed a local attacker to perform privilege escalation via a malicious file. (Chromium security severity: High)"
+                          - button "Dismiss" [ref=e769] [cursor=pointer]:
+                            - img [ref=e770]
+                            - text: Dismiss
+                        - listitem [ref=e773]:
+                          - button "CVE-2026-11072" [ref=e774] [cursor=pointer]
+                          - generic [ref=e775]:
+                            - text: High
+                            - generic [ref=e776]: "7.8"
+                          - generic [ref=e777]: "Use after free in WebView in Google Chrome on Android prior to 149.0.7827.53 allowed a local attacker to execute arbitrary code via a malicious file. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e778] [cursor=pointer]:
+                            - img [ref=e779]
+                            - text: Dismiss
+                        - listitem [ref=e782]:
+                          - button "CVE-2026-11103" [ref=e783] [cursor=pointer]
+                          - generic [ref=e784]:
+                            - text: High
+                            - generic [ref=e785]: "7.8"
+                          - generic [ref=e786]: "Inappropriate implementation in Installer in Google Chrome on Windows prior to 149.0.7827.53 allowed a local attacker to perform OS-level privilege escalation via a malicious file. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e787] [cursor=pointer]:
+                            - img [ref=e788]
+                            - text: Dismiss
+                        - listitem [ref=e791]:
+                          - button "CVE-2026-11297" [ref=e792] [cursor=pointer]
+                          - generic [ref=e793]:
+                            - text: High
+                            - generic [ref=e794]: "7.7"
+                          - generic [ref=e795]: "Insufficient validation of untrusted input in Reader Mode in Google Chrome on Android prior to 149.0.7827.53 allowed a local attacker to bypass navigation restrictions via a malicious file. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e796] [cursor=pointer]:
+                            - img [ref=e797]
+                            - text: Dismiss
+                        - listitem [ref=e800]:
+                          - button "CVE-2026-11151" [ref=e801] [cursor=pointer]
+                          - generic [ref=e802]:
+                            - text: High
+                            - generic [ref=e803]: "7.5"
+                          - generic [ref=e804]: "Insufficient validation of untrusted input in Password Manager in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e805] [cursor=pointer]:
+                            - img [ref=e806]
+                            - text: Dismiss
+                        - listitem [ref=e809]:
+                          - button "CVE-2026-11154" [ref=e810] [cursor=pointer]
+                          - generic [ref=e811]:
+                            - text: High
+                            - generic [ref=e812]: "7.5"
+                          - generic [ref=e813]: "Use after free in Dawn in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to potentially perform a sandbox escape via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e814] [cursor=pointer]:
+                            - img [ref=e815]
+                            - text: Dismiss
+                        - listitem [ref=e818]:
+                          - button "CVE-2026-11265" [ref=e819] [cursor=pointer]
+                          - generic [ref=e820]:
+                            - text: High
+                            - generic [ref=e821]: "7.5"
+                          - generic [ref=e822]: "Inappropriate implementation in Autofill in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e823] [cursor=pointer]:
+                            - img [ref=e824]
+                            - text: Dismiss
+                        - listitem [ref=e827]:
+                          - button "CVE-2026-10968" [ref=e828] [cursor=pointer]
+                          - generic [ref=e829]:
+                            - text: High
+                            - generic [ref=e830]: "7.4"
+                          - generic [ref=e831]: "Insufficient validation of untrusted input in Dawn in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to leak cross-origin data via a crafted HTML page. (Chromium security severity: High)"
+                          - button "Dismiss" [ref=e832] [cursor=pointer]:
+                            - img [ref=e833]
+                            - text: Dismiss
+                        - listitem [ref=e836]:
+                          - button "CVE-2026-10973" [ref=e837] [cursor=pointer]
+                          - generic [ref=e838]:
+                            - text: High
+                            - generic [ref=e839]: "7.4"
+                          - generic [ref=e840]: "Uninitialized Use in Dawn in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: High)"
+                          - button "Dismiss" [ref=e841] [cursor=pointer]:
+                            - img [ref=e842]
+                            - text: Dismiss
+                        - listitem [ref=e845]:
+                          - button "CVE-2026-11035" [ref=e846] [cursor=pointer]
+                          - generic [ref=e847]:
+                            - text: High
+                            - generic [ref=e848]: "7.3"
+                          - generic [ref=e849]: "Inappropriate implementation in Custom Tabs in Google Chrome on Android prior to 149.0.7827.53 allowed a local attacker to perform privilege escalation via a crafted XML file. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e850] [cursor=pointer]:
+                            - img [ref=e851]
+                            - text: Dismiss
+                        - listitem [ref=e854]:
+                          - button "CVE-2026-11115" [ref=e855] [cursor=pointer]
+                          - generic [ref=e856]:
+                            - text: High
+                            - generic [ref=e857]: "7.3"
+                          - generic [ref=e858]: "Use after free in Updater in Google Chrome on Windows prior to 149.0.7827.53 allowed a local attacker to perform OS-level privilege escalation via a malicious file. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e859] [cursor=pointer]:
+                            - img [ref=e860]
+                            - text: Dismiss
+                        - listitem [ref=e863]:
+                          - button "CVE-2026-11269" [ref=e864] [cursor=pointer]
+                          - generic [ref=e865]:
+                            - text: High
+                            - generic [ref=e866]: "7.1"
+                          - generic [ref=e867]: "Inappropriate implementation in Extensions in Google Chrome prior to 149.0.7827.53 allowed an attacker in a privileged network position to execute arbitrary code inside a sandbox via a crafted Chrome Extension. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e868] [cursor=pointer]:
+                            - img [ref=e869]
+                            - text: Dismiss
+                        - listitem [ref=e872]:
+                          - button "CVE-2026-11166" [ref=e873] [cursor=pointer]
+                          - generic [ref=e874]:
+                            - text: Medium
+                            - generic [ref=e875]: "6.8"
+                          - generic [ref=e876]: "Inappropriate implementation in SVG in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to inject arbitrary scripts or HTML (UXSS) via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e877] [cursor=pointer]:
+                            - img [ref=e878]
+                            - text: Dismiss
+                        - listitem [ref=e881]:
+                          - button "CVE-2026-11039" [ref=e882] [cursor=pointer]
+                          - generic [ref=e883]:
+                            - text: Medium
+                            - generic [ref=e884]: "6.5"
+                          - generic [ref=e885]: "Uninitialized Use in Skia in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e886] [cursor=pointer]:
+                            - img [ref=e887]
+                            - text: Dismiss
+                        - listitem [ref=e890]:
+                          - button "CVE-2026-10944" [ref=e891] [cursor=pointer]
+                          - generic [ref=e892]:
+                            - text: Medium
+                            - generic [ref=e893]: "6.5"
+                          - generic [ref=e894]: "Insufficient policy enforcement in Autofill in Google Chrome on iOS prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: High)"
+                          - button "Dismiss" [ref=e895] [cursor=pointer]:
+                            - img [ref=e896]
+                            - text: Dismiss
+                        - listitem [ref=e899]:
+                          - button "CVE-2026-10950" [ref=e900] [cursor=pointer]
+                          - generic [ref=e901]:
+                            - text: Medium
+                            - generic [ref=e902]: "6.5"
+                          - generic [ref=e903]: "Insufficient policy enforcement in Autofill in Google Chrome on iOS prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: High)"
+                          - button "Dismiss" [ref=e904] [cursor=pointer]:
+                            - img [ref=e905]
+                            - text: Dismiss
+                        - listitem [ref=e908]:
+                          - button "CVE-2026-10996" [ref=e909] [cursor=pointer]
+                          - generic [ref=e910]:
+                            - text: Medium
+                            - generic [ref=e911]: "6.5"
+                          - generic [ref=e912]: "Inappropriate implementation in Workers in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass same origin policy via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e913] [cursor=pointer]:
+                            - img [ref=e914]
+                            - text: Dismiss
+                        - listitem [ref=e917]:
+                          - button "CVE-2026-10997" [ref=e918] [cursor=pointer]
+                          - generic [ref=e919]:
+                            - text: Medium
+                            - generic [ref=e920]: "6.5"
+                          - generic [ref=e921]: "Insufficient policy enforcement in Extensions in Google Chrome prior to 149.0.7827.53 allowed an attacker who convinced a user to install a malicious extension to bypass discretionary access control via a crafted Chrome Extension. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e922] [cursor=pointer]:
+                            - img [ref=e923]
+                            - text: Dismiss
+                        - listitem [ref=e926]:
+                          - button "CVE-2026-10999" [ref=e927] [cursor=pointer]
+                          - generic [ref=e928]:
+                            - text: Medium
+                            - generic [ref=e929]: "6.5"
+                          - generic [ref=e930]: "Integer overflow in ANGLE in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e931] [cursor=pointer]:
+                            - img [ref=e932]
+                            - text: Dismiss
+                        - listitem [ref=e935]:
+                          - button "CVE-2026-11006" [ref=e936] [cursor=pointer]
+                          - generic [ref=e937]:
+                            - text: Medium
+                            - generic [ref=e938]: "6.5"
+                          - generic [ref=e939]: "Out of bounds read in Dawn in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to perform an out of bounds memory read via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e940] [cursor=pointer]:
+                            - img [ref=e941]
+                            - text: Dismiss
+                        - listitem [ref=e944]:
+                          - button "CVE-2026-11007" [ref=e945] [cursor=pointer]
+                          - generic [ref=e946]:
+                            - text: Medium
+                            - generic [ref=e947]: "6.5"
+                          - generic [ref=e948]: "Insufficient validation of untrusted input in WebView in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e949] [cursor=pointer]:
+                            - img [ref=e950]
+                            - text: Dismiss
+                        - listitem [ref=e953]:
+                          - button "CVE-2026-11008" [ref=e954] [cursor=pointer]
+                          - generic [ref=e955]:
+                            - text: Medium
+                            - generic [ref=e956]: "6.5"
+                          - generic [ref=e957]: "Insufficient validation of untrusted input in WebAppInstalls in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e958] [cursor=pointer]:
+                            - img [ref=e959]
+                            - text: Dismiss
+                        - listitem [ref=e962]:
+                          - button "CVE-2026-11013" [ref=e963] [cursor=pointer]
+                          - generic [ref=e964]:
+                            - text: Medium
+                            - generic [ref=e965]: "6.5"
+                          - generic [ref=e966]: "Insufficient validation of untrusted input in Network in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e967] [cursor=pointer]:
+                            - img [ref=e968]
+                            - text: Dismiss
+                        - listitem [ref=e971]:
+                          - button "CVE-2026-11014" [ref=e972] [cursor=pointer]
+                          - generic [ref=e973]:
+                            - text: Medium
+                            - generic [ref=e974]: "6.5"
+                          - generic [ref=e975]: "Insufficient policy enforcement in Extensions in Google Chrome prior to 149.0.7827.53 allowed an attacker who convinced a user to install a malicious extension to bypass site isolation via a crafted Chrome Extension. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e976] [cursor=pointer]:
+                            - img [ref=e977]
+                            - text: Dismiss
+                        - listitem [ref=e980]:
+                          - button "CVE-2026-11016" [ref=e981] [cursor=pointer]
+                          - generic [ref=e982]:
+                            - text: Medium
+                            - generic [ref=e983]: "6.5"
+                          - generic [ref=e984]: "Insufficient validation of untrusted input in Network in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to bypass same origin policy via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e985] [cursor=pointer]:
+                            - img [ref=e986]
+                            - text: Dismiss
+                        - listitem [ref=e989]:
+                          - button "CVE-2026-11017" [ref=e990] [cursor=pointer]
+                          - generic [ref=e991]:
+                            - text: Medium
+                            - generic [ref=e992]: "6.5"
+                          - generic [ref=e993]: "Inappropriate implementation in Link Preview in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to bypass navigation restrictions via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e994] [cursor=pointer]:
+                            - img [ref=e995]
+                            - text: Dismiss
+                        - listitem [ref=e998]:
+                          - button "CVE-2026-11018" [ref=e999] [cursor=pointer]
+                          - generic [ref=e1000]:
+                            - text: Medium
+                            - generic [ref=e1001]: "6.5"
+                          - generic [ref=e1002]: "Insufficient policy enforcement in Actor in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass navigation restrictions via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1003] [cursor=pointer]:
+                            - img [ref=e1004]
+                            - text: Dismiss
+                        - listitem [ref=e1007]:
+                          - button "CVE-2026-11019" [ref=e1008] [cursor=pointer]
+                          - generic [ref=e1009]:
+                            - text: Medium
+                            - generic [ref=e1010]: "6.5"
+                          - generic [ref=e1011]: "Inappropriate implementation in Payments in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to perform domain spoofing via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1012] [cursor=pointer]:
+                            - img [ref=e1013]
+                            - text: Dismiss
+                        - listitem [ref=e1016]:
+                          - button "CVE-2026-11020" [ref=e1017] [cursor=pointer]
+                          - generic [ref=e1018]:
+                            - text: Medium
+                            - generic [ref=e1019]: "6.5"
+                          - generic [ref=e1020]: "Inappropriate implementation in Extensions in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted XML file. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1021] [cursor=pointer]:
+                            - img [ref=e1022]
+                            - text: Dismiss
+                        - listitem [ref=e1025]:
+                          - button "CVE-2026-11022" [ref=e1026] [cursor=pointer]
+                          - generic [ref=e1027]:
+                            - text: Medium
+                            - generic [ref=e1028]: "6.5"
+                          - generic [ref=e1029]: "Insufficient validation of untrusted input in DevTools in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to bypass same origin policy via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1030] [cursor=pointer]:
+                            - img [ref=e1031]
+                            - text: Dismiss
+                        - listitem [ref=e1034]:
+                          - button "CVE-2026-11026" [ref=e1035] [cursor=pointer]
+                          - generic [ref=e1036]:
+                            - text: Medium
+                            - generic [ref=e1037]: "6.5"
+                          - generic [ref=e1038]: "Inappropriate implementation in Extensions in Google Chrome prior to 149.0.7827.53 allowed an attacker who convinced a user to install a malicious extension to bypass navigation restrictions via a crafted Chrome Extension. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1039] [cursor=pointer]:
+                            - img [ref=e1040]
+                            - text: Dismiss
+                        - listitem [ref=e1043]:
+                          - button "CVE-2026-11027" [ref=e1044] [cursor=pointer]
+                          - generic [ref=e1045]:
+                            - text: Medium
+                            - generic [ref=e1046]: "6.5"
+                          - generic [ref=e1047]: "Insufficient validation of untrusted input in Glic in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1048] [cursor=pointer]:
+                            - img [ref=e1049]
+                            - text: Dismiss
+                        - listitem [ref=e1052]:
+                          - button "CVE-2026-11032" [ref=e1053] [cursor=pointer]
+                          - generic [ref=e1054]:
+                            - text: Medium
+                            - generic [ref=e1055]: "6.5"
+                          - generic [ref=e1056]: "Inappropriate implementation in Password Manager in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1057] [cursor=pointer]:
+                            - img [ref=e1058]
+                            - text: Dismiss
+                        - listitem [ref=e1061]:
+                          - button "CVE-2026-11033" [ref=e1062] [cursor=pointer]
+                          - generic [ref=e1063]:
+                            - text: Medium
+                            - generic [ref=e1064]: "6.5"
+                          - generic [ref=e1065]: "Uninitialized Use in WebML in Google Chrome on Mac prior to 149.0.7827.53 allowed a remote attacker to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1066] [cursor=pointer]:
+                            - img [ref=e1067]
+                            - text: Dismiss
+                        - listitem [ref=e1070]:
+                          - button "CVE-2026-11036" [ref=e1071] [cursor=pointer]
+                          - generic [ref=e1072]:
+                            - text: Medium
+                            - generic [ref=e1073]: "6.5"
+                          - generic [ref=e1074]: "Inappropriate implementation in DOM in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass same origin policy via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1075] [cursor=pointer]:
+                            - img [ref=e1076]
+                            - text: Dismiss
+                        - listitem [ref=e1079]:
+                          - button "CVE-2026-11044" [ref=e1080] [cursor=pointer]
+                          - generic [ref=e1081]:
+                            - text: Medium
+                            - generic [ref=e1082]: "6.5"
+                          - generic [ref=e1083]: "Integer overflow in ANGLE in Google Chrome on Mac prior to 149.0.7827.53 allowed a remote attacker to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1084] [cursor=pointer]:
+                            - img [ref=e1085]
+                            - text: Dismiss
+                        - listitem [ref=e1088]:
+                          - button "CVE-2026-11045" [ref=e1089] [cursor=pointer]
+                          - generic [ref=e1090]:
+                            - text: Medium
+                            - generic [ref=e1091]: "6.5"
+                          - generic [ref=e1092]: "Insufficient validation of untrusted input in GPU in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1093] [cursor=pointer]:
+                            - img [ref=e1094]
+                            - text: Dismiss
+                        - listitem [ref=e1097]:
+                          - button "CVE-2026-11048" [ref=e1098] [cursor=pointer]
+                          - generic [ref=e1099]:
+                            - text: Medium
+                            - generic [ref=e1100]: "6.5"
+                          - generic [ref=e1101]: "Inappropriate implementation in Extensions in Google Chrome prior to 149.0.7827.53 allowed an attacker who convinced a user to install a malicious extension to bypass same origin policy via a crafted Chrome Extension. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1102] [cursor=pointer]:
+                            - img [ref=e1103]
+                            - text: Dismiss
+                        - listitem [ref=e1106]:
+                          - button "CVE-2026-11051" [ref=e1107] [cursor=pointer]
+                          - generic [ref=e1108]:
+                            - text: Medium
+                            - generic [ref=e1109]: "6.5"
+                          - generic [ref=e1110]: "Out of bounds read in ANGLE in Google Chrome on Linux prior to 149.0.7827.53 allowed a remote attacker to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1111] [cursor=pointer]:
+                            - img [ref=e1112]
+                            - text: Dismiss
+                        - listitem [ref=e1115]:
+                          - button "CVE-2026-11057" [ref=e1116] [cursor=pointer]
+                          - generic [ref=e1117]:
+                            - text: Medium
+                            - generic [ref=e1118]: "6.5"
+                          - generic [ref=e1119]: "Uninitialized Use in Skia in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1120] [cursor=pointer]:
+                            - img [ref=e1121]
+                            - text: Dismiss
+                        - listitem [ref=e1124]:
+                          - button "CVE-2026-11064" [ref=e1125] [cursor=pointer]
+                          - generic [ref=e1126]:
+                            - text: Medium
+                            - generic [ref=e1127]: "6.5"
+                          - generic [ref=e1128]: "Race in GPU in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1129] [cursor=pointer]:
+                            - img [ref=e1130]
+                            - text: Dismiss
+                        - listitem [ref=e1133]:
+                          - button "CVE-2026-11067" [ref=e1134] [cursor=pointer]
+                          - generic [ref=e1135]:
+                            - text: Medium
+                            - generic [ref=e1136]: "6.5"
+                          - generic [ref=e1137]: "Uninitialized Use in Dawn in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1138] [cursor=pointer]:
+                            - img [ref=e1139]
+                            - text: Dismiss
+                        - listitem [ref=e1142]:
+                          - button "CVE-2026-11069" [ref=e1143] [cursor=pointer]
+                          - generic [ref=e1144]:
+                            - text: Medium
+                            - generic [ref=e1145]: "6.5"
+                          - generic [ref=e1146]: "Insufficient validation of untrusted input in Cast in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass same origin policy via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1147] [cursor=pointer]:
+                            - img [ref=e1148]
+                            - text: Dismiss
+                        - listitem [ref=e1151]:
+                          - button "CVE-2026-11073" [ref=e1152] [cursor=pointer]
+                          - generic [ref=e1153]:
+                            - text: Medium
+                            - generic [ref=e1154]: "6.5"
+                          - generic [ref=e1155]: "Use after free in WebGL in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1156] [cursor=pointer]:
+                            - img [ref=e1157]
+                            - text: Dismiss
+                        - listitem [ref=e1160]:
+                          - button "CVE-2026-11075" [ref=e1161] [cursor=pointer]
+                          - generic [ref=e1162]:
+                            - text: Medium
+                            - generic [ref=e1163]: "6.5"
+                          - generic [ref=e1164]: "Out of bounds read in V8 in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1165] [cursor=pointer]:
+                            - img [ref=e1166]
+                            - text: Dismiss
+                        - listitem [ref=e1169]:
+                          - button "CVE-2026-11078" [ref=e1170] [cursor=pointer]
+                          - generic [ref=e1171]:
+                            - text: Medium
+                            - generic [ref=e1172]: "6.5"
+                          - generic [ref=e1173]: "Inappropriate implementation in FileSystem in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to bypass same origin policy via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1174] [cursor=pointer]:
+                            - img [ref=e1175]
+                            - text: Dismiss
+                        - listitem [ref=e1178]:
+                          - button "CVE-2026-11081" [ref=e1179] [cursor=pointer]
+                          - generic [ref=e1180]:
+                            - text: Medium
+                            - generic [ref=e1181]: "6.5"
+                          - generic [ref=e1182]: "Inappropriate implementation in Canvas in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass same origin policy via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1183] [cursor=pointer]:
+                            - img [ref=e1184]
+                            - text: Dismiss
+                        - listitem [ref=e1187]:
+                          - button "CVE-2026-11083" [ref=e1188] [cursor=pointer]
+                          - generic [ref=e1189]:
+                            - text: Medium
+                            - generic [ref=e1190]: "6.5"
+                          - generic [ref=e1191]: "Inappropriate implementation in Password Manager in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1192] [cursor=pointer]:
+                            - img [ref=e1193]
+                            - text: Dismiss
+                        - listitem [ref=e1196]:
+                          - button "CVE-2026-11084" [ref=e1197] [cursor=pointer]
+                          - generic [ref=e1198]:
+                            - text: Medium
+                            - generic [ref=e1199]: "6.5"
+                          - generic [ref=e1200]: "Inappropriate implementation in Password Manager in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1201] [cursor=pointer]:
+                            - img [ref=e1202]
+                            - text: Dismiss
+                        - listitem [ref=e1205]:
+                          - button "CVE-2026-11087" [ref=e1206] [cursor=pointer]
+                          - generic [ref=e1207]:
+                            - text: Medium
+                            - generic [ref=e1208]: "6.5"
+                          - generic [ref=e1209]: "Uninitialized Use in ANGLE in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1210] [cursor=pointer]:
+                            - img [ref=e1211]
+                            - text: Dismiss
+                        - listitem [ref=e1214]:
+                          - button "CVE-2026-11089" [ref=e1215] [cursor=pointer]
+                          - generic [ref=e1216]:
+                            - text: Medium
+                            - generic [ref=e1217]: "6.5"
+                          - generic [ref=e1218]: "Uninitialized Use in Media in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1219] [cursor=pointer]:
+                            - img [ref=e1220]
+                            - text: Dismiss
+                        - listitem [ref=e1223]:
+                          - button "CVE-2026-11090" [ref=e1224] [cursor=pointer]
+                          - generic [ref=e1225]:
+                            - text: Medium
+                            - generic [ref=e1226]: "6.5"
+                          - generic [ref=e1227]: "Uninitialized Use in ANGLE in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1228] [cursor=pointer]:
+                            - img [ref=e1229]
+                            - text: Dismiss
+                        - listitem [ref=e1232]:
+                          - button "CVE-2026-11093" [ref=e1233] [cursor=pointer]
+                          - generic [ref=e1234]:
+                            - text: Medium
+                            - generic [ref=e1235]: "6.5"
+                          - generic [ref=e1236]: "Inappropriate implementation in Printing in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1237] [cursor=pointer]:
+                            - img [ref=e1238]
+                            - text: Dismiss
+                        - listitem [ref=e1241]:
+                          - button "CVE-2026-11101" [ref=e1242] [cursor=pointer]
+                          - generic [ref=e1243]:
+                            - text: Medium
+                            - generic [ref=e1244]: "6.5"
+                          - generic [ref=e1245]: "Uninitialized Use in Dawn in Google Chrome on Windows prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1246] [cursor=pointer]:
+                            - img [ref=e1247]
+                            - text: Dismiss
+                        - listitem [ref=e1250]:
+                          - button "CVE-2026-11104" [ref=e1251] [cursor=pointer]
+                          - generic [ref=e1252]:
+                            - text: Medium
+                            - generic [ref=e1253]: "6.5"
+                          - generic [ref=e1254]: "Uninitialized Use in ANGLE in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1255] [cursor=pointer]:
+                            - img [ref=e1256]
+                            - text: Dismiss
+                        - listitem [ref=e1259]:
+                          - button "CVE-2026-11105" [ref=e1260] [cursor=pointer]
+                          - generic [ref=e1261]:
+                            - text: Medium
+                            - generic [ref=e1262]: "6.5"
+                          - generic [ref=e1263]: "Insufficient validation of untrusted input in WebUI in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1264] [cursor=pointer]:
+                            - img [ref=e1265]
+                            - text: Dismiss
+                        - listitem [ref=e1268]:
+                          - button "CVE-2026-11106" [ref=e1269] [cursor=pointer]
+                          - generic [ref=e1270]:
+                            - text: Medium
+                            - generic [ref=e1271]: "6.5"
+                          - generic [ref=e1272]: "Inappropriate implementation in Media in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1273] [cursor=pointer]:
+                            - img [ref=e1274]
+                            - text: Dismiss
+                        - listitem [ref=e1277]:
+                          - button "CVE-2026-11109" [ref=e1278] [cursor=pointer]
+                          - generic [ref=e1279]:
+                            - text: Medium
+                            - generic [ref=e1280]: "6.5"
+                          - generic [ref=e1281]: "Uninitialized Use in ANGLE in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1282] [cursor=pointer]:
+                            - img [ref=e1283]
+                            - text: Dismiss
+                        - listitem [ref=e1286]:
+                          - button "CVE-2026-11110" [ref=e1287] [cursor=pointer]
+                          - generic [ref=e1288]:
+                            - text: Medium
+                            - generic [ref=e1289]: "6.5"
+                          - generic [ref=e1290]: "Uninitialized Use in ANGLE in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1291] [cursor=pointer]:
+                            - img [ref=e1292]
+                            - text: Dismiss
+                        - listitem [ref=e1295]:
+                          - button "CVE-2026-11129" [ref=e1296] [cursor=pointer]
+                          - generic [ref=e1297]:
+                            - text: Medium
+                            - generic [ref=e1298]: "6.5"
+                          - generic [ref=e1299]: "Inappropriate implementation in Extensions in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1300] [cursor=pointer]:
+                            - img [ref=e1301]
+                            - text: Dismiss
+                        - listitem [ref=e1304]:
+                          - button "CVE-2026-11132" [ref=e1305] [cursor=pointer]
+                          - generic [ref=e1306]:
+                            - text: Medium
+                            - generic [ref=e1307]: "6.5"
+                          - generic [ref=e1308]: "Insufficient policy enforcement in Paint in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass same origin policy via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1309] [cursor=pointer]:
+                            - img [ref=e1310]
+                            - text: Dismiss
+                        - listitem [ref=e1313]:
+                          - button "CVE-2026-11133" [ref=e1314] [cursor=pointer]
+                          - generic [ref=e1315]:
+                            - text: Medium
+                            - generic [ref=e1316]: "6.5"
+                          - generic [ref=e1317]: "Insufficient policy enforcement in Paint in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass same origin policy via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1318] [cursor=pointer]:
+                            - img [ref=e1319]
+                            - text: Dismiss
+                        - listitem [ref=e1322]:
+                          - button "CVE-2026-11134" [ref=e1323] [cursor=pointer]
+                          - generic [ref=e1324]:
+                            - text: Medium
+                            - generic [ref=e1325]: "6.5"
+                          - generic [ref=e1326]: "Inappropriate implementation in Media in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1327] [cursor=pointer]:
+                            - img [ref=e1328]
+                            - text: Dismiss
+                        - listitem [ref=e1331]:
+                          - button "CVE-2026-11135" [ref=e1332] [cursor=pointer]
+                          - generic [ref=e1333]:
+                            - text: Medium
+                            - generic [ref=e1334]: "6.5"
+                          - generic [ref=e1335]: "Insufficient policy enforcement in Autofill in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass discretionary access control via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1336] [cursor=pointer]:
+                            - img [ref=e1337]
+                            - text: Dismiss
+                        - listitem [ref=e1340]:
+                          - button "CVE-2026-11137" [ref=e1341] [cursor=pointer]
+                          - generic [ref=e1342]:
+                            - text: Medium
+                            - generic [ref=e1343]: "6.5"
+                          - generic [ref=e1344]: "Uninitialized Use in ANGLE in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1345] [cursor=pointer]:
+                            - img [ref=e1346]
+                            - text: Dismiss
+                        - listitem [ref=e1349]:
+                          - button "CVE-2026-11138" [ref=e1350] [cursor=pointer]
+                          - generic [ref=e1351]:
+                            - text: Medium
+                            - generic [ref=e1352]: "6.5"
+                          - generic [ref=e1353]: "Uninitialized Use in ANGLE in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1354] [cursor=pointer]:
+                            - img [ref=e1355]
+                            - text: Dismiss
+                        - listitem [ref=e1358]:
+                          - button "CVE-2026-11139" [ref=e1359] [cursor=pointer]
+                          - generic [ref=e1360]:
+                            - text: Medium
+                            - generic [ref=e1361]: "6.5"
+                          - generic [ref=e1362]: "Inappropriate implementation in Paint in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1363] [cursor=pointer]:
+                            - img [ref=e1364]
+                            - text: Dismiss
+                        - listitem [ref=e1367]:
+                          - button "CVE-2026-11140" [ref=e1368] [cursor=pointer]
+                          - generic [ref=e1369]:
+                            - text: Medium
+                            - generic [ref=e1370]: "6.5"
+                          - generic [ref=e1371]: "Out of bounds read in Chromecast in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1372] [cursor=pointer]:
+                            - img [ref=e1373]
+                            - text: Dismiss
+                        - listitem [ref=e1376]:
+                          - button "CVE-2026-11141" [ref=e1377] [cursor=pointer]
+                          - generic [ref=e1378]:
+                            - text: Medium
+                            - generic [ref=e1379]: "6.5"
+                          - generic [ref=e1380]: "Uninitialized Use in Audio in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1381] [cursor=pointer]:
+                            - img [ref=e1382]
+                            - text: Dismiss
+                        - listitem [ref=e1385]:
+                          - button "CVE-2026-11142" [ref=e1386] [cursor=pointer]
+                          - generic [ref=e1387]:
+                            - text: Medium
+                            - generic [ref=e1388]: "6.5"
+                          - generic [ref=e1389]: "Insufficient policy enforcement in Paint in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass same origin policy via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1390] [cursor=pointer]:
+                            - img [ref=e1391]
+                            - text: Dismiss
+                        - listitem [ref=e1394]:
+                          - button "CVE-2026-11143" [ref=e1395] [cursor=pointer]
+                          - generic [ref=e1396]:
+                            - text: Medium
+                            - generic [ref=e1397]: "6.5"
+                          - generic [ref=e1398]: "Out of bounds read in Extensions in Google Chrome on Linux prior to 149.0.7827.53 allowed an attacker who convinced a user to install a malicious extension to obtain potentially sensitive information from process memory via a crafted Chrome Extension. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1399] [cursor=pointer]:
+                            - img [ref=e1400]
+                            - text: Dismiss
+                        - listitem [ref=e1403]:
+                          - button "CVE-2026-11148" [ref=e1404] [cursor=pointer]
+                          - generic [ref=e1405]:
+                            - text: Medium
+                            - generic [ref=e1406]: "6.5"
+                          - generic [ref=e1407]: "Inappropriate implementation in Payments in Google Chrome on Android prior to 149.0.7827.53 allowed a local attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1408] [cursor=pointer]:
+                            - img [ref=e1409]
+                            - text: Dismiss
+                        - listitem [ref=e1412]:
+                          - button "CVE-2026-11160" [ref=e1413] [cursor=pointer]
+                          - generic [ref=e1414]:
+                            - text: Medium
+                            - generic [ref=e1415]: "6.5"
+                          - generic [ref=e1416]: "Out of bounds read in Input in Google Chrome on Linux prior to 149.0.7827.53 allowed a remote attacker to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1417] [cursor=pointer]:
+                            - img [ref=e1418]
+                            - text: Dismiss
+                        - listitem [ref=e1421]:
+                          - button "CVE-2026-11168" [ref=e1422] [cursor=pointer]
+                          - generic [ref=e1423]:
+                            - text: Medium
+                            - generic [ref=e1424]: "6.5"
+                          - generic [ref=e1425]: "Inappropriate implementation in Extensions in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1426] [cursor=pointer]:
+                            - img [ref=e1427]
+                            - text: Dismiss
+                        - listitem [ref=e1430]:
+                          - button "CVE-2026-11176" [ref=e1431] [cursor=pointer]
+                          - generic [ref=e1432]:
+                            - text: Medium
+                            - generic [ref=e1433]: "6.5"
+                          - generic [ref=e1434]: "Inappropriate implementation in Media in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1435] [cursor=pointer]:
+                            - img [ref=e1436]
+                            - text: Dismiss
+                        - listitem [ref=e1439]:
+                          - button "CVE-2026-11180" [ref=e1440] [cursor=pointer]
+                          - generic [ref=e1441]:
+                            - text: Medium
+                            - generic [ref=e1442]: "6.5"
+                          - generic [ref=e1443]: "Inappropriate implementation in SVG in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1444] [cursor=pointer]:
+                            - img [ref=e1445]
+                            - text: Dismiss
+                        - listitem [ref=e1448]:
+                          - button "CVE-2026-11258" [ref=e1449] [cursor=pointer]
+                          - generic [ref=e1450]:
+                            - text: Medium
+                            - generic [ref=e1451]: "6.5"
+                          - generic [ref=e1452]: "Inappropriate implementation in File System Access in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who convinced a user to engage in specific UI gestures to bypass discretionary access control via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1453] [cursor=pointer]:
+                            - img [ref=e1454]
+                            - text: Dismiss
+                        - listitem [ref=e1457]:
+                          - button "CVE-2026-11263" [ref=e1458] [cursor=pointer]
+                          - generic [ref=e1459]:
+                            - text: Medium
+                            - generic [ref=e1460]: "6.5"
+                          - generic [ref=e1461]: "Insufficient policy enforcement in WebAuthentication in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to leak cross-origin data via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1462] [cursor=pointer]:
+                            - img [ref=e1463]
+                            - text: Dismiss
+                        - listitem [ref=e1466]:
+                          - button "CVE-2026-11270" [ref=e1467] [cursor=pointer]
+                          - generic [ref=e1468]:
+                            - text: Medium
+                            - generic [ref=e1469]: "6.5"
+                          - generic [ref=e1470]: "Inappropriate implementation in UI in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1471] [cursor=pointer]:
+                            - img [ref=e1472]
+                            - text: Dismiss
+                        - listitem [ref=e1475]:
+                          - button "CVE-2026-11271" [ref=e1476] [cursor=pointer]
+                          - generic [ref=e1477]:
+                            - text: Medium
+                            - generic [ref=e1478]: "6.5"
+                          - generic [ref=e1479]: "Inappropriate implementation in Passwords in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who convinced a user to engage in specific UI gestures to leak cross-origin data via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1480] [cursor=pointer]:
+                            - img [ref=e1481]
+                            - text: Dismiss
+                        - listitem [ref=e1484]:
+                          - button "CVE-2026-11275" [ref=e1485] [cursor=pointer]
+                          - generic [ref=e1486]:
+                            - text: Medium
+                            - generic [ref=e1487]: "6.5"
+                          - generic [ref=e1488]: "Inappropriate implementation in Page Info in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to bypass navigation restrictions via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1489] [cursor=pointer]:
+                            - img [ref=e1490]
+                            - text: Dismiss
+                        - listitem [ref=e1493]:
+                          - button "CVE-2026-11283" [ref=e1494] [cursor=pointer]
+                          - generic [ref=e1495]:
+                            - text: Medium
+                            - generic [ref=e1496]: "6.5"
+                          - generic [ref=e1497]: "Insufficient validation of untrusted input in Shortcuts in Google Chrome on Mac prior to 149.0.7827.53 allowed a remote attacker to bypass navigation restrictions via a malicious file. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1498] [cursor=pointer]:
+                            - img [ref=e1499]
+                            - text: Dismiss
+                        - listitem [ref=e1502]:
+                          - button "CVE-2026-11287" [ref=e1503] [cursor=pointer]
+                          - generic [ref=e1504]:
+                            - text: Medium
+                            - generic [ref=e1505]: "6.5"
+                          - generic [ref=e1506]: "Insufficient policy enforcement in Navigation in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to bypass navigation restrictions via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1507] [cursor=pointer]:
+                            - img [ref=e1508]
+                            - text: Dismiss
+                        - listitem [ref=e1511]:
+                          - button "CVE-2026-11308" [ref=e1512] [cursor=pointer]
+                          - generic [ref=e1513]:
+                            - text: Medium
+                            - generic [ref=e1514]: "6.3"
+                          - generic [ref=e1515]: "Inappropriate implementation in Extensions in Google Chrome prior to 149.0.7827.53 allowed an attacker who convinced a user to install a malicious extension to perform privilege escalation via a crafted Chrome Extension. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1516] [cursor=pointer]:
+                            - img [ref=e1517]
+                            - text: Dismiss
+                        - listitem [ref=e1520]:
+                          - button "CVE-2026-11034" [ref=e1521] [cursor=pointer]
+                          - generic [ref=e1522]:
+                            - text: Medium
+                            - generic [ref=e1523]: "6.1"
+                          - generic [ref=e1524]: "Insufficient validation of untrusted input in Tab Group Sync in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker to inject arbitrary scripts or HTML (UXSS) via malicious network traffic. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1525] [cursor=pointer]:
+                            - img [ref=e1526]
+                            - text: Dismiss
+                        - listitem [ref=e1529]:
+                          - button "CVE-2026-11150" [ref=e1530] [cursor=pointer]
+                          - generic [ref=e1531]:
+                            - text: Medium
+                            - generic [ref=e1532]: "6.1"
+                          - generic [ref=e1533]: "Inappropriate implementation in XML in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to inject arbitrary scripts or HTML (UXSS) via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1534] [cursor=pointer]:
+                            - img [ref=e1535]
+                            - text: Dismiss
+                        - listitem [ref=e1538]:
+                          - button "CVE-2026-11273" [ref=e1539] [cursor=pointer]
+                          - generic [ref=e1540]:
+                            - text: Medium
+                            - generic [ref=e1541]: "6.1"
+                          - generic [ref=e1542]: "Insufficient validation of untrusted input in Omnibox in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who convinced a user to engage in specific UI gestures to inject arbitrary scripts or HTML (UXSS) via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1543] [cursor=pointer]:
+                            - img [ref=e1544]
+                            - text: Dismiss
+                        - listitem [ref=e1547]:
+                          - button "CVE-2026-11157" [ref=e1548] [cursor=pointer]
+                          - generic [ref=e1549]:
+                            - text: Medium
+                            - generic [ref=e1550]: "5.4"
+                          - generic [ref=e1551]: "Script injection in Accessibility in Google Chrome prior to 149.0.7827.53 allowed an attacker who convinced a user to install a malicious extension to inject arbitrary scripts or HTML (UXSS) via a crafted Chrome Extension. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1552] [cursor=pointer]:
+                            - img [ref=e1553]
+                            - text: Dismiss
+                        - listitem [ref=e1556]:
+                          - button "CVE-2026-11004" [ref=e1557] [cursor=pointer]
+                          - generic [ref=e1558]:
+                            - text: Medium
+                            - generic [ref=e1559]: "5.3"
+                          - generic [ref=e1560]: "Out of bounds read in ANGLE in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to obtain potentially sensitive information from process memory via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1561] [cursor=pointer]:
+                            - img [ref=e1562]
+                            - text: Dismiss
+                        - listitem [ref=e1565]:
+                          - button "CVE-2026-11145" [ref=e1566] [cursor=pointer]
+                          - generic [ref=e1567]:
+                            - text: Medium
+                            - generic [ref=e1568]: "5.3"
+                          - generic [ref=e1569]: "Race in Geolocation in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1570] [cursor=pointer]:
+                            - img [ref=e1571]
+                            - text: Dismiss
+                        - listitem [ref=e1574]:
+                          - button "CVE-2026-11174" [ref=e1575] [cursor=pointer]
+                          - generic [ref=e1576]:
+                            - text: Medium
+                            - generic [ref=e1577]: "5.3"
+                          - generic [ref=e1578]: "Inappropriate implementation in Site Isolation in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to bypass site isolation via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1579] [cursor=pointer]:
+                            - img [ref=e1580]
+                            - text: Dismiss
+                        - listitem [ref=e1583]:
+                          - button "CVE-2026-11281" [ref=e1584] [cursor=pointer]
+                          - generic [ref=e1585]:
+                            - text: Medium
+                            - generic [ref=e1586]: "5.0"
+                          - generic [ref=e1587]: "Integer overflow in Chromoting in Google Chrome on Windows prior to 149.0.7827.53 allowed a local attacker to obtain potentially sensitive information from process memory via a crafted ETW event. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1588] [cursor=pointer]:
+                            - img [ref=e1589]
+                            - text: Dismiss
+                        - listitem [ref=e1592]:
+                          - button "CVE-2026-11031" [ref=e1593] [cursor=pointer]
+                          - generic [ref=e1594]:
+                            - text: Medium
+                            - generic [ref=e1595]: "4.3"
+                          - generic [ref=e1596]: "Insufficient validation of untrusted input in Password Manager in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to perform UI spoofing via malicious network traffic. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1597] [cursor=pointer]:
+                            - img [ref=e1598]
+                            - text: Dismiss
+                        - listitem [ref=e1601]:
+                          - button "CVE-2026-11062" [ref=e1602] [cursor=pointer]
+                          - generic [ref=e1603]:
+                            - text: Medium
+                            - generic [ref=e1604]: "4.3"
+                          - generic [ref=e1605]: "Insufficient policy enforcement in Extensions in Google Chrome prior to 149.0.7827.53 allowed an attacker who convinced a user to install a malicious extension to inject scripts or HTML into a privileged page via a crafted Chrome Extension. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1606] [cursor=pointer]:
+                            - img [ref=e1607]
+                            - text: Dismiss
+                        - listitem [ref=e1610]:
+                          - button "CVE-2026-11107" [ref=e1611] [cursor=pointer]
+                          - generic [ref=e1612]:
+                            - text: Medium
+                            - generic [ref=e1613]: "4.3"
+                          - generic [ref=e1614]: "Inappropriate implementation in Downloads in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to perform UI spoofing via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1615] [cursor=pointer]:
+                            - img [ref=e1616]
+                            - text: Dismiss
+                        - listitem [ref=e1619]:
+                          - button "CVE-2026-11155" [ref=e1620] [cursor=pointer]
+                          - generic [ref=e1621]:
+                            - text: Medium
+                            - generic [ref=e1622]: "4.3"
+                          - generic [ref=e1623]: "Inappropriate implementation in CSS in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1624] [cursor=pointer]:
+                            - img [ref=e1625]
+                            - text: Dismiss
+                        - listitem [ref=e1628]:
+                          - button "CVE-2026-11156" [ref=e1629] [cursor=pointer]
+                          - generic [ref=e1630]:
+                            - text: Medium
+                            - generic [ref=e1631]: "4.3"
+                          - generic [ref=e1632]: "Inappropriate implementation in CSS in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1633] [cursor=pointer]:
+                            - img [ref=e1634]
+                            - text: Dismiss
+                        - listitem [ref=e1637]:
+                          - button "CVE-2026-11159" [ref=e1638] [cursor=pointer]
+                          - generic [ref=e1639]:
+                            - text: Medium
+                            - generic [ref=e1640]: "4.3"
+                          - generic [ref=e1641]: "Uninitialized Use in Skia in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1642] [cursor=pointer]:
+                            - img [ref=e1643]
+                            - text: Dismiss
+                        - listitem [ref=e1646]:
+                          - button "CVE-2026-11161" [ref=e1647] [cursor=pointer]
+                          - generic [ref=e1648]:
+                            - text: Medium
+                            - generic [ref=e1649]: "4.3"
+                          - generic [ref=e1650]: "Inappropriate implementation in DataTransfer in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1651] [cursor=pointer]:
+                            - img [ref=e1652]
+                            - text: Dismiss
+                        - listitem [ref=e1655]:
+                          - button "CVE-2026-11162" [ref=e1656] [cursor=pointer]
+                          - generic [ref=e1657]:
+                            - text: Medium
+                            - generic [ref=e1658]: "4.3"
+                          - generic [ref=e1659]: "Inappropriate implementation in CSS in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1660] [cursor=pointer]:
+                            - img [ref=e1661]
+                            - text: Dismiss
+                        - listitem [ref=e1664]:
+                          - button "CVE-2026-11178" [ref=e1665] [cursor=pointer]
+                          - generic [ref=e1666]:
+                            - text: Medium
+                            - generic [ref=e1667]: "4.3"
+                          - generic [ref=e1668]: "Insufficient policy enforcement in WebView in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker to leak cross-origin data via a crafted HTML page. (Chromium security severity: Medium)"
+                          - button "Dismiss" [ref=e1669] [cursor=pointer]:
+                            - img [ref=e1670]
+                            - text: Dismiss
+                        - listitem [ref=e1673]:
+                          - button "CVE-2026-11257" [ref=e1674] [cursor=pointer]
+                          - generic [ref=e1675]:
+                            - text: Medium
+                            - generic [ref=e1676]: "4.3"
+                          - generic [ref=e1677]: "Inappropriate implementation in Browser in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass navigation restrictions via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1678] [cursor=pointer]:
+                            - img [ref=e1679]
+                            - text: Dismiss
+                        - listitem [ref=e1682]:
+                          - button "CVE-2026-11259" [ref=e1683] [cursor=pointer]
+                          - generic [ref=e1684]:
+                            - text: Medium
+                            - generic [ref=e1685]: "4.3"
+                          - generic [ref=e1686]: "Insufficient validation of untrusted input in Cast in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass same origin policy via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1687] [cursor=pointer]:
+                            - img [ref=e1688]
+                            - text: Dismiss
+                        - listitem [ref=e1691]:
+                          - button "CVE-2026-11260" [ref=e1692] [cursor=pointer]
+                          - generic [ref=e1693]:
+                            - text: Medium
+                            - generic [ref=e1694]: "4.3"
+                          - generic [ref=e1695]: "Inappropriate implementation in Permissions in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass content security policy via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1696] [cursor=pointer]:
+                            - img [ref=e1697]
+                            - text: Dismiss
+                        - listitem [ref=e1700]:
+                          - button "CVE-2026-11261" [ref=e1701] [cursor=pointer]
+                          - generic [ref=e1702]:
+                            - text: Medium
+                            - generic [ref=e1703]: "4.3"
+                          - generic [ref=e1704]: "Inappropriate implementation in PDF in Google Chrome prior to 149.0.7827.53 allowed a remote attacker who had compromised the renderer process to perform UI spoofing via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1705] [cursor=pointer]:
+                            - img [ref=e1706]
+                            - text: Dismiss
+                        - listitem [ref=e1709]:
+                          - button "CVE-2026-11264" [ref=e1710] [cursor=pointer]
+                          - generic [ref=e1711]:
+                            - text: Medium
+                            - generic [ref=e1712]: "4.3"
+                          - generic [ref=e1713]: "Policy bypass in Content Security Policy in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass content security policy via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1714] [cursor=pointer]:
+                            - img [ref=e1715]
+                            - text: Dismiss
+                        - listitem [ref=e1718]:
+                          - button "CVE-2026-11266" [ref=e1719] [cursor=pointer]
+                          - generic [ref=e1720]:
+                            - text: Medium
+                            - generic [ref=e1721]: "4.3"
+                          - generic [ref=e1722]: "Inappropriate implementation in SafeBrowsing in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to bypass Safe Browsing via a malicious file. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1723] [cursor=pointer]:
+                            - img [ref=e1724]
+                            - text: Dismiss
+                        - listitem [ref=e1727]:
+                          - button "CVE-2026-11267" [ref=e1728] [cursor=pointer]
+                          - generic [ref=e1729]:
+                            - text: Medium
+                            - generic [ref=e1730]: "4.3"
+                          - generic [ref=e1731]: "Insufficient policy enforcement in Extensions in Google Chrome prior to 149.0.7827.53 allowed an attacker who convinced a user to install a malicious extension to bypass content security policy via a crafted Chrome Extension. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1732] [cursor=pointer]:
+                            - img [ref=e1733]
+                            - text: Dismiss
+                        - listitem [ref=e1736]:
+                          - button "CVE-2026-11291" [ref=e1737] [cursor=pointer]
+                          - generic [ref=e1738]:
+                            - text: Medium
+                            - generic [ref=e1739]: "4.3"
+                          - generic [ref=e1740]: "Inappropriate implementation in Android Autofill in Google Chrome on Android prior to 149.0.7827.53 allowed a remote attacker to bypass same origin policy via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1741] [cursor=pointer]:
+                            - img [ref=e1742]
+                            - text: Dismiss
+                        - listitem [ref=e1745]:
+                          - button "CVE-2026-11300" [ref=e1746] [cursor=pointer]
+                          - generic [ref=e1747]:
+                            - text: Medium
+                            - generic [ref=e1748]: "4.3"
+                          - generic [ref=e1749]: "Inappropriate implementation in Permissions in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to perform UI spoofing via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1750] [cursor=pointer]:
+                            - img [ref=e1751]
+                            - text: Dismiss
+                        - listitem [ref=e1754]:
+                          - button "CVE-2026-11302" [ref=e1755] [cursor=pointer]
+                          - generic [ref=e1756]:
+                            - text: Medium
+                            - generic [ref=e1757]: "4.3"
+                          - generic [ref=e1758]: "Insufficient policy enforcement in Chrome for iOS in Google Chrome on iOS prior to 149.0.7827.53 allowed a remote attacker to bypass discretionary access control via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1759] [cursor=pointer]:
+                            - img [ref=e1760]
+                            - text: Dismiss
+                        - listitem [ref=e1763]:
+                          - button "CVE-2026-11309" [ref=e1764] [cursor=pointer]
+                          - generic [ref=e1765]:
+                            - text: Medium
+                            - generic [ref=e1766]: "4.3"
+                          - generic [ref=e1767]: "Insufficient policy enforcement in History in Google Chrome prior to 149.0.7827.53 allowed a remote attacker to perform UI spoofing via a crafted HTML page. (Chromium security severity: Low)"
+                          - button "Dismiss" [ref=e1768] [cursor=pointer]:
+                            - img [ref=e1769]
+                            - text: Dismiss
+                  - row "GitHub CLI 2.83.1 1 CVEs 1 High High 7.4 Update to 2.93.0 23h ago" [ref=e194] [cursor=pointer]:
+                    - cell "GitHub CLI 2.83.1" [ref=e195]:
+                      - generic [ref=e196]:
+                        - img [ref=e197]
+                        - generic [ref=e199]: GitHub CLI
+                        - generic [ref=e200]: 2.83.1
+                    - cell "1 CVEs 1 High" [ref=e201]:
+                      - generic [ref=e202]:
+                        - generic [ref=e203]: 1 CVEs
+                        - generic [ref=e204]: 1 High
+                    - cell "High 7.4" [ref=e205]:
+                      - generic [ref=e206]:
+                        - text: High
+                        - generic [ref=e207]: "7.4"
+                    - cell "Update to 2.93.0" [ref=e208]
+                    - cell "23h ago" [ref=e209]
+  - alert [ref=e5]

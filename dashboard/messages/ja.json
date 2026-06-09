@@ -423,7 +423,9 @@
       "machine": "マシン",
       "recommended": "推奨",
       "matched": "一致日",
-      "actions": "操作"
+      "actions": "操作",
+      "cveCount": "脆弱性",
+      "worst": "最も深刻"
     },
     "detail": {
       "title": "脆弱性の詳細",
@@ -449,7 +451,10 @@
       "confirm": "対応不要にする",
       "done": "脆弱性を対応不要にしました",
       "failed": "脆弱性を更新できませんでした"
-    }
+    },
+    "cveCount": "{count} 件",
+    "pageInfoGroups": "{total} ページ中 {page} ページ · {count} ソフトウェア",
+    "groupedCount": "{cves} 件の脆弱性 · {software} ソフトウェア"
   },
   "licenses": {
     "title": "ライセンス",

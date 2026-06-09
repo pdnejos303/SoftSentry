@@ -423,7 +423,9 @@
       "machine": "Machine",
       "recommended": "Recommended",
       "matched": "Matched",
-      "actions": "Actions"
+      "actions": "Actions",
+      "cveCount": "Vulnerabilities",
+      "worst": "Worst"
     },
     "detail": {
       "title": "Vulnerability detail",
@@ -449,7 +451,10 @@
       "confirm": "Dismiss",
       "done": "Vulnerability dismissed",
       "failed": "Could not update the vulnerability"
-    }
+    },
+    "cveCount": "{count} CVEs",
+    "pageInfoGroups": "Page {page} of {total} · {count} software",
+    "groupedCount": "{cves} CVEs · {software} software"
   },
   "licenses": {
     "title": "Licenses",

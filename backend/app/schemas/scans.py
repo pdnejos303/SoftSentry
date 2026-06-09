@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-SignatureStatus = Literal["valid", "expired", "invalid", "unsigned"]
+SignatureStatus = Literal["valid", "expired", "invalid", "unsigned", "unknown"]
 
 
 class SignatureIn(BaseModel):

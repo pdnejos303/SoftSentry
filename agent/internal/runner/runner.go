@@ -569,12 +569,25 @@ func toScanRequest(res scanner.Result, trigger string) transport.ScanRequest {
 		}
 		// ถ้ามีข้อมูล digital signature ให้แปลงด้วย
 		if s.Signature != nil {
-			item.Signature = &transport.SignatureItem{
-				Status:         string(s.Signature.Status),    // สถานะ signature (valid/invalid/unsigned)
-				Signer:         s.Signature.Signer,            // ชื่อผู้ลงนาม
-				Issuer:         s.Signature.Issuer,            // ผู้ออก certificate
-				CertThumbprint: s.Signature.Thumbprint,        // fingerprint ของ certificate
+			si := &transport.SignatureItem{
+				Status:             string(s.Signature.Status), // สถานะ signature (valid/invalid/unsigned/unknown)
+				Signer:             s.Signature.Signer,         // ชื่อผู้ลงนาม
+				Issuer:             s.Signature.Issuer,         // ผู้ออก certificate
+				CertThumbprint:     s.Signature.Thumbprint,     // SHA-1 fingerprint ของ leaf cert
+				CertValidFrom:      s.Signature.ValidFrom,      // วันเริ่มมีผลของ cert
+				CertValidTo:        s.Signature.ValidTo,        // วันหมดอายุของ cert
+				SignatureAlgorithm: s.Signature.Algorithm,      // algorithm ที่ใช้เซ็น
 			}
+			// แปลง certificate chain ทีละ node
+			for _, n := range s.Signature.Chain {
+				si.Chain = append(si.Chain, transport.ChainNode{
+					Subject:   n.Subject,
+					Issuer:    n.Issuer,
+					ValidFrom: n.ValidFrom,
+					ValidTo:   n.ValidTo,
+				})
+			}
+			item.Signature = si
 		}
 		items = append(items, item)
 	}

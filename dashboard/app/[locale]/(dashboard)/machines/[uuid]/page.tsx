@@ -8,11 +8,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { DeleteMachineDialog } from "@/components/machines/DeleteMachineDialog";
-import { useMachineVulnerabilities } from "@/lib/vulnerability";
+import { useVulnerabilityGroups } from "@/lib/vulnerability";
 import type { VulnerabilityItem } from "@/lib/types";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
 import { ReportGenerateButton } from "@/components/reports/ReportGenerateButton";
-import { VulnTable } from "@/components/vulnerabilities/VulnTable";
+import { VulnGroupTable } from "@/components/vulnerabilities/VulnGroupTable";
 import { CVEDetailModal } from "@/components/vulnerabilities/CVEDetailModal";
 import { DismissDialog } from "@/components/vulnerabilities/DismissDialog";
 import {
@@ -274,16 +274,18 @@ function VulnerabilitiesTab({ uuid }: { uuid: string }) {
   const [showDismissed, setShowDismissed] = useState(false);
   const [openVuln, setOpenVuln] = useState<VulnerabilityItem | null>(null);
   const [dismissVuln, setDismissVuln] = useState<VulnerabilityItem | null>(null);
-  const { data, isLoading } = useMachineVulnerabilities(uuid, {
-    page_size: 100,
-    show_dismissed: showDismissed,
-  });
+
+  // Grouped view: one row per affected software (reuses the global grouped
+  // endpoint filtered to this machine). Each group expands to its CVEs.
+  const baseFilters = { machine_uuid: uuid, show_dismissed: showDismissed };
+  const { data, isLoading } = useVulnerabilityGroups({ ...baseFilters, page_size: 200 });
+  const cveTotal = data?.items.reduce((sum, g) => sum + g.cve_count, 0);
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {data ? t("totalVulnsCount", { count: data.total }) : ""}
+          {data ? t("groupedCount", { cves: cveTotal ?? 0, software: data.total }) : ""}
         </p>
         <Button
           size="sm"
@@ -293,11 +295,12 @@ function VulnerabilitiesTab({ uuid }: { uuid: string }) {
           {t("showDismissed")}
         </Button>
       </div>
-      <VulnTable
+      <VulnGroupTable
         items={data?.items}
         isLoading={isLoading}
         isAdmin={isAdmin}
         hideMachine
+        baseFilters={baseFilters}
         onOpen={setOpenVuln}
         onDismiss={setDismissVuln}
       />

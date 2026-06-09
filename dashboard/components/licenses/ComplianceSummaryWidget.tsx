@@ -42,14 +42,14 @@ export function ComplianceSummaryWidget({
       <CardHeader>
         <CardTitle className="text-base">{t("statsTitle")}</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="chart-split">
         {isLoading || !data ? (
           <Skeleton className="h-56 w-full" />
         ) : data.total === 0 ? (
           <p className="py-10 text-center text-sm text-muted-foreground">{t("empty")}</p>
         ) : (
-          <div className="flex flex-col items-center gap-6 sm:flex-row">
-            <div className="relative w-full max-w-[240px]">
+          <div className="chart-split-body">
+            <div className="relative w-full max-w-[240px] shrink-0">
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie

@@ -215,6 +215,26 @@ export interface VulnerabilityDetail extends VulnerabilityItem {
   published_at: string | null;
 }
 
+export interface SeverityCount {
+  severity: string;
+  count: number;
+}
+
+// One installed software (machine, name, version) with its CVEs aggregated.
+export interface VulnerabilityGroup {
+  software_uuid: string;
+  software_name: string;
+  software_version: string;
+  machine_uuid: string;
+  machine_hostname: string;
+  cve_count: number;
+  max_cvss: number | null;
+  top_severity: string;
+  severity_counts: SeverityCount[];
+  recommended_version: string | null;
+  latest_matched_at: string;
+}
+
 export interface VulnSummaryItem {
   severity: string;
   count: number;

@@ -1,4 +1,4 @@
-"""Application settings loaded from environment via pydantic-settings."""
+"""Application settings โหลดจาก environment ผ่าน pydantic-settings."""
 
 from __future__ import annotations
 
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     license_key_encryption_key: str = Field(
         default="",
-        description="hex32 key for Fernet — generate with openssl rand -hex 32",
+        description="hex32 key สำหรับ Fernet — สร้างด้วย openssl rand -hex 32",
     )
 
     dashboard_url: str = "http://localhost:3000"
@@ -43,19 +43,19 @@ class Settings(BaseSettings):
     nvd_api_key: str = ""
     osv_api_base: str = "https://api.osv.dev/v1"
 
-    # Directory holding agent binaries + manifest.json for auto-update
-    # (spec 1.6). Empty disables the auto-update distribution endpoints.
+    # โฟลเดอร์ที่เก็บ agent binary + manifest.json สำหรับ auto-update (spec 1.6)
+    # ถ้าว่างเปล่า จะปิด endpoint auto-update distribution
     agent_binary_dir: str = ""
 
-    # Where generated report artifacts (PDF/CSV) are written (spec 8.4). Mounted
-    # as a volume in prod so files survive container restarts.
+    # โฟลเดอร์สำหรับ report artifact (PDF/CSV) ที่สร้างออกมา (spec 8.4)
+    # mount เป็น volume ใน prod เพื่อให้ไฟล์รอดจาก container restart
     reports_dir: str = "var/reports"
-    # Generated reports older than this are purged by the daily cleanup job.
+    # report ที่เก่ากว่านี้จะถูก cleanup job รายวันลบทิ้ง
     report_retention_days: int = 30
 
-    # How often the in-process loop refreshes business-KPI gauges exposed at
-    # /metrics (Module: Telemetry). Kept in-process because Prometheus gauges
-    # live in the backend's memory; the arq worker is a separate process.
+    # ความถี่ที่ in-process loop รีเฟรช business-KPI gauge ที่ /metrics (Module: Telemetry)
+    # ต้องรันใน process เดียวกับ backend เพราะ Prometheus gauge อยู่ใน memory ของ process
+    # arq worker เป็น process แยกต่างหาก
     metrics_refresh_seconds: int = 30
 
     @property

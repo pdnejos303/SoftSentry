@@ -52,8 +52,8 @@ def create_token(
         if token_type == "access"
         else settings.jwt_refresh_ttl_seconds
     )
-    # Truncate to whole seconds so the returned datetimes match the integer
-    # NumericDate values encoded into the JWT (iat/exp).
+    # ตัดทอนให้เหลือแค่ whole seconds เพื่อให้ datetime ที่ return ตรงกับ NumericDate
+    # ที่ encode เข้า JWT (iat/exp) ซึ่งเป็น integer
     issued_at = _now().replace(microsecond=0)
     expires_at = issued_at + timedelta(seconds=ttl)
     payload: dict[str, Any] = {
@@ -85,6 +85,6 @@ def decode_token(token: str, *, expected_type: TokenType | None = None) -> dict[
 
 
 def generate_opaque_token(num_bytes: int = 32) -> str:
-    """Return base64url-encoded random token (no padding)."""
+    """สร้าง random token แบบ base64url-encoded (ไม่มี padding)."""
     raw = secrets.token_bytes(num_bytes)
     return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")

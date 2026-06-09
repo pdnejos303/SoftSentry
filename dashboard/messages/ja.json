@@ -173,7 +173,14 @@
       "scanTime": "スキャン日時",
       "type": "種類",
       "trigger": "トリガー",
-      "software": "ソフトウェア"
+      "software": "ソフトウェア",
+      "license": "ライセンス"
+    },
+    "licenseStatus": {
+      "compliant": "準拠",
+      "over_used": "超過使用",
+      "expiring_soon": "期限切れ間近",
+      "expired": "期限切れ"
     }
   },
   "deploy": {

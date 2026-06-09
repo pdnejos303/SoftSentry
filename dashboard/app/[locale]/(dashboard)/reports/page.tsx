@@ -17,7 +17,7 @@ const POLL_MS = 5_000;
 export default function ReportsPage() {
   const t = useTranslations("reports");
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "dev";
 
   const filters = useMemo(() => ({ page: 1, page_size: 100 }), []);
   const { data, isLoading } = useReports(filters, { refetchInterval: POLL_MS });

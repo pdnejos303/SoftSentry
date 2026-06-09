@@ -1,7 +1,7 @@
-"""arq worker — background jobs (CVE sync, report generation, etc.).
+"""arq worker — background jobs (CVE sync, report generation ฯลฯ)
 
-Registers the `cve_sync` task (Module 5.1) with a daily cron, plus a no-op
-`ping` so the worker boots even if everything else is disabled.
+ลงทะเบียน task `cve_sync` (Module 5.1) แบบ daily cron + task `ping` เป็น no-op
+เพื่อให้ worker boot ได้แม้ทุก job อื่นจะถูก disable
 """
 
 from __future__ import annotations
@@ -22,7 +22,7 @@ def _redis_settings() -> RedisSettings:
 
 
 async def ping(ctx: dict[str, Any]) -> str:
-    """No-op placeholder task. Lets arq start a worker before real jobs exist."""
+    """No-op placeholder task — ให้ arq start worker ได้ก่อนที่ job จริงจะพร้อม."""
     return "pong"
 
 
@@ -36,13 +36,13 @@ class WorkerSettings:
         cleanup_reports,
     ]
     cron_jobs: ClassVar[list[Any]] = [
-        # Daily incremental CVE sync at 03:00 UTC (spec 5.1).
+        # sync CVE รายวัน 03:00 UTC (spec 5.1)
         cron(cve_sync, hour=3, minute=0),
-        # Daily license compliance / expiry check at 04:00 UTC (spec 6.4).
+        # ตรวจ license compliance + expiry รายวัน 04:00 UTC (spec 6.4)
         cron(license_compliance_check, hour=4, minute=0),
-        # Fire due report schedules every minute (spec 8.5).
+        # ยิง scheduled report ที่ถึงเวลาทุกนาที (spec 8.5)
         cron(run_due_schedules, second=0),
-        # Purge expired report artifacts daily at 05:00 UTC (spec 8.4).
+        # ลบ report artifact ที่หมดอายุ รายวัน 05:00 UTC (spec 8.4)
         cron(cleanup_reports, hour=5, minute=0),
     ]
     redis_settings = _redis_settings()

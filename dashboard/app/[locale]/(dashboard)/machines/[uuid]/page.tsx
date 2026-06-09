@@ -16,6 +16,7 @@ import { VulnTable } from "@/components/vulnerabilities/VulnTable";
 import { CVEDetailModal } from "@/components/vulnerabilities/CVEDetailModal";
 import { DismissDialog } from "@/components/vulnerabilities/DismissDialog";
 import {
+  licenseVariant,
   signatureVariant,
   statusVariant,
   useMachine,
@@ -47,7 +48,7 @@ export default function MachineDetailPage() {
   const tm = useTranslations("machines");
   const router = useRouter();
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "dev";
   const { data: machine, isLoading } = useMachine(uuid);
   const trigger = useTriggerScan(uuid);
   const queryClient = useQueryClient();
@@ -211,20 +212,21 @@ function SoftwareTab({ uuid }: { uuid: string }) {
               <TableHead>{t("col.version")}</TableHead>
               <TableHead>{t("col.publisher")}</TableHead>
               <TableHead>{t("col.signature")}</TableHead>
+              <TableHead>{t("col.license")}</TableHead>
               <TableHead>{t("col.source")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={5}>
+                <TableCell colSpan={6}>
                   <Skeleton className="h-6 w-full" />
                 </TableCell>
               </TableRow>
             )}
             {data?.items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="py-6 text-center text-muted-foreground">
+                <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
                   {t("noSoftware")}
                 </TableCell>
               </TableRow>
@@ -238,6 +240,15 @@ function SoftwareTab({ uuid }: { uuid: string }) {
                   {s.signature_status ? (
                     <Badge variant={signatureVariant(s.signature_status)}>
                       {t(`sig.${s.signature_status}`)}
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {s.license_status ? (
+                    <Badge variant={licenseVariant(s.license_status)}>
+                      {t(`licenseStatus.${s.license_status}`)}
                     </Badge>
                   ) : (
                     <span className="text-muted-foreground">—</span>
@@ -259,7 +270,7 @@ function SoftwareTab({ uuid }: { uuid: string }) {
 function VulnerabilitiesTab({ uuid }: { uuid: string }) {
   const t = useTranslations("vulnerabilities");
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "dev";
   const [showDismissed, setShowDismissed] = useState(false);
   const [openVuln, setOpenVuln] = useState<VulnerabilityItem | null>(null);
   const [dismissVuln, setDismissVuln] = useState<VulnerabilityItem | null>(null);

@@ -151,6 +151,23 @@ export function statusVariant(status: string): "success" | "warning" | "muted" {
   return "muted";
 }
 
+export function licenseVariant(
+  status: string,
+): "success" | "warning" | "danger" | "outline" {
+  switch (status) {
+    case "compliant":
+      return "success";
+    case "over_used":
+      return "danger";
+    case "expired":
+      return "danger";
+    case "expiring_soon":
+      return "warning";
+    default:
+      return "outline";
+  }
+}
+
 export function signatureVariant(
   status: SignatureStatus,
 ): "success" | "warning" | "danger" | "muted" | "outline" {

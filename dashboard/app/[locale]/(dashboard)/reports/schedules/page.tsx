@@ -14,7 +14,7 @@ import { ScheduleTable } from "@/components/reports/ScheduleTable";
 export default function ReportSchedulesPage() {
   const t = useTranslations("reports");
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "dev";
   const { data, isLoading } = useSchedules();
   const [formOpen, setFormOpen] = useState(false);
 

@@ -1,9 +1,9 @@
-"""Column-level secret encryption (Module 6 — license keys).
+"""Column-level secret encryption สำหรับ license key (Module 6).
 
-Uses Fernet (AES-128-CBC + HMAC) with a key derived from the configured
-`license_key_encryption_key` (falling back to `jwt_secret` in dev/test where the
-dedicated key is unset). Deriving via SHA-256 → urlsafe-base64 means any secret
-string is accepted as input, sidestepping Fernet's strict 32-byte-base64 format.
+ใช้ Fernet (AES-128-CBC + HMAC) โดย derive key จาก `license_key_encryption_key`
+(fallback เป็น `jwt_secret` ใน dev/test ที่ยังไม่ได้ตั้งค่า dedicated key)
+derive ผ่าน SHA-256 → urlsafe-base64 เพื่อรับ secret string ทุกรูปแบบ
+โดยไม่ต้องกังวลกับ format 32-byte-base64 ที่ Fernet กำหนด
 """
 
 from __future__ import annotations
@@ -44,12 +44,12 @@ def decrypt_secret(cipher: bytes | None) -> str | None:
     try:
         return _fernet().decrypt(bytes(cipher)).decode("utf-8")
     except InvalidToken:
-        # Key rotated or corrupt ciphertext — surface as "no key" rather than 500.
+        # Key ถูก rotate หรือ ciphertext เสียหาย — คืน None แทน 500
         return None
 
 
 class EncryptedString(TypeDecorator[str]):
-    """Transparently AES-encrypts a string at rest. Stored as bytes (ciphertext)."""
+    """AES-encrypt string โปร่งใส ณ ตอนเขียน DB เก็บเป็น bytes (ciphertext)."""
 
     impl = LargeBinary
     cache_ok = True

@@ -1,4 +1,4 @@
-"""Structured logging via structlog — JSON in prod, console in dev."""
+"""Structured logging ด้วย structlog — JSON ใน production, console-friendly ใน development."""
 
 from __future__ import annotations
 

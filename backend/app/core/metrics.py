@@ -1,16 +1,14 @@
-"""Prometheus metric definitions exposed at ``GET /metrics`` (Telemetry).
+"""นิยาม Prometheus metrics ที่ expose ที่ GET /metrics (Telemetry)
 
-Three families live on the default registry:
+มี 3 กลุ่ม metric บน default registry:
 
-* **HTTP** — request count + latency, recorded by the middleware in
-  ``app.main`` using the matched *route template* as the ``path`` label so
-  cardinality stays bounded by the number of routes.
-* **Agent** — derived from the scan payloads agents push through the API
-  (``POST /agents/scans``). The architecture forbids scraping agents directly
-  (`docs/02-architecture.md`: "ไม่ส่ง telemetry นอก backend"), so the backend
-  turns reported scan data into metrics.
-* **Business KPIs** — fleet gauges refreshed periodically from the DB by
-  ``app.services.metrics_service`` (must run in-process; gauges are per-process).
+* **HTTP** — request count + latency บันทึกโดย middleware ใน app.main
+  ใช้ route template เป็น path label เพื่อควบคุม cardinality ให้ผูกกับจำนวน route ไม่ใช่จำนวน URL จริง
+* **Agent** — ดึงจาก scan payload ที่ agent push มาผ่าน POST /agents/scans
+  สถาปัตยกรรมห้าม scrape agent โดยตรง (docs/02-architecture.md: "ไม่ส่ง telemetry นอก backend")
+  ดังนั้น backend แปลง scan data ให้เป็น metrics แทน
+* **Business KPIs** — fleet gauge ที่ refresh เป็นระยะจาก DB ผ่าน metrics_service
+  ต้องรันใน process เดียวกับ backend เพราะ Prometheus gauge อยู่ใน memory ของ process นั้น
 """
 
 from __future__ import annotations
@@ -29,7 +27,7 @@ http_request_duration_seconds = Histogram(
     ["method", "path"],
 )
 
-# ── Agent (derived from pushed scan payloads) ─────────────────────────────────
+# ── Agent (ดึงจาก scan payload ที่ push เข้ามา) ──────────────────────────────
 agent_scans_total = Counter(
     "softsentry_agent_scans_total",
     "Inventory scans ingested from agents.",
@@ -50,7 +48,7 @@ agent_scan_software_count = Histogram(
     buckets=(0, 10, 25, 50, 100, 200, 400, 800),
 )
 
-# ── Business KPIs (refreshed by metrics_service) ──────────────────────────────
+# ── Business KPIs (refresh โดย metrics_service) ───────────────────────────────
 machines = Gauge(
     "softsentry_machines",
     "Machines by derived status (online/stale/offline).",
@@ -82,8 +80,8 @@ business_metrics_refreshed_timestamp_seconds = Gauge(
 
 
 def observe_scan(*, scan_type: str, duration_seconds: float, software_count: int) -> None:
-    """Record one ingested scan into the agent metric family."""
+    """บันทึก scan ที่ ingest เสร็จเข้า agent metric family."""
     agent_scans_total.labels(scan_type=scan_type).inc()
-    # Clamp clock skew / out-of-order timestamps to zero rather than dropping.
+    # clamp clock skew / timestamp ที่ผิดลำดับให้เป็น zero แทนที่จะ drop
     agent_scan_duration_seconds.observe(max(duration_seconds, 0.0))
     agent_scan_software_count.observe(software_count)

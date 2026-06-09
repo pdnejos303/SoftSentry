@@ -9,6 +9,6 @@ providers:
     updateIntervalSeconds: 30
     allowUiUpdates: true
     options:
-      # JSON dashboards are mounted here (see docker-compose grafana volumes).
+      # JSON dashboard mount ไว้ที่นี่ (ดู grafana volumes ใน docker-compose)
       path: /var/lib/grafana/dashboards
       foldersFromFilesStructure: false

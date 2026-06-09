@@ -5,7 +5,7 @@ datasources:
     type: prometheus
     uid: softsentry-prometheus
     access: proxy
-    # Resolves on the internal compose network (service name: prometheus).
+    # resolve บน internal compose network (service name: prometheus)
     url: http://prometheus:9090
     isDefault: true
     editable: false

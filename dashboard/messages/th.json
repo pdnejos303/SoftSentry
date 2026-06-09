@@ -173,7 +173,14 @@
       "scanTime": "เวลาสแกน",
       "type": "ประเภท",
       "trigger": "ตัวกระตุ้น",
-      "software": "ซอฟต์แวร์"
+      "software": "ซอฟต์แวร์",
+      "license": "License"
+    },
+    "licenseStatus": {
+      "compliant": "ปกติ",
+      "over_used": "ใช้เกินสิทธิ์",
+      "expiring_soon": "ใกล้หมดอายุ",
+      "expired": "หมดอายุ"
     }
   },
   "deploy": {

@@ -8,10 +8,13 @@ the fleet scale we target. Revisit with SQL-side grouping if it gets large.
 
 from __future__ import annotations
 
+import fnmatch
+from datetime import date
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import ColumnElement, func, select
 
+from app.models.license import License
 from app.models.machine import Machine
 from app.models.scan import Scan
 from app.models.signature import SignatureRecord
@@ -63,7 +66,7 @@ async def machine_software(
         )
     ).all()
 
-    items = [
+    raw = [
         {
             "uuid": rec.uuid,
             "name": rec.name,
@@ -79,6 +82,7 @@ async def machine_software(
         }
         for rec, sig_status in rows
     ]
+    items = await _enrich_license_status(session, raw)
     return items, int(total)
 
 
@@ -152,6 +156,69 @@ async def machine_scans(
         for s in rows
     ]
     return items, int(total)
+
+
+# ── License enrichment ──────────────────────────────────────────────────────
+
+_EXPIRING_WINDOW = 90
+
+
+async def _enrich_license_status(
+    session: AsyncSession,
+    items: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    """Attach license_status to each item — None when no license covers it."""
+    licenses = list((await session.execute(select(License))).scalars().all())
+    if not licenses:
+        return [{**item, "license_status": None} for item in items]
+
+    # Count distinct live machines per license (reuse same query as license_service).
+    from sqlalchemy import and_
+
+    count_rows = (
+        await session.execute(
+            select(License.id, func.count(func.distinct(Machine.id)))
+            .select_from(License)
+            .outerjoin(
+                SoftwareRecord,
+                and_(
+                    SoftwareRecord.name.ilike(License.software_name),
+                    SoftwareRecord.uninstalled_at.is_(None),
+                ),
+            )
+            .outerjoin(
+                Machine,
+                and_(Machine.id == SoftwareRecord.machine_id, Machine.deleted_at.is_(None)),
+            )
+            .where(License.id.in_([lic.id for lic in licenses]))
+            .group_by(License.id)
+        )
+    ).all()
+    installed_map: dict[int, int] = {lic_id: int(cnt) for lic_id, cnt in count_rows}
+
+    today = date.today()
+
+    def _status(lic: License, installed: int) -> str:
+        d = (lic.expires_at - today).days if lic.expires_at else None
+        if d is not None and d < 0:
+            return "expired"
+        if installed > lic.purchased_count:
+            return "over_used"
+        if d is not None and d <= _EXPIRING_WINDOW:
+            return "expiring_soon"
+        return "compliant"
+
+    result: list[dict[str, object]] = []
+    for item in items:
+        sw_name = str(item["name"])
+        matched_status: str | None = None
+        for lic in licenses:
+            pattern = lic.software_name.replace("%", "*").replace("_", "?")
+            if fnmatch.fnmatch(sw_name.lower(), pattern.lower()):
+                matched_status = _status(lic, installed_map.get(lic.id, 0))
+                break
+        result.append({**item, "license_status": matched_status})
+    return result
 
 
 # ── A4: cross-machine ───────────────────────────────────────────────────────
@@ -240,7 +307,11 @@ async def top_software(session: AsyncSession, *, limit: int = 10) -> list[dict[s
     rows = (
         await session.execute(
             select(SoftwareRecord.name, func.max(SoftwareRecord.publisher), install_count)
-            .where(SoftwareRecord.uninstalled_at.is_(None))
+            .join(Machine, Machine.id == SoftwareRecord.machine_id)
+            .where(
+                SoftwareRecord.uninstalled_at.is_(None),
+                Machine.deleted_at.is_(None),
+            )
             .group_by(SoftwareRecord.name)
             .order_by(install_count.desc(), SoftwareRecord.name)
             .limit(limit)

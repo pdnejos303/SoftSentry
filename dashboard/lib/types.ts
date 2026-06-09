@@ -49,6 +49,7 @@ export interface MachineSoftwareItem {
   source: string;
   signature_status: SignatureStatus;
   is_active: boolean;
+  license_status: "compliant" | "over_used" | "expired" | "expiring_soon" | null;
 }
 
 export interface SoftwareHistoryItem {

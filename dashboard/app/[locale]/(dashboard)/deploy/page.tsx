@@ -32,7 +32,7 @@ import {
 export default function DeployPage() {
   const t = useTranslations("deploy");
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "dev";
 
   const [server, setServer] = useState(() => defaultServerUrl());
   const [showAdvanced, setShowAdvanced] = useState(false);

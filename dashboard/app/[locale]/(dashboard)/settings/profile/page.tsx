@@ -65,7 +65,7 @@ export default function ProfilePage() {
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">{t("role")}</span>
-            <Badge variant={user?.role === "admin" ? "default" : "muted"}>
+            <Badge variant={user?.role === "admin" || user?.role === "dev" ? "default" : "muted"}>
               {user ? t(`roles.${user.role}`) : ""}
             </Badge>
           </div>

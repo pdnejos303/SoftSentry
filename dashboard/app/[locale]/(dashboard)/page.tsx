@@ -26,7 +26,7 @@ export default function OverviewPage() {
   const t = useTranslations("dashboard");
   const router = useRouter();
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "dev";
   const qc = useQueryClient();
 
   const [paused, setPaused] = useState(false);

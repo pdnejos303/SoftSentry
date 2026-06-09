@@ -29,7 +29,7 @@ const PAGE_SIZE = 25;
 export default function LicensesPage() {
   const t = useTranslations("licenses");
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "dev";
 
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");

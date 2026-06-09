@@ -15,7 +15,7 @@ const POLL_MS = 30_000;
 export default function AlertsPage() {
   const t = useTranslations("alerts");
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "dev";
   const [status, setStatus] = useState<string>("active");
   const [severity, setSeverity] = useState<string>("");
 

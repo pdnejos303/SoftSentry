@@ -11,7 +11,7 @@ from fastapi import Depends, Header, HTTPException, Request, status
 from redis.asyncio import Redis
 from sqlalchemy import select
 
-# Re-exported (explicit alias) so routers can import DBSession from this module.
+# re-export ชัดเจนเพื่อให้ router import DBSession จาก module นี้ได้โดยตรง
 from app.core.db import DBSession as DBSession
 from app.core.redis import get_redis
 from app.core.security import decode_token, verify_password
@@ -41,7 +41,7 @@ async def get_current_user(
     except jwt.PyJWTError as exc:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token") from exc
 
-    # JWT subjects are strings; the uuid column expects a UUID object.
+    # JWT subject เป็น string — uuid column ต้องการ UUID object
     try:
         subject_uuid = uuid_lib.UUID(payload["sub"])
     except (ValueError, TypeError, KeyError) as exc:
@@ -64,10 +64,10 @@ async def get_current_user(
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-# Role groups — keep these in sync with dashboard/lib/permissions.ts.
-#   dev    — superuser, may access everything
-#   admin  — Overview + Machines + Deploy only, full actions within that scope
-#   viewer — broad read-only (everything except Deploy / Users / Audit Log)
+# Role groups — sync กับ dashboard/lib/permissions.ts เสมอ
+#   dev    — superuser เข้าได้ทุกอย่าง
+#   admin  — Overview + Machines + Deploy เท่านั้น มี full actions ในขอบเขตนั้น
+#   viewer — read-only กว้าง (ทุกหน้า ยกเว้น Deploy / Users / Audit Log)
 ALL_ROLES = ("dev", "admin", "viewer")
 DEV = ("dev",)
 DEV_ADMIN = ("dev", "admin")
@@ -87,10 +87,10 @@ async def get_current_agent(
     session: DBSession,
     authorization: Annotated[str | None, Header()] = None,
 ) -> Machine:
-    """Match agent bearer token against bcrypt hash of stored token.
+    """ตรวจสอบ agent bearer token กับ bcrypt hash ที่เก็บไว้ใน DB.
 
-    Linear scan is acceptable at fleet scale we target; for >10k machines move
-    to keyed lookup (e.g. token prefix index).
+    Linear scan ยอมรับได้ที่ fleet ขนาดที่เราเจาะจง — ถ้าเกิน 10k machines ให้เปลี่ยนเป็น
+    keyed lookup (เช่น token prefix index)
     """
     token = _bearer(authorization)
 

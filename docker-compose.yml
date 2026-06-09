@@ -10,9 +10,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pg_data:/var/lib/postgresql/data
-    # No host port published — only the backend/worker reach Postgres over the
-    # internal compose network (postgres:5432). Use `docker compose exec postgres
-    # psql` for ad-hoc access instead of exposing the DB on the host.
+    # ไม่ expose port ออก host — backend/worker เข้าถึง Postgres ผ่าน internal network
+    # (postgres:5432) เท่านั้น ใช้ `docker compose exec postgres psql` สำหรับ ad-hoc access
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
@@ -25,8 +24,8 @@ services:
     command: ["redis-server", "--requirepass", "${REDIS_PASSWORD}", "--save", "60", "1"]
     volumes:
       - redis_data:/data
-    # No host port published — backend/worker reach Redis over the internal
-    # compose network (redis:6379). Keep it off the host to shrink attack surface.
+    # ไม่ expose port ออก host — backend/worker ใช้ internal network (redis:6379) เท่านั้น
+    # ปิด host port เพื่อลด attack surface
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 5s
@@ -38,9 +37,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    # Apply DB migrations + seed the initial admin (idempotent) before serving.
-    # Done here (not in the Dockerfile) so the worker, which reuses this image,
-    # does not race on migrations.
+    # รัน DB migration + seed admin เริ่มต้น (idempotent) ก่อน serve
+    # ทำที่นี่ (ไม่ใช่ใน Dockerfile) เพื่อกัน worker ที่ใช้ image เดียวกัน race กันบน migration
     command:
       - sh
       - -c
@@ -57,11 +55,10 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
-      # Directory (mounted below) holding built agent binaries + manifest.json,
-      # served by the one-click installer + auto-update endpoints.
+      # โฟลเดอร์ที่เก็บ agent binary + manifest.json สำหรับ one-click installer และ auto-update endpoint
       AGENT_BINARY_DIR: /app/agent-binaries
-    # Host port is parametrised (default 47800) to avoid colliding with anything
-    # already bound on a shared server. Container still listens on 8000 internally.
+    # host port ปรับได้ (default 47800) ป้องกันชนกับ service อื่นบน shared server
+    # container ยังฟัง port 8000 ภายใน
     ports:
       - "${BACKEND_HOST_PORT:-47800}:8000"
     volumes:
@@ -75,8 +72,8 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    # Shares the backend image (which has an HTTP /health HEALTHCHECK), but the
-    # worker serves no HTTP — disable the inherited healthcheck so it isn't unhealthy.
+    # ใช้ image เดียวกับ backend (มี HTTP /health HEALTHCHECK) แต่ worker ไม่เปิด HTTP
+    # ปิด inherited healthcheck เพื่อกัน false-unhealthy
     healthcheck:
       disable: true
     command: ["uv", "run", "arq", "app.workers.WorkerSettings"]
@@ -98,9 +95,8 @@ services:
       context: ./dashboard
       dockerfile: Dockerfile
       args:
-        # NEXT_PUBLIC_* is baked into the client bundle at build time, so the
-        # browser-facing API URL must point at the host/port the browser uses to
-        # reach the backend (the server's domain/IP + BACKEND_HOST_PORT in prod).
+        # NEXT_PUBLIC_* ถูก bake เข้า client bundle ตอน build-time
+        # URL ที่ browser ใช้ต้องตรงกับ host/port จริงที่เบราว์เซอร์เห็น (ไม่ใช่ internal container name)
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     restart: unless-stopped
     depends_on:
@@ -126,7 +122,7 @@ services:
     restart: unless-stopped
     volumes:
       - grafana_data:/var/lib/grafana
-      # Datasource + dashboard-provider configs, and the dashboard JSON they load.
+      # config datasource + dashboard-provider และไฟล์ dashboard JSON ที่โหลดอัตโนมัติ
       - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
     ports:

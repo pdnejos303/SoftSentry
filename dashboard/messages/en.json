@@ -173,7 +173,14 @@
       "scanTime": "Scan time",
       "type": "Type",
       "trigger": "Trigger",
-      "software": "Software"
+      "software": "Software",
+      "license": "License"
+    },
+    "licenseStatus": {
+      "compliant": "Compliant",
+      "over_used": "Over used",
+      "expiring_soon": "Expiring soon",
+      "expired": "Expired"
     }
   },
   "deploy": {

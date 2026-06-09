@@ -35,7 +35,7 @@ const PAGE_SIZE = 20;
 export default function MachinesPage() {
   const t = useTranslations("machines");
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "dev";
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);

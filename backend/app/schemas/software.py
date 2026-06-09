@@ -26,6 +26,7 @@ class MachineSoftwareItem(BaseModel):
     source: str
     signature_status: str | None = None  # valid|expired|invalid|unsigned|None
     is_active: bool = True
+    license_status: str | None = None  # compliant|over_used|expired|expiring_soon|None
 
 
 class MachineSoftwareList(BaseModel):

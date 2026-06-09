@@ -1,4 +1,4 @@
-"""Async SQLAlchemy engine + session factory + FastAPI dependency."""
+"""Async SQLAlchemy engine, session factory และ FastAPI dependency."""
 
 from __future__ import annotations
 
@@ -19,8 +19,8 @@ if TYPE_CHECKING:
 _engine_kwargs: dict[str, object] = {
     "echo": settings.log_level == "DEBUG",
 }
-# Connection pooling tuned for Postgres; SQLite (used in tests) does not accept
-# pool_size/max_overflow and manages connections via its own pool implementation.
+# ปรับ connection pool สำหรับ Postgres — SQLite ที่ใช้ใน test ไม่รับ pool_size/max_overflow
+# และจัดการ connection ด้วย pool ของตัวเอง
 if not settings.database_url.startswith("sqlite"):
     _engine_kwargs.update(pool_pre_ping=True, pool_size=10, max_overflow=20)
 

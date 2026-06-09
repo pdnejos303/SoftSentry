@@ -33,7 +33,7 @@ const PAGE_SIZE = 50;
 export function PolicyManager({ kind }: { kind: PolicyKind }) {
   const t = useTranslations("policy");
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "dev";
   const [q, setQ] = useState("");
   const debouncedQ = useDebounced(q);
   const [formOpen, setFormOpen] = useState(false);

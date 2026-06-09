@@ -15,7 +15,7 @@ const PAGE_SIZE = 50;
 export default function AuditLogPage() {
   const t = useTranslations("audit");
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "dev";
   const [action, setAction] = useState("");
   const [entityType, setEntityType] = useState("");
   const [dateFrom, setDateFrom] = useState("");

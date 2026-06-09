@@ -31,7 +31,7 @@ const DATE_WINDOWS = ["all", "7d", "30d", "90d"] as const;
 export default function VulnerabilitiesPage() {
   const t = useTranslations("vulnerabilities");
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "admin" || user?.role === "dev";
 
   const [q, setQ] = useState("");
   const [severities, setSeverities] = useState<string[]>([]);

@@ -26,7 +26,7 @@ const PAGE_SIZE = 50;
 export default function UsersPage() {
   const t = useTranslations("users");
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.role === "dev";
   const [q, setQ] = useState("");
   const [role, setRole] = useState("");
   const debouncedQ = useDebounced(q);

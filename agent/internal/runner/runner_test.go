@@ -4,9 +4,10 @@
 package runner
 
 import (
-	"context"  // ใช้ context.Background() สำหรับ call ที่ไม่ต้องการ timeout ใน test
-	"io"       // ใช้ io.Discard เพื่อทิ้ง output ทั้งหมดใน test loop
-	"testing"  // ใช้ t.Fatal, t.Error และ t.Setenv สำหรับ test infrastructure
+	"context" // ใช้ context.Background() สำหรับ call ที่ไม่ต้องการ timeout ใน test
+	"io"      // ใช้ io.Discard เพื่อทิ้ง output ทั้งหมดใน test loop
+	"testing" // ใช้ t.Fatal, t.Error และ t.Setenv สำหรับ test infrastructure
+	"time"    // ใช้เทียบงบเวลาสแกน (scanBudget)
 
 	"github.com/softsentry/agent/internal/storage"   // ใช้ SaveLastUpdate/LoadLastUpdate เพื่อ seed และตรวจสอบ loop-breaker marker
 	"github.com/softsentry/agent/internal/transport" // ใช้ AgentUpdate struct เป็น input ให้ maybeUpdate
@@ -16,8 +17,8 @@ import (
 // เพื่อให้ loop-breaker marker (last_update) ถูกอ่าน/เขียนภายใต้ไดเรกทอรีของเทสต์เอง
 // และไม่ปนกับข้อมูล config จริงของผู้ใช้บนเครื่อง
 func useTempConfigDir(t *testing.T) {
-	t.Helper() // บอก testing framework ว่านี่คือ helper function (เพื่อให้ stack trace ชัดขึ้น)
-	dir := t.TempDir() // สร้างไดเรกทอรีชั่วคราวที่จะถูกลบอัตโนมัติเมื่อ test จบ
+	t.Helper()                   // บอก testing framework ว่านี่คือ helper function (เพื่อให้ stack trace ชัดขึ้น)
+	dir := t.TempDir()           // สร้างไดเรกทอรีชั่วคราวที่จะถูกลบอัตโนมัติเมื่อ test จบ
 	t.Setenv("ProgramData", dir) // override บน Windows: config อยู่ใต้ %ProgramData%\SoftSentry
 	t.Setenv("HOME", dir)        // override บน macOS/Linux: config อยู่ใต้ $HOME/.softsentry
 	t.Setenv("USERPROFILE", dir) // override ค่า fallback ของ UserHomeDir บน Windows
@@ -93,5 +94,27 @@ func TestMaybeUpdateSkipsSameVersion(t *testing.T) {
 	// ต้องไม่ apply update เพราะ version เดิมอยู่แล้ว
 	if r.maybeUpdate(context.Background(), up) {
 		t.Error("maybeUpdate should not update to the version already running")
+	}
+}
+
+// TestScanBudgetIncremental ตรวจสอบว่ารอบ incremental (cache มีแล้ว) ใช้งบ 2 นาที
+func TestScanBudgetIncremental(t *testing.T) {
+	if got := scanBudget(false, 15); got != 2*time.Minute {
+		t.Errorf("incremental budget: want 2m, got %s", got)
+	}
+}
+
+// TestScanBudgetFirstScan ตรวจสอบว่ารอบแรกใช้งบตาม firstScanMinutes ที่ตั้งไว้
+func TestScanBudgetFirstScan(t *testing.T) {
+	if got := scanBudget(true, 15); got != 15*time.Minute {
+		t.Errorf("first-scan budget: want 15m, got %s", got)
+	}
+}
+
+// TestScanBudgetFirstScanFallsBackWhenUnset ตรวจสอบว่ารอบแรกที่ไม่ได้ตั้งค่า
+// (0) ใช้ fallback 15 นาที
+func TestScanBudgetFirstScanFallsBackWhenUnset(t *testing.T) {
+	if got := scanBudget(true, 0); got != 15*time.Minute {
+		t.Errorf("first-scan budget with unset minutes: want 15m fallback, got %s", got)
 	}
 }

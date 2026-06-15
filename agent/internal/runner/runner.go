@@ -10,14 +10,14 @@
 package runner
 
 import (
-	"context"  // ใช้จัดการ cancellation และ timeout ของแต่ละ operation
-	"errors"   // ใช้สร้าง sentinel error เช่น ErrRestartRequired
-	"fmt"      // ใช้จัดรูปแบบ log message และ error string
-	"io"       // ใช้ io.Writer สำหรับ output และ io.Discard เพื่อทิ้ง output
-	"os"       // ใช้หา executable path ของตัวเอง (os.Executable)
-	"strings"  // ใช้ EqualFold เพื่อเปรียบเทียบ SHA-256 แบบ case-insensitive
-	"sync"     // ใช้ WaitGroup เพื่อรอให้ background worker หยุดก่อน return
-	"time"     // ใช้คำนวณ interval, timeout และ uptime ของ agent
+	"context" // ใช้จัดการ cancellation และ timeout ของแต่ละ operation
+	"errors"  // ใช้สร้าง sentinel error เช่น ErrRestartRequired
+	"fmt"     // ใช้จัดรูปแบบ log message และ error string
+	"io"      // ใช้ io.Writer สำหรับ output และ io.Discard เพื่อทิ้ง output
+	"os"      // ใช้หา executable path ของตัวเอง (os.Executable)
+	"strings" // ใช้ EqualFold เพื่อเปรียบเทียบ SHA-256 แบบ case-insensitive
+	"sync"    // ใช้ WaitGroup เพื่อรอให้ background worker หยุดก่อน return
+	"time"    // ใช้คำนวณ interval, timeout และ uptime ของ agent
 
 	"github.com/softsentry/agent/internal/config"    // ใช้โหลด config ที่ enroll ไว้ (server URL, auto-update flag)
 	"github.com/softsentry/agent/internal/queue"     // ใช้บัฟเฟอร์ retry สำหรับการอัปโหลดที่ล้มเหลว
@@ -110,15 +110,16 @@ func Run(ctx context.Context, opts Options) error {
 	scanInterval := schedule.Interval(cfg.ScanIntervalHours)
 	// สร้าง loop struct ที่รวบรวม dependency ทั้งหมดไว้ด้วยกัน
 	r := &loop{
-		client:       client,
-		queue:        q,
-		out:          out,
-		errw:         errw,
-		started:      started,
-		autoUpdate:   cfg.AutoUpdateEnabled,
-		exePath:      exePath,
-		version:      transport.Version, // เวอร์ชันที่ฝังอยู่ใน binary ณ ตอน build
-		scanInterval: scanInterval,
+		client:           client,
+		queue:            q,
+		out:              out,
+		errw:             errw,
+		started:          started,
+		autoUpdate:       cfg.AutoUpdateEnabled,
+		exePath:          exePath,
+		version:          transport.Version, // เวอร์ชันที่ฝังอยู่ใน binary ณ ตอน build
+		scanInterval:     scanInterval,
+		firstScanMinutes: cfg.FirstScanTimeoutMinutes,
 	}
 
 	// ตัดสินใจว่าถึงเวลาสแกนตอนเริ่มต้นหรือยัง (ตาม spec 1.1):
@@ -306,8 +307,8 @@ func (r *loop) beat(ctx context.Context, work chan<- workItem) {
 func (r *loop) worker(
 	ctx context.Context,
 	flushInterval time.Duration, // ความถี่ของการ retry queue (เท่ากับ heartbeat interval)
-	work <-chan workItem,         // channel รับงานจาก heartbeat loop
-	restart chan<- struct{},      // channel ส่งสัญญาณให้ serve restart process
+	work <-chan workItem, // channel รับงานจาก heartbeat loop
+	restart chan<- struct{}, // channel ส่งสัญญาณให้ serve restart process
 ) {
 	// สร้าง ticker สำหรับ flush retry queue ตาม interval
 	flush := time.NewTicker(flushInterval)
@@ -347,15 +348,16 @@ func (r *loop) worker(
 // (TH) loop รวบรวม dependency ของแต่ละการรัน เพื่อให้ helper method
 // ไม่ต้องรับ parameter list ที่ยาวเกินไปในทุกการเรียก
 type loop struct {
-	client       *transport.Client // HTTP client สำหรับส่ง heartbeat และ scan payload
-	queue        *queue.Queue      // retry queue สำหรับการอัปโหลดที่ล้มเหลว
-	out          io.Writer         // output writer สำหรับข้อความความคืบหน้าปกติ
-	errw         io.Writer         // error writer สำหรับ warning และ error message
-	started      time.Time         // เวลาที่ agent เริ่มทำงาน ใช้คำนวณ uptime
-	autoUpdate   bool              // ถ้า true: รับ self-update จาก server อัตโนมัติ
-	exePath      string            // path ของ executable ตัวเอง ใช้แทนที่ binary ตอน self-update
-	version      string            // เวอร์ชันที่ฝังอยู่ใน binary ณ ตอน build (จาก transport.Version)
-	scanInterval time.Duration     // ความถี่ของ auto-scan (แปลงมาจาก config.ScanIntervalHours)
+	client           *transport.Client // HTTP client สำหรับส่ง heartbeat และ scan payload
+	queue            *queue.Queue      // retry queue สำหรับการอัปโหลดที่ล้มเหลว
+	out              io.Writer         // output writer สำหรับข้อความความคืบหน้าปกติ
+	errw             io.Writer         // error writer สำหรับ warning และ error message
+	started          time.Time         // เวลาที่ agent เริ่มทำงาน ใช้คำนวณ uptime
+	autoUpdate       bool              // ถ้า true: รับ self-update จาก server อัตโนมัติ
+	exePath          string            // path ของ executable ตัวเอง ใช้แทนที่ binary ตอน self-update
+	version          string            // เวอร์ชันที่ฝังอยู่ใน binary ณ ตอน build (จาก transport.Version)
+	scanInterval     time.Duration     // ความถี่ของ auto-scan (แปลงมาจาก config.ScanIntervalHours)
+	firstScanMinutes int               // งบเวลาสแกนรอบแรก (จาก config.FirstScanTimeoutMinutes)
 }
 
 // runScan performs a scan and, on success, records the scan time so the
@@ -465,6 +467,20 @@ func (r *loop) maybeUpdate(ctx context.Context, up *transport.AgentUpdate) bool 
 	return true // คืนค่า true เพื่อให้ caller ทราบว่าต้อง restart process
 }
 
+// scanBudget เลือกงบเวลาของการสแกน: รอบ incremental (cache มีแล้ว) ใช้ 2 นาที,
+// รอบแรก (cache ว่าง) ใช้ firstScanMinutes (default 15 ถ้าไม่ได้ตั้ง) เพราะต้อง
+// verify ทุกไฟล์ ผลที่ verify แล้วถูก cache จึงไล่ให้ครบในรอบถัดๆ ไปได้แม้ timeout
+// (TH) เลือกงบเวลาสแกนตามว่าเป็นรอบแรกหรือ incremental
+func scanBudget(firstScan bool, firstScanMinutes int) time.Duration {
+	if !firstScan {
+		return 2 * time.Minute
+	}
+	if firstScanMinutes <= 0 {
+		firstScanMinutes = 15
+	}
+	return time.Duration(firstScanMinutes) * time.Minute
+}
+
 // scanAndUpload runs a local scan and POSTs it to the backend. On upload
 // failure the scan is persisted to the retry queue rather than lost (spec 1.7),
 // so this returns an error only when the scan itself fails.
@@ -473,8 +489,10 @@ func (r *loop) maybeUpdate(ctx context.Context, up *transport.AgentUpdate) bool 
 // บันทึกลงคิว retry แทนที่จะหายไป (ตาม spec 1.7) ดังนั้นฟังก์ชันนี้จะคืนค่า
 // error ก็ต่อเมื่อการสแกนเองล้มเหลวเท่านั้น
 func (r *loop) scanAndUpload(ctx context.Context, trigger string) error {
-	// จำกัดเวลาสแกนไว้ที่ 2 นาที (สแกน software inventory อาจช้าบน Windows)
-	scanCtx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	// รอบแรก (cache ว่าง) ให้งบเวลามากกว่าปกติ เพราะต้อง verify ลายเซ็นทุกไฟล์;
+	// รอบถัดไป incremental ใช้ 2 นาทีพอ (verify เฉพาะไฟล์ที่เปลี่ยน)
+	budget := scanBudget(scanner.IsFirstScan(), r.firstScanMinutes)
+	scanCtx, cancel := context.WithTimeout(ctx, budget)
 	defer cancel()
 
 	// แสดงข้อความว่ากำลังสแกน
@@ -597,11 +615,11 @@ func toScanRequest(res scanner.Result, trigger string) transport.ScanRequest {
 		scanType = "manual"
 	}
 	return transport.ScanRequest{
-		StartedAt:   res.StartedAt.UTC().Format(time.RFC3339),   // เวลาเริ่มสแกน (UTC, RFC3339)
-		CompletedAt: res.FinishedAt.UTC().Format(time.RFC3339),  // เวลาสิ้นสุดสแกน (UTC, RFC3339)
-		ScanType:    scanType,                                    // ประเภทการสแกน ("auto" หรือ "manual")
-		Trigger:     trigger,                                     // trigger ดั้งเดิม ("auto"/"manual"/"enroll")
-		Software:    items,                                       // รายการซอฟต์แวร์ทั้งหมดที่สแกนได้
+		StartedAt:   res.StartedAt.UTC().Format(time.RFC3339),  // เวลาเริ่มสแกน (UTC, RFC3339)
+		CompletedAt: res.FinishedAt.UTC().Format(time.RFC3339), // เวลาสิ้นสุดสแกน (UTC, RFC3339)
+		ScanType:    scanType,                                  // ประเภทการสแกน ("auto" หรือ "manual")
+		Trigger:     trigger,                                   // trigger ดั้งเดิม ("auto"/"manual"/"enroll")
+		Software:    items,                                     // รายการซอฟต์แวร์ทั้งหมดที่สแกนได้
 	}
 }
 

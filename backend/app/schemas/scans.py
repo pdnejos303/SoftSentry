@@ -30,7 +30,7 @@ class SoftwareIn(BaseModel):
     install_path: str | None = None
     install_size_kb: int | None = Field(default=None, ge=0)
     arch: str | None = Field(default=None, max_length=10)
-    source: Literal["registry", "appstore", "plist"]
+    source: Literal["registry", "appstore", "plist", "filesystem"]
     signature: SignatureIn | None = None
 
 

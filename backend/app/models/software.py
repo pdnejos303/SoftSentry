@@ -39,7 +39,7 @@ class SoftwareRecord(Base, UuidMixin, TimestampMixin):
     install_path: Mapped[str | None] = mapped_column(Text)
     install_size_kb: Mapped[int | None] = mapped_column(BigInteger)
     arch: Mapped[str | None] = mapped_column(String(10))
-    source: Mapped[str] = mapped_column(String(20), nullable=False)  # registry | appstore | plist
+    source: Mapped[str] = mapped_column(String(20), nullable=False)  # registry | appstore | plist | filesystem
     # 1:1 link to the signature seen in the latest scan. use_alter resolves the
     # circular FK with signature_records (which also references this table).
     signature_id: Mapped[int | None] = mapped_column(

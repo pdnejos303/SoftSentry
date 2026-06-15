@@ -89,3 +89,34 @@ func TestLoadMissingReturnsDefault(t *testing.T) {
 		t.Errorf("expected default scan interval, got %d", c.ScanIntervalHours)
 	}
 }
+
+// TestParseOldConfigKeepsFilesystemDefaults ตรวจสอบว่า config เก่าที่ไม่มี key
+// filesystem ยังได้ค่า default ที่เปิด filesystem scan ไว้ (backward compatible)
+func TestParseOldConfigKeepsFilesystemDefaults(t *testing.T) {
+	old := []byte("server_url: http://example\nscan_interval_hours: 6\n")
+	cfg, err := parse(old)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if !cfg.FilesystemScanEnabled {
+		t.Error("FilesystemScanEnabled: want true for a config missing the key")
+	}
+	if cfg.FilesystemDeepMode {
+		t.Error("FilesystemDeepMode: want false default")
+	}
+	if cfg.FirstScanTimeoutMinutes != 15 {
+		t.Errorf("FirstScanTimeoutMinutes: want 15, got %d", cfg.FirstScanTimeoutMinutes)
+	}
+}
+
+// TestParseHonorsExplicitDisable ตรวจสอบว่าเมื่อ config ปิด filesystem scan
+// อย่างชัดเจน ค่าที่ parse ได้ต้องเป็น false (ไม่ถูก default ทับ)
+func TestParseHonorsExplicitDisable(t *testing.T) {
+	cfg, err := parse([]byte("filesystem_scan_enabled: false\n"))
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if cfg.FilesystemScanEnabled {
+		t.Error("FilesystemScanEnabled: want false when explicitly set")
+	}
+}

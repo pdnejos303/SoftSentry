@@ -20,6 +20,15 @@ type Config struct {
 	ScanIntervalHours int    `yaml:"scan_interval_hours"`  // ความถี่การสแกน software inventory (หน่วย: ชั่วโมง)
 	AutoUpdateEnabled bool   `yaml:"auto_update_enabled"`  // เปิด/ปิดการอัปเดต agent อัตโนมัติ
 	LogLevel          string `yaml:"log_level"`            // ระดับ log ที่ต้องการ เช่น "info", "debug", "warn"
+
+	// FilesystemScanEnabled เปิดการเดิน filesystem หา .exe นอก registry (default true)
+	FilesystemScanEnabled bool `yaml:"filesystem_scan_enabled"`
+	// FilesystemDeepMode สแกนทั้งไดรฟ์ระบบรวม Windows (default false = curated roots เท่านั้น)
+	FilesystemDeepMode bool `yaml:"filesystem_deep_mode"`
+	// FilesystemExtraRoots เพิ่ม root ที่จะเดินเองได้ (default [])
+	FilesystemExtraRoots []string `yaml:"filesystem_extra_roots"`
+	// FirstScanTimeoutMinutes งบเวลาของสแกนรอบแรก (cache ว่าง) เป็นนาที (default 15)
+	FirstScanTimeoutMinutes int `yaml:"first_scan_timeout_minutes"`
 }
 
 // Default returns a Config initialized with sensible defaults.
@@ -27,9 +36,11 @@ type Config struct {
 // สแกนทุก 6 ชั่วโมง, เปิด auto-update, log ระดับ info
 func Default() *Config {
 	return &Config{
-		ScanIntervalHours: 6,    // สแกน software inventory ทุก 6 ชั่วโมงโดยค่าเริ่มต้น
-		AutoUpdateEnabled: true, // เปิดใช้งาน auto-update โดยค่าเริ่มต้น
-		LogLevel:          "info", // log ระดับ info โดยค่าเริ่มต้น
+		ScanIntervalHours:       6,      // สแกน software inventory ทุก 6 ชั่วโมงโดยค่าเริ่มต้น
+		AutoUpdateEnabled:       true,   // เปิดใช้งาน auto-update โดยค่าเริ่มต้น
+		LogLevel:                "info", // log ระดับ info โดยค่าเริ่มต้น
+		FilesystemScanEnabled:   true,   // เดิน filesystem หา .exe นอก registry โดยค่าเริ่มต้น
+		FirstScanTimeoutMinutes: 15,     // งบเวลาสแกนรอบแรก 15 นาที (รอบถัดไปใช้ 2 นาทีใน runner)
 	}
 }
 
@@ -104,9 +115,16 @@ func Load() (*Config, error) {
 		// error อื่นๆ ที่ไม่ใช่ไฟล์ไม่มี ให้คืน error กลับไป
 		return nil, fmt.Errorf("read config: %w", err)
 	}
-	// เริ่มต้นด้วยค่า Default ก่อน เผื่อไฟล์ไม่ได้ระบุบางฟิลด์
+	// แปลงข้อมูล YAML ทับลงบนค่า Default (ฟิลด์ไหนไม่มีใน YAML จะยังคงค่า default)
+	return parse(data)
+}
+
+// parse overlays YAML data onto a fresh Default config. Fields absent from the
+// YAML keep their default, so configs written before new fields existed still
+// get sensible values (e.g. FilesystemScanEnabled stays true).
+// (TH) parse ทับค่า YAML ลงบน Default ฟิลด์ที่ไม่มีใน YAML จะคงค่า default ไว้
+func parse(data []byte) (*Config, error) {
 	cfg := Default()
-	// แปลงข้อมูล YAML ทับลงบน cfg (ฟิลด์ไหนไม่มีใน YAML จะยังคงค่า default)
 	if err := yaml.Unmarshal(data, cfg); err != nil {
 		return nil, fmt.Errorf("parse config: %w", err)
 	}

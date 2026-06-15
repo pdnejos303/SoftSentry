@@ -51,7 +51,7 @@ type Software struct {
 	InstallPath   string     `json:"install_path,omitempty"`      // path ของไฟล์ executable หลัก
 	InstallSizeKB int64      `json:"install_size_kb,omitempty"`   // ขนาดการติดตั้งเป็น kilobytes
 	Arch          string     `json:"arch,omitempty"`              // สถาปัตยกรรม: x64 หรือ x86
-	Source        string     `json:"source"`                      // แหล่งที่มาของข้อมูล: registry, appstore, หรือ plist
+	Source        string     `json:"source"`                      // แหล่งที่มาของข้อมูล: registry, filesystem, appstore, หรือ plist
 	Signature     *Signature `json:"signature,omitempty"`         // ผลการตรวจสอบลายเซ็นดิจิทัล (nil ถ้ายังไม่ตรวจ)
 }
 
@@ -284,4 +284,34 @@ func sortStable(in []Software) {
 		}
 		return in[i].Version < in[j].Version // ถ้าชื่อเหมือนกัน เรียงตามเวอร์ชัน
 	})
+}
+
+// mergeWindows รวมรายการจาก registry และ filesystem ให้ปลอดภัยต่อ DB unique
+// constraint (machine_id, name, version): registry ชนะเมื่อ (normalizeName, version)
+// ชนกัน และ filesystem entry ที่ name+version ซ้ำกันเองก็เก็บแค่ตัวแรก
+// (dedupe() ปกติ key เป็น (name,version,install_path) จึงไม่ตัด path ต่างให้ — จึงต้องมีขั้นนี้)
+// Parameter:
+//   - reg: รายการจาก registry collector
+//   - fs:  รายการจาก filesystem collector
+//
+// Return:
+//   - []Software: reg ตามด้วย fs ที่ไม่ชน (name,version) กับ reg หรือกันเอง
+func mergeWindows(reg, fs []Software) []Software {
+	type nv = [2]string
+	seen := make(map[nv]struct{}, len(reg)+len(fs))
+	out := make([]Software, 0, len(reg)+len(fs))
+
+	for _, r := range reg {
+		seen[nv{normalizeName(r.Name), r.Version}] = struct{}{}
+		out = append(out, r)
+	}
+	for _, f := range fs {
+		key := nv{normalizeName(f.Name), f.Version}
+		if _, dup := seen[key]; dup {
+			continue // ชนกับ registry หรือ fs entry ก่อนหน้า — ทิ้ง
+		}
+		seen[key] = struct{}{}
+		out = append(out, f)
+	}
+	return out
 }

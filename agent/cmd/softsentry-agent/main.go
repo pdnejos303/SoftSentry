@@ -31,14 +31,21 @@ func main() {
 	// config trailer ฝังอยู่) ให้ติดตั้งตัวเองแทนที่จะรัน CLI ปกติ
 	// maybeSelfInstall ตรวจสอบว่าไบนารีมี config trailer หรือไม่
 	// ถ้ามี จะจัดการ self-install แล้วคืน handled=true
-	if handled, err := maybeSelfInstall(ctx); err != nil {
-		// การติดตั้งตัวเองล้มเหลว — แสดง error และรอผู้ใช้กด Enter ก่อนปิด
+	handled, err := maybeSelfInstall(ctx)
+	if handled {
+		// runSelfInstall ได้แสดงผลลัพธ์ (สำเร็จ/ล้มเหลว) ให้ผู้ใช้ผ่าน GUI/console แล้ว
+		// ที่นี่จึงแค่กำหนด exit code ไม่ต้องพิมพ์ error ซ้ำ
+		if err != nil {
+			os.Exit(1) // ติดตั้งล้มเหลว — บอก exit code โดยไม่แสดงซ้ำ
+		}
+		return // ติดตั้งสำเร็จ/ผู้ใช้ยกเลิก — ไม่ต้องรัน CLI ปกติ
+	}
+	if err != nil {
+		// ไม่ใช่ self-install (เช่น อ่าน config trailer ล้มเหลวก่อนเริ่มติดตั้ง) —
+		// แสดง error ตามปกติแล้วรอผู้ใช้กด Enter ก่อนปิดหน้าต่าง
 		fmt.Fprintln(os.Stderr, "error:", err)
-		waitForExit(os.Stdout) // รอผู้ใช้กด Enter เพื่อไม่ให้หน้าต่างปิดทันที
-		os.Exit(1)             // ออกด้วย exit code 1 เพื่อบ่งชี้ว่าเกิดข้อผิดพลาด
-	} else if handled {
-		// self-install จัดการเรียบร้อยแล้ว — ไม่ต้องรัน CLI ปกติ
-		return
+		waitForExit(os.Stdout)
+		os.Exit(1)
 	}
 
 	// รัน CLI ปกติผ่าน Cobra — ให้ root command แยกแยะ subcommand ต่างๆ

@@ -14,9 +14,15 @@ ARG VERSION
 ENV CGO_ENABLED=0
 COPY go.mod go.sum ./
 RUN go mod download
+# rsrc: เครื่องมือ pure-Go สำหรับฝัง Windows manifest เข้า .syso (ทำงานบน Linux ได้)
+RUN go install github.com/akavel/rsrc@latest
 COPY . .
 RUN set -eu; \
     mkdir -p /out; \
+    # ฝัง application manifest (เปิด TaskDialog/DPI + asInvoker) เข้า package dir
+    # ก่อน build — ชื่อ *_windows_amd64.syso ทำให้ลิงก์เฉพาะ build Windows/amd64
+    /go/bin/rsrc -manifest cmd/softsentry-agent/app.manifest -arch amd64 \
+      -o cmd/softsentry-agent/rsrc_windows_amd64.syso; \
     GOOS=windows GOARCH=amd64 go build \
       -ldflags "-X github.com/softsentry/agent/internal/transport.Version=${VERSION}" \
       -o "/out/softsentry-agent-${VERSION}-windows-amd64.exe" ./cmd/softsentry-agent; \

@@ -41,8 +41,8 @@ func TestInstallDisclosureStatesKeyFacts(t *testing.T) {
 	for _, want := range []string{
 		"http://192.168.1.88:8001", // where it reports — (TH) ต้องแสดง server URL ที่จะรายงานไป
 		"Administrator",            // permission it will ask for — (TH) ต้องระบุว่าต้องใช้สิทธิ์ Administrator
-		"installed software",       // what it collects — (TH) ต้องระบุว่าเก็บรายการซอฟต์แวร์
-		"uninstall",                // how to remove it — (TH) ต้องบอกวิธีถอดถอน
+		"ซอฟต์แวร์ที่ติดตั้ง",         // what it collects — (TH) ต้องระบุว่าเก็บรายการซอฟต์แวร์
+		"uninstall",                // how to remove it — (TH) ต้องบอกวิธีถอดถอน (softsentry-agent uninstall)
 	} {
 		// ถ้า disclosure ไม่มี substring นี้ ถือว่า test ล้มเหลว
 		if !strings.Contains(text, want) {

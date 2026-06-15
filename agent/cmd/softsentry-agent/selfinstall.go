@@ -119,57 +119,77 @@ func maybeSelfInstall(ctx context.Context) (handled bool, err error) {
 // preConsented จะเป็น true เฉพาะตอนที่เป็นการ relaunch ต่อเนื่องที่เราเปิดขึ้นมาเอง
 // — ผู้ใช้ยินยอมไปแล้ว จึงไม่ต้องถามซ้ำ
 func runSelfInstall(ctx context.Context, exe string, emb installer.Embedded, preConsented bool) error {
-	out := os.Stdout // ใช้ stdout สำหรับแสดงผลทั้งหมดในหน้าต่าง console
+	// บน Windows ซ่อนหน้าต่าง console สีดำทันทีที่เริ่ม self-install — ทุกอย่างที่
+	// ผู้ใช้เห็นจะเป็น GUI dialog แทน (บน non-Windows เป็น no-op, ใช้ console ตามเดิม)
+	installer.HideConsoleWindow()
 
 	// ถ้ายังไม่ได้รับ consent (instance แรกที่ไม่ใช่ elevated continuation)
 	if !preConsented {
 		// Informed consent up front, before requesting admin or touching disk.
 		// (TH) ขอความยินยอมแบบรับทราบข้อมูลก่อนเริ่ม ก่อนจะขอสิทธิ์ผู้ดูแลระบบ
 		// หรือแตะต้องดิสก์ — หลักการ privacy by design
-		if !confirmInstall(out, os.Stdin, emb) {
-			// ผู้ใช้ปฏิเสธการติดตั้ง — ไม่มีการเปลี่ยนแปลงใดๆ เกิดขึ้น
-			fmt.Fprintln(out)
-			fmt.Fprintln(out, "  Installation cancelled — nothing was installed or changed.")
-			closeWithCountdown(out, 5) // รอ 5 วินาทีแล้วปิดหน้าต่างอัตโนมัติ
+		if !confirmConsent(emb) {
+			// ผู้ใช้ปฏิเสธการติดตั้ง — ไม่มีการเปลี่ยนแปลงใดๆ เกิดขึ้น เงียบๆ
 			return nil
 		}
 		// ตรวจสอบว่ากำลังรันด้วยสิทธิ์ admin อยู่แล้วหรือไม่
 		if !installer.IsElevated() {
-			// ยังไม่มีสิทธิ์ admin — ต้อง relaunch ผ่าน UAC (Windows)
-			fmt.Fprintln(out)
-			fmt.Fprintln(out, "Requesting administrator permission ...")
-			// Relaunch ตัวเองพร้อม elevatedInstallFlag เพื่อบอกว่า consent ผ่านแล้ว
+			// ยังไม่มีสิทธิ์ admin — relaunch ผ่าน UAC (consent ผ่านแล้ว ส่ง flag ไปด้วย)
 			if err := installer.RelaunchElevated(exe, []string{elevatedInstallFlag}); err != nil {
 				// ขอสิทธิ์ admin ล้มเหลว (ผู้ใช้คลิก "No" ใน UAC หรือ error อื่น)
-				return fmt.Errorf("could not get administrator permission: %w", err)
+				return showInstallError(fmt.Errorf("ขอสิทธิ์ผู้ดูแลระบบไม่สำเร็จ: %w", err))
 			}
-			// The elevated instance continues in its own window; this one is done.
-			// (TH) instance ที่ elevated แล้วจะทำงานต่อในหน้าต่างของมันเอง
-			// ส่วนตัวนี้จบหน้าที่แล้ว — return nil เพื่อปิดหน้าต่างแรกอย่างสะอาด
+			// instance ที่ elevated แล้วจะทำงานต่อในหน้าต่างของมันเอง — ตัวนี้จบ
 			return nil
 		}
 	}
 
-	// แสดง header การติดตั้ง — ถึงขั้นตอนนี้หมายความว่ามีสิทธิ์ admin แล้ว
+	// ถึงตรงนี้ = มีสิทธิ์ admin แล้ว — ลงมือติดตั้งจริง
+	if err := performInstall(ctx, exe, emb); err != nil {
+		return showInstallError(err)
+	}
+	showInstallSuccess()
+	return nil
+}
+
+// confirmConsent ขอความยินยอมจากผู้ใช้ ผ่าน GUI dialog ก่อน (บน Windows) แล้ว
+// fallback เป็น console prompt ถ้าแสดง GUI ไม่ได้ (non-Windows หรือ dialog error)
+// คืน true เมื่อผู้ใช้อนุญาตให้ติดตั้ง
+func confirmConsent(emb installer.Embedded) bool {
+	ci := buildConsentInfo(emb) // แหล่งข้อมูล disclosure กลาง (ไม่มี token)
+	if consented, shown := installer.ConfirmInstallGUI(ci); shown {
+		return consented
+	}
+	// GUI ใช้ไม่ได้ → ตกไปใช้ console (unhide console เผื่อถูกซ่อนไว้ก่อนหน้า)
+	installer.ShowConsoleWindow()
+	return confirmInstall(os.Stdout, os.Stdin, emb)
+}
+
+// performInstall ทำขั้นตอนติดตั้งจริงทั้ง 4 ขั้น (ต้องมีสิทธิ์ admin แล้ว):
+// ลบเวอร์ชันเก่า → คัดลอกไฟล์ → enroll เครื่อง → ลงทะเบียน+เริ่ม service
+// progress เขียนลง stdout (บน Windows console ถูกซ่อน จึงมองไม่เห็น — แต่ยังเก็บไว้
+// เป็น log และเป็นช่องทางแสดงผลของ console fallback บน non-Windows)
+func performInstall(ctx context.Context, exe string, emb installer.Embedded) error {
+	out := os.Stdout
+
+	// แสดง header การติดตั้ง
 	fmt.Fprintln(out, "============================================")
-	fmt.Fprintln(out, "  SoftSentry Agent — installing")
-	fmt.Fprintf(out, "  Server: %s\n", emb.Config.ServerURL) // แสดง server ที่จะรายงานไป
+	fmt.Fprintln(out, "  SoftSentry Agent — กำลังติดตั้ง")
+	fmt.Fprintf(out, "  Server: %s\n", emb.Config.ServerURL) // server ที่จะรายงานไป
 	fmt.Fprintln(out, "============================================")
 	fmt.Fprintln(out)
 
 	// หา install directory ตาม OS (Program Files บน Windows, /usr/local/softsentry บน macOS)
-	installDir, err := installDir()
+	dir, err := installDir()
 	if err != nil {
-		// หา install directory ล้มเหลว
 		return err
 	}
 	// สร้าง install directory ถ้ายังไม่มี (MkdirAll ไม่ error ถ้ามีอยู่แล้ว)
-	if err := os.MkdirAll(installDir, 0o755); err != nil { // #nosec G301 — program dir
-		// สร้าง directory ล้มเหลว (เช่น ไม่มีสิทธิ์เขียน)
+	if err := os.MkdirAll(dir, 0o755); err != nil { // #nosec G301 — program dir
 		return fmt.Errorf("create install dir: %w", err)
 	}
-	// กำหนด path เต็มของ agent binary ที่จะติดตั้ง
-	dstExe := filepath.Join(installDir, exeName()) // เช่น C:\Program Files\SoftSentry\softsentry-agent.exe
+	// path เต็มของ agent binary ที่จะติดตั้ง เช่น C:\Program Files\SoftSentry\softsentry-agent.exe
+	dstExe := filepath.Join(dir, exeName())
 
 	// Step 1 — replace any previous install. If the agent is already installed, a
 	// previous instance is almost certainly running as a service and holding
@@ -187,34 +207,25 @@ func runSelfInstall(ctx context.Context, exe string, emb installer.Embedded, pre
 	// รองรับกรณีไบนารีเก่ายังรันอยู่ (ย้ายออกไปก่อน) และ service.Install จะสร้าง
 	// service ใหม่ให้แม้จะยังมีของเก่าหลงเหลืออยู่
 	step(out, 1, "Removing any previous version")
-	// ตรวจสอบว่า service เดิมมีอยู่และ status ไม่ใช่ "not installed"
 	if st, err := service.Status(); err == nil && st != "not installed" {
-		// หยุดและลบ service เดิม เพื่อปลดล็อกไบนารีที่กำลังรัน
 		if err := service.Uninstall(); err != nil {
-			// ลบ service เก่าล้มเหลว — แจ้งเตือนแต่ดำเนินการต่อ (best-effort)
 			fmt.Fprintf(out, "      (old service not fully removed: %v; continuing)\n", err)
 		}
 	}
-	stepDone(out) // แสดง "done" ต่อท้ายบรรทัด step นี้
+	stepDone(out)
 
 	// Step 2 — copy the agent into Program Files.
-	// (TH) ขั้นที่ 2 — คัดลอก agent ไปไว้ใน Program Files
+	// (TH) ขั้นที่ 2 — คัดลอก agent ไปไว้ใน Program Files (ตัด trailer ออกด้วย OriginalLen)
 	step(out, 2, "Installing files")
-	// คัดลอกไบนารีจาก src (Setup.exe ปัจจุบัน) ไปที่ dst (Program Files)
-	// emb.OriginalLen บอกว่าไบนารีจริงขนาดเท่าไหร่ (ตัด trailer ออก)
 	if err := replaceBinary(exe, dstExe, emb.OriginalLen); err != nil {
-		// คัดลอกไบนารีล้มเหลว
 		return fmt.Errorf("copy agent into place: %w", err)
 	}
 	stepDone(out)
 
 	// Step 3 — enroll this machine with the embedded deployment token.
-	// (TH) ขั้นที่ 3 — enroll เครื่องนี้ด้วย deployment token ที่ฝังมา
+	// (TH) ขั้นที่ 3 — enroll เครื่องนี้ด้วย deployment token ที่ฝังมา (ซ่อน progress ของ enroll)
 	step(out, 3, "Enrolling this machine")
-	// ใช้ io.Discard เป็น output writer เพื่อซ่อน progress ของ enrollMachine
-	// เพราะเราจัดการ progress display เองผ่าน step/stepDone แล้ว
 	if err := enrollMachine(ctx, io.Discard, emb.Config.Token, emb.Config.ServerURL); err != nil {
-		// enroll ล้มเหลว (เช่น token หมดอายุ หรือ server ไม่ตอบสนอง)
 		return fmt.Errorf("enroll: %w", err)
 	}
 	stepDone(out)
@@ -222,73 +233,100 @@ func runSelfInstall(ctx context.Context, exe string, emb installer.Embedded, pre
 	// Step 4 — register + start the background service.
 	// (TH) ขั้นที่ 4 — ลงทะเบียน + เริ่ม background service
 	step(out, 4, "Starting background service")
-	// ติดตั้ง service โดยใช้ path ของไบนารีที่คัดลอกไปแล้ว และ argument "run"
 	if err := service.Install(service.Config{ExePath: dstExe, Args: []string{"run"}}); err != nil {
-		// ติดตั้ง service ล้มเหลว
 		return fmt.Errorf("install service: %w", err)
 	}
 	stepDone(out)
-
-	// แสดงข้อความสำเร็จและรอให้หน้าต่างปิดเองหลัง 8 วินาที
-	fmt.Fprintln(out)
-	fmt.Fprintf(out, "  ✓ Done! SoftSentry Agent is installed and running.\n")
-	fmt.Fprintln(out, "    This machine will appear in the dashboard within a minute.")
-	closeWithCountdown(out, 8) // รอ 8 วินาทีแล้วปิดหน้าต่างอัตโนมัติ
 	return nil
+}
+
+// showInstallSuccess แจ้งผลสำเร็จแบบ GUI (บน Windows) หรือ console (fallback)
+func showInstallSuccess() {
+	const heading = "ติดตั้งสำเร็จ"
+	const msg = "SoftSentry Agent ติดตั้งและกำลังทำงานแล้ว\n" +
+		"เครื่องนี้จะปรากฏใน dashboard ภายใน 1 นาที"
+	if installer.ShowResultGUI(true, heading, msg) {
+		return
+	}
+	// console fallback (non-Windows / GUI แสดงไม่ได้)
+	out := os.Stdout
+	fmt.Fprintln(out)
+	fmt.Fprintf(out, "  ✓ %s — %s\n", heading, msg)
+	closeWithCountdown(out, 8) // รอ 8 วินาทีแล้วปิดหน้าต่างอัตโนมัติ
+}
+
+// showInstallError แจ้งผลล้มเหลวแบบ GUI (บน Windows) หรือ console (fallback)
+// แล้วคืน err เดิมกลับไปให้ผู้เรียก (เพื่อให้ exit code สะท้อนความล้มเหลว) — ผู้เรียก
+// ไม่ต้องแสดง error ซ้ำอีก เพราะฟังก์ชันนี้แสดงให้ผู้ใช้แล้ว
+func showInstallError(err error) error {
+	const heading = "การติดตั้งล้มเหลว"
+	msg := err.Error() + "\n\nลองดาวน์โหลดและเรียกใช้ตัวติดตั้งอีกครั้ง " +
+		"หากยังไม่สำเร็จ โปรดติดต่อทีม IT"
+	if installer.ShowResultGUI(false, heading, msg) {
+		return err
+	}
+	// console fallback (non-Windows / GUI แสดงไม่ได้)
+	installer.ShowConsoleWindow()
+	fmt.Fprintln(os.Stderr, "error:", err)
+	waitForExit(os.Stdout)
+	return err
+}
+
+// buildConsentInfo รวบรวมข้อเท็จจริงสำหรับ disclosure จาก embedded config +
+// install directory ของเครื่องนี้ เป็นแหล่งข้อมูลกลางที่ทั้ง console renderer
+// (installDisclosure) และ GUI renderer (Win32 TaskDialog) ใช้ร่วมกัน
+//
+// installDir() อาจคืน error — ในกรณีนั้นปล่อย dir ว่างให้ BuildConsentInfo ใส่
+// คำอธิบายทั่วไปแทน (disclosure ยังอ่านรู้เรื่อง) token ไม่ถูกส่งต่อไป (ความลับ)
+func buildConsentInfo(emb installer.Embedded) installer.ConsentInfo {
+	dir, _ := installDir() // error → dir == "" → BuildConsentInfo fallback
+	return installer.BuildConsentInfo(emb.Config.ServerURL, dir)
 }
 
 // installDisclosure returns the plain-language consent screen shown before any
 // change is made: what gets installed, where, the permission required, the
 // server it reports to, and exactly what data is (and is not) collected. Kept a
-// pure function so it is unit-testable. The deployment token is intentionally
-// never shown — it is a secret.
+// pure function (rendered from ConsentInfo) so it is unit-testable. The
+// deployment token is intentionally never shown — it is a secret.
 //
 // (TH) คืนค่าหน้าจอขอความยินยอมแบบภาษาธรรมดา ที่แสดงก่อนจะมีการเปลี่ยนแปลงใดๆ:
 // จะติดตั้งอะไร ที่ไหน ต้องใช้สิทธิ์อะไร รายงานไปยังเซิร์ฟเวอร์ไหน และข้อมูล
-// อะไรบ้างที่ถูก (และไม่ถูก) เก็บ ทำเป็น pure function เพื่อให้ unit-test ได้
+// อะไรบ้างที่ถูก (และไม่ถูก) เก็บ render จาก ConsentInfo เพื่อให้ unit-test ได้
 // ส่วน deployment token จะไม่ถูกแสดงโดยเจตนา — เพราะเป็นความลับ
 func installDisclosure(emb installer.Embedded) string {
-	// หา install directory เพื่อแสดงให้ผู้ใช้ทราบว่าจะติดตั้งที่ไหน
-	dir, err := installDir()
-	// ถ้าหา directory ล้มเหลวหรือว่าง ใช้คำอธิบายทั่วไปแทน
-	if err != nil || dir == "" {
-		dir = "the SoftSentry program folder"
-	}
+	ci := buildConsentInfo(emb) // แหล่งข้อมูลกลางเดียวกับ GUI
 
 	// สร้าง disclosure text ด้วย strings.Builder เพื่อประสิทธิภาพ
 	var b strings.Builder
 	// แสดง header
 	fmt.Fprintln(&b, "============================================================")
-	fmt.Fprintln(&b, "  SoftSentry Agent — Setup")
+	fmt.Fprintf(&b, "  %s — ตัวติดตั้ง (Setup)\n", ci.AppName)
 	fmt.Fprintln(&b, "============================================================")
 	fmt.Fprintln(&b)
-	// อธิบายว่า SoftSentry คืออะไรและทำอะไร
-	fmt.Fprintln(&b, "SoftSentry lets your IT / security team keep an inventory of")
-	fmt.Fprintln(&b, "the software on company computers and flag known security")
-	fmt.Fprintln(&b, "vulnerabilities. Before you agree, here is exactly what this")
-	fmt.Fprintln(&b, "setup will do on THIS computer:")
+	// อธิบายว่า SoftSentry คืออะไรและทำอะไร แล้วตามด้วยสิ่งที่จะเกิดขึ้น
+	fmt.Fprintln(&b, ci.Purpose)
+	fmt.Fprintln(&b, "ก่อนกดยินยอม นี่คือสิ่งที่ตัวติดตั้งจะทำบนเครื่องนี้:")
 	fmt.Fprintln(&b)
 	// แสดงรายละเอียดที่จะเกิดขึ้น — ต้องครบถ้วนเพื่อ informed consent
-	fmt.Fprintf(&b, "  Install to : %s\n", dir)                            // ติดตั้งที่ไหน
-	fmt.Fprintln(&b, "  Runs as    : a background service that starts automatically") // รันแบบไหน
-	fmt.Fprintln(&b, "               when the computer boots")
-	fmt.Fprintln(&b, "  Permission : Administrator (to register the service) —") // ต้องใช้สิทธิ์อะไร
-	fmt.Fprintln(&b, "               Windows will prompt you right after this")
-	fmt.Fprintf(&b, "  Reports to : %s\n", emb.Config.ServerURL)           // รายงานไปที่ server ไหน
+	fmt.Fprintf(&b, "  ติดตั้งที่ : %s\n", ci.InstallDir) // ติดตั้งที่ไหน
+	fmt.Fprintf(&b, "  ทำงานเป็น : %s\n", ci.RunsAs)      // รันแบบไหน
+	fmt.Fprintf(&b, "  สิทธิ์ที่ใช้ : %s\n", ci.Permission) // ต้องใช้สิทธิ์อะไร
+	fmt.Fprintf(&b, "  รายงานไป : %s\n", ci.ServerURL)    // รายงานไปที่ server ไหน
 	fmt.Fprintln(&b)
 	// แสดงข้อมูลที่จะส่งไปยัง server
-	fmt.Fprintln(&b, "Sent to that server, on a schedule:")
-	fmt.Fprintln(&b, "  - List of installed software (name, version, publisher)") // รายการซอฟต์แวร์
-	fmt.Fprintln(&b, "  - Digital-signature status of program files")              // สถานะ digital signature
-	fmt.Fprintln(&b, "  - Basic machine info (hostname, OS version, architecture)") // ข้อมูลเครื่องพื้นฐาน
+	fmt.Fprintln(&b, "ส่งให้เซิร์ฟเวอร์เป็นระยะ:")
+	for _, d := range ci.DataCollected {
+		fmt.Fprintf(&b, "  - %s\n", d)
+	}
 	fmt.Fprintln(&b)
 	// แสดงอย่างชัดเจนว่าข้อมูลใดที่ "ไม่" ถูกเก็บ — สำคัญมากสำหรับ consent
-	fmt.Fprintln(&b, "NOT collected: your personal files, documents, photos,")
-	fmt.Fprintln(&b, "emails, keystrokes, screen contents, or web browsing.")
+	fmt.Fprintln(&b, "ไม่เก็บ:")
+	for _, d := range ci.DataNotKept {
+		fmt.Fprintf(&b, "  - %s\n", d)
+	}
 	fmt.Fprintln(&b)
 	// บอกวิธีถอดถอน — ผู้ใช้ต้องรู้ว่าถอดได้
-	fmt.Fprintln(&b, "You can remove it any time from \"Apps & features\", or run:")
-	fmt.Fprintln(&b, "  softsentry-agent uninstall")
+	fmt.Fprintln(&b, ci.UninstallHint)
 	return b.String()
 }
 
@@ -313,7 +351,7 @@ func confirmInstall(w io.Writer, r io.Reader, emb installer.Embedded) bool {
 	// แสดงเส้นแบ่ง separator
 	fmt.Fprintln(w, "------------------------------------------------------------")
 	// แสดง prompt — [y/N] บ่งชี้ว่า default คือ No (ต้องพิมพ์ y อย่างชัดเจน)
-	fmt.Fprint(w, "Install SoftSentry Agent on this computer? [y/N]: ")
+	fmt.Fprint(w, "ติดตั้ง SoftSentry Agent บนเครื่องนี้? [y/N]: ")
 
 	// อ่าน input ของผู้ใช้จนถึง newline
 	line, _ := bufio.NewReader(r).ReadString('\n')

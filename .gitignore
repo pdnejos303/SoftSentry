@@ -47,6 +47,10 @@ vendor/
 /agent/softsentry-agent
 /agent/softsentry-agent-*
 
+# generated Windows resource object (manifest .syso) — สร้างตอน build จาก
+# cmd/softsentry-agent/app.manifest ผ่าน rsrc; ไม่ commit (regenerate ได้เสมอ)
+*.syso
+
 # Agent binaries ถูก build ตอน `docker compose build` โดย stage `agent-builder`
 # แล้ว publish ลง named volume `agent_binaries` — ไม่ commit เข้า git อีกต่อไป
 # (local non-docker dev ยัง drop build ไว้ที่นี่ได้ผ่าน agent/build.ps1)

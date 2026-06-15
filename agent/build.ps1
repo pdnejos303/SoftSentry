@@ -30,15 +30,33 @@ $exeName = "softsentry-agent-$Version-windows-$Arch.exe"
 if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Force $OutDir | Out-Null }
 $exePath = Join-Path $OutDir $exeName
 
-Write-Host "[1/3] build windows/$Arch (version $Version) ..." -ForegroundColor Cyan
+# ── embed Windows application manifest (เปิด TaskDialog/DPI + asInvoker) ──────
+# สร้าง .syso จาก cmd\softsentry-agent\app.manifest ด้วย rsrc แล้ววางในโฟลเดอร์
+# package เพื่อให้ go build ลิงก์เข้า binary โดยอัตโนมัติ (ชื่อ *_windows_<arch>.syso
+# ทำให้ลิงก์เฉพาะ build ของ Windows/arch นั้น — ไม่กระทบ cross-compile mac/linux)
+Write-Host "[1/4] embed manifest (rsrc) ..." -ForegroundColor Cyan
+$rsrc = (Get-Command rsrc -ErrorAction SilentlyContinue)
+if ($rsrc) { $rsrcExe = $rsrc.Source }
+else {
+    Write-Host "      rsrc not found — installing github.com/akavel/rsrc ..." -ForegroundColor Yellow
+    & go install github.com/akavel/rsrc@latest
+    if ($LASTEXITCODE -ne 0) { throw "go install rsrc failed" }
+    $rsrcExe = Join-Path (& go env GOPATH) "bin\rsrc.exe"
+}
+$manifest = Join-Path $PSScriptRoot "cmd\softsentry-agent\app.manifest"
+$syso     = Join-Path $PSScriptRoot "cmd\softsentry-agent\rsrc_windows_$Arch.syso"
+& $rsrcExe -manifest $manifest -arch $Arch -o $syso
+if ($LASTEXITCODE -ne 0) { throw "rsrc failed" }
+
+Write-Host "[2/4] build windows/$Arch (version $Version) ..." -ForegroundColor Cyan
 $env:GOOS = "windows"; $env:GOARCH = $Arch
 & go build -ldflags $ldflags -o $exePath ./cmd/softsentry-agent
 if ($LASTEXITCODE -ne 0) { throw "go build failed" }
 
-Write-Host "[2/3] sha256 ..." -ForegroundColor Cyan
+Write-Host "[3/4] sha256 ..." -ForegroundColor Cyan
 $sha = (Get-FileHash -Algorithm SHA256 $exePath).Hash.ToLower()
 
-Write-Host "[3/3] write manifest.json ..." -ForegroundColor Cyan
+Write-Host "[4/4] write manifest.json ..." -ForegroundColor Cyan
 $manifest = [ordered]@{
     binaries = @(
         [ordered]@{

@@ -1,0 +1,9 @@
+# กัน binary 13MB หลุดเข้า build context (ทำให้ build ช้า) — มันถูก build ใหม่ใน stage อยู่แล้ว
+softsentry-agent
+softsentry-agent-*
+*.exe
+*.test
+bin/
+dist/
+.softsentry/
+README.md

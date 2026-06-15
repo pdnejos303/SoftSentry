@@ -43,11 +43,14 @@ agent/dist/
 *.test
 *.prof
 vendor/
+# stray compiled agent binaries (no .exe extension → ไม่โดน *.exe ด้านบนจับ)
+/agent/softsentry-agent
+/agent/softsentry-agent-*
 
-# Built agent binaries are committed so they reach the server (the
-# agent-binaries dir is bind-mounted into the backend container). Negate the
-# *.exe rule above for this dir only — everywhere else *.exe stays ignored.
-!backend/agent-binaries/*.exe
+# Agent binaries ถูก build ตอน `docker compose build` โดย stage `agent-builder`
+# แล้ว publish ลง named volume `agent_binaries` — ไม่ commit เข้า git อีกต่อไป
+# (local non-docker dev ยัง drop build ไว้ที่นี่ได้ผ่าน agent/build.ps1)
+/backend/agent-binaries/
 
 # ── Docker ─────────────────────────────────────────────────────
 *.log

@@ -51,6 +51,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      # รอ agent-builder cross-compile binary + เขียน manifest ลง volume ให้เสร็จก่อน
+      # ไม่งั้น download endpoint จะตอบ 503 "No agent binary available"
+      agent-builder:
+        condition: service_completed_successfully
     env_file: .env
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
@@ -64,7 +68,9 @@ services:
     volumes:
       - ./backend/app:/app/app
       - ./backend/alembic:/app/alembic
-      - ./backend/agent-binaries:/app/agent-binaries
+      # ใช้ named volume ที่ agent-builder เขียน binary + manifest ลงไป (แทน bind-mount
+      # โฟลเดอร์ใน repo) — git ไม่ต้องแบก .exe และ binary ถูก build สดทุกครั้งที่ compose build
+      - agent_binaries:/app/agent-binaries
       - reports_data:/app/reports
 
   worker:
@@ -89,6 +95,20 @@ services:
     volumes:
       - ./backend/app:/app/app
       - reports_data:/app/reports
+
+  # cross-compile agent (windows/amd64) แล้ว publish ลง named volume `agent_binaries`
+  # ที่ backend ใช้เสิร์ฟ one-click installer + auto-update — รันครั้งเดียวแล้ว exit 0
+  # (backend รอด้วย depends_on: condition: service_completed_successfully)
+  # bump version: AGENT_VERSION=1.0.0 docker compose up -d --build agent-builder backend
+  agent-builder:
+    build:
+      context: ./agent
+      dockerfile: Dockerfile
+      args:
+        VERSION: ${AGENT_VERSION:-0.1.0}
+    restart: "no"
+    volumes:
+      - agent_binaries:/export
 
   dashboard:
     build:
@@ -136,5 +156,6 @@ volumes:
   pg_data:
   redis_data:
   reports_data:
+  agent_binaries:
   prom_data:
   grafana_data:

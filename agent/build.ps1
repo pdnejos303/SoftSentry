@@ -11,8 +11,10 @@
     .\build.ps1 -Version 1.0.0        # ออก release ใหม่ (ต้องมากกว่าตัวเดิม agent ถึงจะ auto-update)
     .\build.ps1 -OutDir D:\path       # เขียนไปโฟลเดอร์อื่น
 
-  หลัง build เสร็จ ถ้า backend รันใน docker อยู่แล้ว ไฟล์จะถูก mount เข้า /app/agent-binaries
-  อัตโนมัติ (ดู docker-compose.yml) — ไม่ต้อง rebuild image
+  script นี้ใช้กับ local dev แบบ "ไม่ผ่าน docker" (uv run uvicorn + AGENT_BINARY_DIR
+  ชี้มาที่ ..\backend\agent-binaries). ถ้ารันใน docker ไม่ต้องใช้ script นี้ —
+  service `agent-builder` ใน docker-compose.yml จะ cross-compile + publish ลง
+  named volume `agent_binaries` ให้เองตอน `docker compose build`
 #>
 param(
     [string]$Version = "0.1.0",

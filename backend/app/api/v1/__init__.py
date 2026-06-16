@@ -35,7 +35,10 @@ def _gate(*roles: str) -> list:
     return [Depends(require_role(*roles))]
 
 
-api_router = APIRouter(prefix="/api/v1")
+# Prefix is applied at the app-level include (see app/main.py) rather than here,
+# so the outermost include_router call carries a non-empty prefix — required by
+# FastAPI 0.137+'s deferred-include empty-path validation.
+api_router = APIRouter()
 # Inline CSV exports first: their literal `/.../export` paths must be matched
 # before the `/{uuid}` routes on machines/software/... routers (Module 8).
 api_router.include_router(exports.router, tags=["exports"])

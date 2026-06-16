@@ -28,6 +28,10 @@ class AgentEnrollRequest(BaseModel):
     os_version: str = Field(..., max_length=50)
     arch: Literal["amd64", "arm64", "x86"]
     agent_version: str = Field(..., max_length=20)
+    # Stable hardware id (Windows MachineGuid / macOS IOPlatformUUID). Optional so
+    # older agents still enroll; when present the server dedups re-enrollment onto
+    # the existing machine instead of creating a duplicate.
+    fingerprint: str | None = Field(default=None, max_length=255)
 
 
 class AgentEnrollResponse(BaseModel):

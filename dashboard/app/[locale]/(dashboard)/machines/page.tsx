@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Link } from "@/i18n/routing";
 import { useAuth } from "@/lib/auth";
 import { useMachines, statusVariant, type MachineFilters } from "@/lib/inventory";
+import { machineLabel } from "@/lib/machine";
+import type { MachineListItem } from "@/lib/types";
 import { DeleteMachineDialog } from "@/components/machines/DeleteMachineDialog";
+import { RenameMachineDialog } from "@/components/machines/RenameMachineDialog";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,6 +45,7 @@ export default function MachinesPage() {
   const [pendingDelete, setPendingDelete] = useState<{ uuid: string; hostname: string } | null>(
     null,
   );
+  const [pendingRename, setPendingRename] = useState<MachineListItem | null>(null);
   const debouncedQ = useDebounced(q);
 
   const filters: MachineFilters = {
@@ -53,7 +57,7 @@ export default function MachinesPage() {
   const { data, isLoading, isError } = useMachines(filters);
 
   const statuses = ["", "online", "stale", "offline"];
-  const cols = isAdmin ? 7 : 6;
+  const cols = isAdmin ? 8 : 7;
 
   return (
     <div className="space-y-6">
@@ -103,6 +107,7 @@ export default function MachinesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>{t("col.hostname")}</TableHead>
+              <TableHead>{t("col.owner")}</TableHead>
               <TableHead>{t("col.os")}</TableHead>
               <TableHead>{t("col.status")}</TableHead>
               <TableHead className="text-right">{t("col.software")}</TableHead>
@@ -141,9 +146,13 @@ export default function MachinesPage() {
                     href={`/machines/${m.uuid}`}
                     className="font-medium text-primary hover:underline"
                   >
-                    {m.hostname}
+                    {machineLabel(m)}
                   </Link>
+                  {m.display_name && m.display_name.trim() && (
+                    <div className="text-xs text-muted-foreground">{m.hostname}</div>
+                  )}
                 </TableCell>
+                <TableCell className="text-muted-foreground">{m.owner ?? "—"}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {m.os} {m.os_version}
                 </TableCell>
@@ -168,6 +177,15 @@ export default function MachinesPage() {
                     <Button
                       variant="ghost"
                       size="icon"
+                      onClick={() => setPendingRename(m)}
+                      title={t("rename")}
+                    >
+                      <Pencil className="h-4 w-4" />
+                      <span className="sr-only">{t("rename")}</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setPendingDelete({ uuid: m.uuid, hostname: m.hostname })}
                       title={t("delete")}
                     >
@@ -186,6 +204,11 @@ export default function MachinesPage() {
         uuid={pendingDelete?.uuid ?? null}
         hostname={pendingDelete?.hostname}
         onOpenChange={(open) => !open && setPendingDelete(null)}
+      />
+
+      <RenameMachineDialog
+        machine={pendingRename}
+        onOpenChange={(open) => !open && setPendingRename(null)}
       />
 
       {data && data.total_pages > 1 && (

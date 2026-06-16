@@ -82,6 +82,7 @@ async def enroll(
             os_version=payload.os_version,
             arch=payload.arch,
             agent_version=payload.agent_version,
+            fingerprint=payload.fingerprint,
         )
     except enrollment_service.InvalidEnrollmentToken as exc:
         raise HTTPException(

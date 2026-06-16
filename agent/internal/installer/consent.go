@@ -26,32 +26,40 @@ type ConsentInfo struct {
 	UninstallHint string   // วิธีถอนการติดตั้ง
 }
 
-// BuildConsentInfo ประกอบ ConsentInfo จาก server URL และ install directory ที่
-// คำนวณไว้แล้ว — เนื้อหาคงที่ (purpose, รายการข้อมูล ฯลฯ) ถูกกำหนดไว้ที่เดียวตรงนี้
-//
-// ไม่รับ token โดยเจตนา (ดูหมายเหตุที่ ConsentInfo) ถ้า installDir ว่าง จะใช้
-// คำอธิบายทั่วไปแทน เพื่อให้ disclosure ยังอ่านรู้เรื่องแม้หา path ไม่เจอ
+// emptyDirFallback คือข้อความแทน install dir เมื่อหา path ไม่เจอ — แยกตามภาษา
+var emptyDirFallback = map[Lang]string{
+	LangTH: "โฟลเดอร์โปรแกรม SoftSentry",
+	LangEN: "the SoftSentry program folder",
+	LangJA: "SoftSentry プログラムフォルダー",
+}
+
+// BuildConsentInfo ประกอบ ConsentInfo เป็นภาษาไทย (ค่าเริ่มต้น) — คงไว้เพื่อ
+// console fallback และ test เดิม ภายในเรียก BuildConsentInfoLang
 func BuildConsentInfo(serverURL, installDir string) ConsentInfo {
+	return BuildConsentInfoLang(LangTH, serverURL, installDir)
+}
+
+// BuildConsentInfoLang ประกอบ ConsentInfo จาก server URL และ install directory
+// ในภาษาที่กำหนด — เนื้อหาประโยค (purpose, รายการข้อมูล ฯลฯ) มาจาก consentContents
+// ที่เดียว ส่วน path/URL ใส่ตามค่าจริง ไม่รับ token โดยเจตนา (ดูหมายเหตุที่
+// ConsentInfo) ถ้า installDir ว่าง จะใช้คำอธิบายทั่วไปแทนตามภาษานั้น
+func BuildConsentInfoLang(lang Lang, serverURL, installDir string) ConsentInfo {
+	c := consentContents[lang]
+	if c.purpose == "" { // ภาษาไม่รู้จัก → fallback ไทย
+		lang, c = LangTH, consentContents[LangTH]
+	}
 	if installDir == "" {
-		installDir = "โฟลเดอร์โปรแกรม SoftSentry"
+		installDir = emptyDirFallback[lang]
 	}
 	return ConsentInfo{
-		AppName: "SoftSentry Agent",
-		Purpose: "SoftSentry ช่วยให้ทีม IT / Security ขององค์กรเก็บรายการซอฟต์แวร์" +
-			"ในเครื่องคอมพิวเตอร์ และแจ้งเตือนช่องโหว่ความปลอดภัยที่รู้จัก",
-		InstallDir: installDir,
-		RunsAs:     "background service ที่เริ่มทำงานอัตโนมัติเมื่อเปิดเครื่อง",
-		Permission: "Administrator (เพื่อลงทะเบียน service) — Windows จะถามสิทธิ์ต่อจากนี้",
-		ServerURL:  serverURL,
-		DataCollected: []string{
-			"รายการซอฟต์แวร์ที่ติดตั้ง (ชื่อ, เวอร์ชัน, ผู้พัฒนา)",
-			"สถานะลายเซ็นดิจิทัลของไฟล์โปรแกรม",
-			"ข้อมูลเครื่องพื้นฐาน (ชื่อเครื่อง, เวอร์ชัน OS, สถาปัตยกรรม)",
-		},
-		DataNotKept: []string{
-			"ไฟล์ส่วนตัว, เอกสาร, รูปภาพ, อีเมล",
-			"การพิมพ์คีย์บอร์ด, ภาพหน้าจอ, หรือประวัติการเข้าเว็บ",
-		},
-		UninstallHint: "ถอนการติดตั้งได้ทุกเมื่อจาก \"Apps & features\" หรือสั่ง: softsentry-agent uninstall",
+		AppName:       "SoftSentry Agent",
+		Purpose:       c.purpose,
+		InstallDir:    installDir,
+		RunsAs:        c.runsAs,
+		Permission:    c.permission,
+		ServerURL:     serverURL,
+		DataCollected: c.dataCollected,
+		DataNotKept:   c.dataNotKept,
+		UninstallHint: c.uninstallHint,
 	}
 }

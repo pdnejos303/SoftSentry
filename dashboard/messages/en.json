@@ -77,6 +77,9 @@
     "riskyMachinesEmpty": "No machines with risk yet",
     "riskScore": "Risk score",
     "alertFeedTitle": "Recent alerts",
+    "alertFeedPrev": "Previous",
+    "alertFeedNext": "Next",
+    "alertFeedPageInfo": "Page {page} of {total} · {count} alerts",
     "riskCardTitle": "Risk score",
     "riskClean": "No risk signals — this machine is clean.",
     "riskColor": {
@@ -97,13 +100,14 @@
   "machines": {
     "title": "Machines",
     "subtitle": "All enrolled endpoints reporting to SoftSentry",
-    "searchPlaceholder": "Search hostname...",
+    "searchPlaceholder": "Search name, hostname, owner...",
     "loadError": "Failed to load machines",
     "empty": "No machines found",
     "prev": "Previous",
     "next": "Next",
     "pageInfo": "Page {page} of {total} · {count} machines",
     "delete": "Delete",
+    "rename": "Rename",
     "status": {
       "all": "All",
       "online": "Online",
@@ -112,6 +116,7 @@
     },
     "col": {
       "hostname": "Hostname",
+      "owner": "Owner",
       "os": "OS",
       "status": "Status",
       "software": "Software",
@@ -126,6 +131,17 @@
       "confirm": "Delete",
       "done": "Machine removed",
       "failed": "Could not remove the machine"
+    },
+    "renameDialog": {
+      "title": "Rename machine",
+      "subtitle": "Give {hostname} a friendly name and owner so it's easy to tell whose machine it is.",
+      "displayName": "Display name",
+      "owner": "Owner",
+      "ownerPlaceholder": "e.g. Somchai (IT)",
+      "cancel": "Cancel",
+      "save": "Save",
+      "done": "Machine updated",
+      "failed": "Could not update the machine"
     }
   },
   "machineDetail": {
@@ -145,6 +161,7 @@
       "scans": "Scans"
     },
     "field": {
+      "owner": "Owner",
       "software": "Software installed",
       "tags": "Tags",
       "enrolled": "Enrolled",
@@ -191,6 +208,11 @@
     "downloadButton": "Download Agent",
     "downloadHint": "Double-click the downloaded file on each machine — it installs and enrolls itself. The same file works on any number of machines.",
     "downloadStarted": "Download started",
+    "appName": "SoftSentry Agent",
+    "heroTagline": "Install the agent on an endpoint in one click",
+    "step1": "Download",
+    "step2": "Double-click to install",
+    "step3": "Appears in the dashboard within ~1 min",
     "advanced": "Advanced: manage deployment links",
     "createTitle": "Create an install link",
     "label": "Label",

@@ -67,6 +67,26 @@ export function useRevokeDeploymentToken() {
   });
 }
 
+/** The agent build currently being served (mirrors what the installer hands out).
+ *  Returns null when no binary has been published yet. */
+export interface BinaryInfo {
+  version: string;
+  os: string;
+  arch: string;
+}
+
+export function useBinaryInfo(os = "windows", arch = "amd64") {
+  return useQuery({
+    queryKey: ["binary-info", os, arch],
+    queryFn: async () => {
+      const { data } = await api.get<BinaryInfo | null>("/deploy/binary-info", {
+        params: { os, arch },
+      });
+      return data;
+    },
+  });
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Default callback URL the agent will phone home to: the API base minus the

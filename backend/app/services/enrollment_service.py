@@ -169,6 +169,24 @@ async def revoke_token(*, session: AsyncSession, token_uuid: uuid_lib.UUID) -> E
     return token
 
 
+async def _find_by_fingerprint(
+    *, session: AsyncSession, fingerprint: str
+) -> Machine | None:
+    """The live (non-deleted) machine carrying this hardware fingerprint, if any.
+
+    Soft-deleted machines are ignored: an admin removed them on purpose, so a
+    re-install should come back as a fresh row, not silently revive the old one.
+    """
+    return (
+        await session.execute(
+            select(Machine).where(
+                Machine.fingerprint == fingerprint,
+                Machine.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
+
+
 async def enroll_agent(
     *,
     session: AsyncSession,
@@ -178,6 +196,7 @@ async def enroll_agent(
     os_version: str,
     arch: str,
     agent_version: str,
+    fingerprint: str | None = None,
 ) -> tuple[Machine, str]:
     now = datetime.now(tz=UTC)
 
@@ -186,13 +205,41 @@ async def enroll_agent(
         raise InvalidEnrollmentToken()
 
     agent_token_plain = generate_opaque_token(num_bytes=32)
+    agent_token_hash = hash_password(agent_token_plain)
+
+    # Re-enrollment: a known fingerprint maps back to its existing machine. Rotate
+    # the agent token and refresh the reported host facts, but keep enrolled_at and
+    # the admin-set display_name/owner/tags so naming survives a re-install.
+    existing = (
+        await _find_by_fingerprint(session=session, fingerprint=fingerprint)
+        if fingerprint
+        else None
+    )
+    if existing is not None:
+        existing.hostname = hostname
+        existing.os = os
+        existing.os_version = os_version
+        existing.arch = arch
+        existing.agent_version = agent_version
+        existing.agent_token_hash = agent_token_hash
+        existing.last_seen_at = now
+        existing.status = "online"
+        await session.flush()
+
+        token.use_count += 1
+        token.used_at = now
+        token.used_by_machine_id = existing.id
+        await session.flush()
+        return existing, agent_token_plain
+
     machine = Machine(
         hostname=hostname,
+        fingerprint=fingerprint,
         os=os,
         os_version=os_version,
         arch=arch,
         agent_version=agent_version,
-        agent_token_hash=hash_password(agent_token_plain),
+        agent_token_hash=agent_token_hash,
         enrolled_at=now,
         last_seen_at=now,
         status="online",

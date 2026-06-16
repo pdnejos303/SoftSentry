@@ -156,12 +156,13 @@ func (c *Client) doWithHeaders(
 
 // EnrollRequest คือ payload ที่ agent ส่งไปยัง server เพื่อ enroll
 type EnrollRequest struct {
-	EnrollmentToken string `json:"enrollment_token"` // one-time token จาก deployment package
-	Hostname        string `json:"hostname"`         // ชื่อเครื่อง endpoint
-	OS              string `json:"os"`               // ระบบปฏิบัติการ เช่น "windows", "darwin"
-	OSVersion       string `json:"os_version"`       // version ของ OS เช่น "10.0.26200"
-	Arch            string `json:"arch"`             // architecture เช่น "amd64", "arm64"
-	AgentVersion    string `json:"agent_version"`    // version ของ agent binary
+	EnrollmentToken string `json:"enrollment_token"`      // one-time token จาก deployment package
+	Hostname        string `json:"hostname"`              // ชื่อเครื่อง endpoint
+	OS              string `json:"os"`                    // ระบบปฏิบัติการ เช่น "windows", "darwin"
+	OSVersion       string `json:"os_version"`            // version ของ OS เช่น "10.0.26200"
+	Arch            string `json:"arch"`                  // architecture เช่น "amd64", "arm64"
+	AgentVersion    string `json:"agent_version"`         // version ของ agent binary
+	Fingerprint     string `json:"fingerprint,omitempty"` // hardware id ที่คงที่ ใช้ dedup การ enroll ซ้ำ (ละเว้นถ้าว่าง)
 }
 
 // EnrollResponse คือ reply ที่ server ส่งกลับมาเมื่อ enroll สำเร็จ

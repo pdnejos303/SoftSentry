@@ -18,6 +18,7 @@ from app.core.config import settings
 from app.core.deps import DBSession, require_role
 from app.models.user import User
 from app.schemas.deploy import (
+    BinaryInfoOut,
     DeploymentTokenCreated,
     DeploymentTokenCreateRequest,
     DeploymentTokenOut,
@@ -110,6 +111,25 @@ async def revoke_deployment_token(
     )
     await session.commit()
     return DeploymentTokenOut.model_validate(token)
+
+
+@router.get(
+    "/binary-info",
+    response_model=BinaryInfoOut | None,
+    summary="Admin: the latest agent binary being served (for the deploy UI version badge)",
+)
+async def latest_binary_info(
+    _: AdminUser,
+    os: Annotated[str, Query()] = "windows",
+    arch: Annotated[str, Query()] = "amd64",
+) -> BinaryInfoOut | None:
+    # Mirrors what /installer would hand out: the highest-versioned binary in
+    # agent_binary_dir for this os/arch. None (→ null body) when none is published
+    # yet, so the badge simply hides instead of erroring.
+    entry = binary_service.latest_for(settings.agent_binary_dir, os, arch)
+    if entry is None:
+        return None
+    return BinaryInfoOut(version=entry.version, os=entry.os, arch=entry.arch)
 
 
 @router.get(

@@ -19,6 +19,15 @@ class Machine(Base, UuidMixin, TimestampMixin):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     hostname: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    # Admin-set friendly name + owner so "whose machine is this?" is answerable
+    # from the dashboard (hostnames like DESKTOP-AB12 don't say). Both optional;
+    # the UI falls back to hostname when display_name is unset.
+    display_name: Mapped[str | None] = mapped_column(String(255))
+    owner: Mapped[str | None] = mapped_column(String(255))
+    # Stable hardware fingerprint reported by the agent (Windows MachineGuid /
+    # macOS IOPlatformUUID). Lets re-enrollment (e.g. re-running the one-click
+    # installer) map back to the same machine instead of creating a duplicate.
+    fingerprint: Mapped[str | None] = mapped_column(String(255), index=True)
     os: Mapped[str] = mapped_column(String(20), nullable=False)
     os_version: Mapped[str] = mapped_column(String(50), nullable=False)
     arch: Mapped[str] = mapped_column(String(10), nullable=False)

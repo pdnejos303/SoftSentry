@@ -69,6 +69,10 @@ to the backend.`, // คำอธิบายยาวที่แสดงเ�
 	cmd.AddCommand(statusCmd())    // status — แสดงสถานะ service และการ enroll
 	cmd.AddCommand(logsCmd())      // logs — แสดงบรรทัดสุดท้ายของ log file
 	cmd.AddCommand(versionCmd())   // version — พิมพ์เวอร์ชันแล้วออก
+	// preview-wizard — เครื่องมือ QA (ซ่อน) เปิดเฉพาะ Windows; non-Windows คืน nil
+	if c := previewWizardCmd(); c != nil {
+		cmd.AddCommand(c)
+	}
 	return cmd
 }
 

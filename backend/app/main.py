@@ -79,7 +79,11 @@ async def prometheus_http_middleware(
     return response
 
 
-app.include_router(api_router)
+# Apply the /api/v1 prefix here (not on the APIRouter) so the prefix is non-empty
+# at the outermost include. FastAPI 0.137+ resolves nested includes lazily and runs
+# its "prefix and path cannot both be empty" check at the top-level include call —
+# a bare `@router.get("")` leaf (e.g. machines) trips it unless this call has a prefix.
+app.include_router(api_router, prefix="/api/v1")
 
 
 @app.get("/health", tags=["meta"])

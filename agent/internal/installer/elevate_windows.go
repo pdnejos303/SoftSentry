@@ -1,4 +1,5 @@
 //go:build windows
+
 // build tag นี้ทำให้ไฟล์นี้ถูก compile เฉพาะบน Windows เท่านั้น
 
 // แพ็กเกจ installer จัดการ flow การดาวน์โหลดและติดตั้งตัวเอง
@@ -6,9 +7,9 @@
 package installer
 
 import (
-	"fmt"          // ใช้จัดรูปแบบ error message
+	"fmt"           // ใช้จัดรูปแบบ error message
 	"path/filepath" // ใช้ดึง directory ของ executable จาก path
-	"strings"      // ใช้ join arguments เป็น string เดียว
+	"strings"       // ใช้ join arguments เป็น string เดียว
 
 	"golang.org/x/sys/windows" // ใช้ Windows API: GetCurrentProcessToken, ShellExecute, UTF16PtrFromString
 )
@@ -27,8 +28,8 @@ func IsElevated() bool {
 // elevated process has been launched (not when it finishes); the caller should
 // then exit so only the elevated instance continues.
 //
-// (TH) RelaunchElevated เปิดโปรแกรมที่ exePath ขึ้นมาใหม่พร้อม args ที่กำหนด
-// ผ่าน ShellExecute "runas" ซึ่งจะเรียก UAC consent prompt ของ Windows ขึ้นมา
+// (TH) RelaunchElevated เปิดโปรแกรมที่ exePath ขึ้นมาใหม่พร้อม args(arguments) ที่กำหนด
+// ผ่าน ShellExecute "runas" ซึ่งจะเรียก UAC(User Account Control) consent prompt ของ Windows ขึ้นมา
 // ฟังก์ชันนี้จะ return ทันทีหลังโพรเซสที่ elevated ถูกเปิดขึ้น (ไม่รอให้ทำงานเสร็จ)
 // ผู้เรียกควรออกจากโปรแกรมหลังจากนี้ เพื่อให้เหลือเพียง instance ที่ elevated ทำงานต่อ
 //
@@ -39,6 +40,7 @@ func IsElevated() bool {
 // return: error ถ้า ShellExecute ล้มเหลว, nil ถ้าสำเร็จ
 func RelaunchElevated(exePath string, args []string) error {
 	// แปลง "runas" เป็น UTF-16 pointer สำหรับ Windows API
+	// "runas" คือ Windows command ที่ใช้รันโปรแกรมในฐานะ user อื่น (มักใช้เพื่อ elevate เป็น Admin)
 	// "runas" คือ verb ที่บอก Windows ให้เปิดโปรแกรมด้วยสิทธิ์ admin
 	verb, err := windows.UTF16PtrFromString("runas")
 	if err != nil {

@@ -11,10 +11,11 @@ import (
 // HostInfo describes the local machine in terms the server expects.
 // (TH) HostInfo อธิบายข้อมูลเครื่องนี้ในรูปแบบที่ฝั่งเซิร์ฟเวอร์ต้องการ
 type HostInfo struct {
-	Hostname  string // ชื่อ hostname ของเครื่อง เช่น "DESKTOP-ABC123"
-	OS        string // ชื่อระบบปฏิบัติการ เช่น "windows", "macos", "linux"
-	OSVersion string // เวอร์ชันของ OS เช่น "10.0.26200" หรือ "14.5"
-	Arch      string // สถาปัตยกรรม CPU เช่น "amd64", "arm64"
+	Hostname    string // ชื่อ hostname ของเครื่อง เช่น "DESKTOP-ABC123"
+	OS          string // ชื่อระบบปฏิบัติการ เช่น "windows", "macos", "linux"
+	OSVersion   string // เวอร์ชันของ OS เช่น "10.0.26200" หรือ "14.5"
+	Arch        string // สถาปัตยกรรม CPU เช่น "amd64", "arm64"
+	Fingerprint string // hardware id ที่คงที่ (Windows MachineGuid / macOS IOPlatformUUID); "" ถ้าหาไม่ได้
 }
 
 // Detect returns the current host's identity, including the real OS version
@@ -43,9 +44,10 @@ func Detect() (HostInfo, error) {
 
 	// คืนค่า HostInfo ที่รวบรวมข้อมูลทั้งหมดของเครื่อง
 	return HostInfo{
-		Hostname:  hostname,          // ชื่อ hostname ที่ดึงมาได้
-		OS:        osName,            // ชื่อ OS หลังแปลงแล้ว
-		OSVersion: detectOSVersion(), // เวอร์ชัน OS จาก function เฉพาะแพลตฟอร์ม
-		Arch:      runtime.GOARCH,    // สถาปัตยกรรม CPU ปัจจุบัน เช่น "amd64"
+		Hostname:    hostname,            // ชื่อ hostname ที่ดึงมาได้
+		OS:          osName,              // ชื่อ OS หลังแปลงแล้ว
+		OSVersion:   detectOSVersion(),   // เวอร์ชัน OS จาก function เฉพาะแพลตฟอร์ม
+		Arch:        runtime.GOARCH,      // สถาปัตยกรรม CPU ปัจจุบัน เช่น "amd64"
+		Fingerprint: detectFingerprint(), // hardware id เฉพาะแพลตฟอร์ม (อาจเป็น "")
 	}, nil
 }

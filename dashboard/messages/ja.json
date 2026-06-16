@@ -97,13 +97,14 @@
   "machines": {
     "title": "マシン",
     "subtitle": "SoftSentry にレポートしている登録済みエンドポイント",
-    "searchPlaceholder": "ホスト名を検索...",
+    "searchPlaceholder": "名前・ホスト名・所有者を検索...",
     "loadError": "マシンの読み込みに失敗しました",
     "empty": "マシンが見つかりません",
     "prev": "前へ",
     "next": "次へ",
     "pageInfo": "{total} ページ中 {page} ページ · {count} 台のマシン",
     "delete": "削除",
+    "rename": "名前を変更",
     "status": {
       "all": "すべて",
       "online": "オンライン",
@@ -112,6 +113,7 @@
     },
     "col": {
       "hostname": "ホスト名",
+      "owner": "所有者",
       "os": "OS",
       "status": "ステータス",
       "software": "ソフトウェア",
@@ -126,6 +128,17 @@
       "confirm": "削除",
       "done": "マシンを削除しました",
       "failed": "マシンを削除できませんでした"
+    },
+    "renameDialog": {
+      "title": "マシンの名前を変更",
+      "subtitle": "{hostname} にわかりやすい名前と所有者を設定して、誰のマシンかを判別しやすくします。",
+      "displayName": "表示名",
+      "owner": "所有者",
+      "ownerPlaceholder": "例: Somchai (IT)",
+      "cancel": "キャンセル",
+      "save": "保存",
+      "done": "マシンを更新しました",
+      "failed": "マシンを更新できませんでした"
     }
   },
   "machineDetail": {
@@ -145,6 +158,7 @@
       "scans": "スキャン"
     },
     "field": {
+      "owner": "所有者",
       "software": "インストール済みソフトウェア",
       "tags": "タグ",
       "enrolled": "登録日",
@@ -191,6 +205,11 @@
     "downloadButton": "エージェントをダウンロード",
     "downloadHint": "ダウンロードしたファイルを対象マシンでダブルクリックすると、自動でインストールと登録が行われます。同じファイルを何台でも使えます。",
     "downloadStarted": "ダウンロードを開始しました",
+    "appName": "SoftSentry Agent",
+    "heroTagline": "ワンクリックでエンドポイントにエージェントを導入",
+    "step1": "ダウンロード",
+    "step2": "ダブルクリックでインストール",
+    "step3": "約1分でダッシュボードに表示",
     "advanced": "詳細設定: 配布リンクを管理",
     "createTitle": "インストールリンクを作成",
     "label": "ラベル",

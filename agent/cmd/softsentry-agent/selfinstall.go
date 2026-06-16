@@ -19,6 +19,7 @@ import (
 	"os"           // ใช้ดู OS argument, อ่าน stdin, เขียนไฟล์, และหา env var
 	"path/filepath" // ใช้ต่อ path และหาชื่อไฟล์
 	"runtime"      // ใช้ตรวจสอบ OS ปัจจุบัน (GOOS) เพื่อเลือก path และชื่อไฟล์
+	"slices"       // ใช้ slices.Contains ตรวจหา flag ใน args
 	"strings"      // ใช้ build disclosure text และแปลง input เป็น lowercase
 	"time"         // ใช้สร้าง timestamp สำหรับชื่อไฟล์ backup และ countdown timer
 
@@ -60,14 +61,17 @@ const elevatedInstallFlag = "--accept-install"
 func maybeSelfInstall(ctx context.Context) (handled bool, err error) {
 	// Two entry shapes count as a self-install: the bare double-click (no args),
 	// and our own elevated continuation (we relaunch with elevatedInstallFlag
-	// after the user consents). Anything else is an ordinary CLI invocation.
+	// after the user consents). The elevated continuation now also carries the
+	// language + install directory the user chose in the wizard, e.g.
+	//   --accept-install --lang=th --install-dir="C:\Program Files\SoftSentry"
+	// Anything else is an ordinary CLI invocation.
 	//
 	// (TH) มีการเริ่มต้นสองรูปแบบที่นับเป็น self-install: การดับเบิลคลิกเฉยๆ
 	// (ไม่มี arg) และการ relaunch ต่อเนื่องของตัวเราเอง (relaunch พร้อม
-	// elevatedInstallFlag หลังผู้ใช้ยินยอมแล้ว) นอกเหนือจากนี้ถือเป็นการเรียกใช้
-	// CLI แบบปกติ
+	// elevatedInstallFlag หลังผู้ใช้ยินยอมแล้ว — แนบ --lang / --install-dir ที่ผู้ใช้
+	// เลือกใน wizard มาด้วย) นอกเหนือจากนี้ถือเป็นการเรียกใช้ CLI แบบปกติ
 	// ตรวจสอบว่านี่คือ elevated continuation (relaunch จาก UAC) หรือไม่
-	continuation := len(os.Args) == 2 && os.Args[1] == elevatedInstallFlag
+	continuation := hasFlag(os.Args[1:], elevatedInstallFlag)
 	// ถ้ามี argument อื่นๆ (ไม่ใช่ no-arg หรือ elevated continuation) ให้ข้ามไป
 	if len(os.Args) != 1 && !continuation {
 		return false, nil // เป็นการเรียก CLI ปกติ — ปล่อยให้ Cobra จัดการ
@@ -94,7 +98,38 @@ func maybeSelfInstall(ctx context.Context) (handled bool, err error) {
 	}
 
 	// มี trailer อยู่ — รัน self-install flow
-	return true, runSelfInstall(ctx, exe, emb, continuation)
+	// แยก --lang / --install-dir ออกจาก args (มีค่าเฉพาะ elevated continuation
+	// ส่วนการเปิดครั้งแรกจะได้ค่าจาก wizard ภายหลัง)
+	lang, dir := parseInstallArgs(os.Args[1:])
+	return true, runSelfInstall(ctx, exe, emb, continuation, lang, dir)
+}
+
+// hasFlag รายงานว่า args มี flag ที่ระบุหรือไม่ (ใช้ตรวจ elevated continuation)
+func hasFlag(args []string, flag string) bool {
+	return slices.Contains(args, flag)
+}
+
+// parseInstallArgs ดึงค่า --lang และ --install-dir จาก args ที่ instance ก่อน
+// elevation แนบมา ค่า default: lang=ไทย, dir="" (ผู้เรียกเติม default dir ของ OS เอง)
+func parseInstallArgs(args []string) (lang installer.Lang, dir string) {
+	lang = installer.LangTH
+	for _, a := range args {
+		switch {
+		case strings.HasPrefix(a, "--lang="):
+			lang = installer.ParseLang(strings.TrimPrefix(a, "--lang="))
+		case strings.HasPrefix(a, "--install-dir="):
+			dir = strings.TrimPrefix(a, "--install-dir=")
+		}
+	}
+	return lang, dir
+}
+
+// quoteArg ครอบค่าด้วยเครื่องหมายคำพูดเพื่อส่งข้าม UAC อย่างปลอดภัย — RelaunchElevated
+// join args ด้วยช่องว่าง ดังนั้น path ที่มีช่องว่าง (เช่น "C:\Program Files\...") ต้อง
+// อยู่ในเครื่องหมายคำพูด ตัด backslash ท้ายออกก่อนเพื่อไม่ให้ \" กลายเป็น escaped quote
+// (ฝั่งรับ Go runtime จะถอดเครื่องหมายคำพูดให้เองตอน parse os.Args)
+func quoteArg(s string) string {
+	return `"` + strings.TrimRight(s, `\`) + `"`
 }
 
 // runSelfInstall performs the install. The first (non-elevated) launch shows a
@@ -118,72 +153,96 @@ func maybeSelfInstall(ctx context.Context) (handled bool, err error) {
 //
 // preConsented จะเป็น true เฉพาะตอนที่เป็นการ relaunch ต่อเนื่องที่เราเปิดขึ้นมาเอง
 // — ผู้ใช้ยินยอมไปแล้ว จึงไม่ต้องถามซ้ำ
-func runSelfInstall(ctx context.Context, exe string, emb installer.Embedded, preConsented bool) error {
+func runSelfInstall(ctx context.Context, exe string, emb installer.Embedded, preConsented bool, lang installer.Lang, installDir string) error {
 	// บน Windows ซ่อนหน้าต่าง console สีดำทันทีที่เริ่ม self-install — ทุกอย่างที่
 	// ผู้ใช้เห็นจะเป็น GUI dialog แทน (บน non-Windows เป็น no-op, ใช้ console ตามเดิม)
 	installer.HideConsoleWindow()
 
+	// default install dir ของ OS — ใช้เมื่อ wizard/args ไม่ได้ระบุ
+	defaultDir, _ := installDirDefault()
+	if installDir == "" {
+		installDir = defaultDir
+	}
+
 	// ถ้ายังไม่ได้รับ consent (instance แรกที่ไม่ใช่ elevated continuation)
 	if !preConsented {
-		// Informed consent up front, before requesting admin or touching disk.
-		// (TH) ขอความยินยอมแบบรับทราบข้อมูลก่อนเริ่ม ก่อนจะขอสิทธิ์ผู้ดูแลระบบ
+		// แสดง wizard GUI (เลือกภาษา → อ่าน+ยินยอม → เลือกโฟลเดอร์) ก่อนขอสิทธิ์ admin
 		// หรือแตะต้องดิสก์ — หลักการ privacy by design
-		if !confirmConsent(emb) {
-			// ผู้ใช้ปฏิเสธการติดตั้ง — ไม่มีการเปลี่ยนแปลงใดๆ เกิดขึ้น เงียบๆ
-			return nil
+		res, shown := installer.RunWizard(emb.Config.ServerURL, installer.DefaultLang(), defaultDir)
+		if shown {
+			if !res.Proceed {
+				return nil // ผู้ใช้กดยกเลิก/ปิดหน้าต่าง — ไม่มีการเปลี่ยนแปลงใดๆ
+			}
+			lang, installDir = res.Lang, res.InstallDir
+		} else {
+			// GUI แสดงไม่ได้ (non-Windows) → ตกไปใช้ console disclosure แบบเดิม
+			installer.ShowConsoleWindow()
+			if !confirmInstall(os.Stdout, os.Stdin, emb) {
+				return nil
+			}
+		}
+		if installDir == "" {
+			installDir = defaultDir
 		}
 		// ตรวจสอบว่ากำลังรันด้วยสิทธิ์ admin อยู่แล้วหรือไม่
 		if !installer.IsElevated() {
-			// ยังไม่มีสิทธิ์ admin — relaunch ผ่าน UAC (consent ผ่านแล้ว ส่ง flag ไปด้วย)
-			if err := installer.RelaunchElevated(exe, []string{elevatedInstallFlag}); err != nil {
+			// ยังไม่มีสิทธิ์ admin — relaunch ผ่าน UAC พร้อมส่งภาษา+โฟลเดอร์ที่เลือก
+			args := []string{
+				elevatedInstallFlag,
+				"--lang=" + string(lang),
+				"--install-dir=" + quoteArg(installDir),
+			}
+			if err := installer.RelaunchElevated(exe, args); err != nil {
 				// ขอสิทธิ์ admin ล้มเหลว (ผู้ใช้คลิก "No" ใน UAC หรือ error อื่น)
-				return showInstallError(fmt.Errorf("ขอสิทธิ์ผู้ดูแลระบบไม่สำเร็จ: %w", err))
+				return showInstallError(lang, fmt.Errorf("ขอสิทธิ์ผู้ดูแลระบบไม่สำเร็จ: %w", err))
 			}
 			// instance ที่ elevated แล้วจะทำงานต่อในหน้าต่างของมันเอง — ตัวนี้จบ
 			return nil
 		}
 	}
 
-	// ถึงตรงนี้ = มีสิทธิ์ admin แล้ว — ลงมือติดตั้งจริง
-	if err := performInstall(ctx, exe, emb); err != nil {
-		return showInstallError(err)
+	// ถึงตรงนี้ = มีสิทธิ์ admin แล้ว — ลงมือติดตั้งจริง พร้อมหน้าความคืบหน้า (GUI)
+	install := func(setStep func(int)) error {
+		return performInstall(ctx, exe, emb, installDir, setStep)
 	}
-	showInstallSuccess()
+	if runErr, shown := installer.RunInstallProgress(lang, install); shown {
+		if runErr != nil {
+			return showInstallError(lang, runErr)
+		}
+		showInstallSuccess(lang)
+		return nil
+	}
+	// GUI progress แสดงไม่ได้ (non-Windows) → รันแบบ console
+	if err := performInstall(ctx, exe, emb, installDir, nil); err != nil {
+		return showInstallError(lang, err)
+	}
+	showInstallSuccess(lang)
 	return nil
-}
-
-// confirmConsent ขอความยินยอมจากผู้ใช้ ผ่าน GUI dialog ก่อน (บน Windows) แล้ว
-// fallback เป็น console prompt ถ้าแสดง GUI ไม่ได้ (non-Windows หรือ dialog error)
-// คืน true เมื่อผู้ใช้อนุญาตให้ติดตั้ง
-func confirmConsent(emb installer.Embedded) bool {
-	ci := buildConsentInfo(emb) // แหล่งข้อมูล disclosure กลาง (ไม่มี token)
-	if consented, shown := installer.ConfirmInstallGUI(ci); shown {
-		return consented
-	}
-	// GUI ใช้ไม่ได้ → ตกไปใช้ console (unhide console เผื่อถูกซ่อนไว้ก่อนหน้า)
-	installer.ShowConsoleWindow()
-	return confirmInstall(os.Stdout, os.Stdin, emb)
 }
 
 // performInstall ทำขั้นตอนติดตั้งจริงทั้ง 4 ขั้น (ต้องมีสิทธิ์ admin แล้ว):
 // ลบเวอร์ชันเก่า → คัดลอกไฟล์ → enroll เครื่อง → ลงทะเบียน+เริ่ม service
 // progress เขียนลง stdout (บน Windows console ถูกซ่อน จึงมองไม่เห็น — แต่ยังเก็บไว้
 // เป็น log และเป็นช่องทางแสดงผลของ console fallback บน non-Windows)
-func performInstall(ctx context.Context, exe string, emb installer.Embedded) error {
+func performInstall(ctx context.Context, exe string, emb installer.Embedded, dir string, setStep func(int)) error {
 	out := os.Stdout
+
+	// report แจ้งความคืบหน้าทั้งสองทาง: เขียน log ลง stdout (ซ่อนบน Windows) และเรียก
+	// setStep ให้หน้า GUI อัปเดต (nil บน console path) — index 0..3 ตรงกับ progressSteps
+	report := func(i int) {
+		if setStep != nil {
+			setStep(i)
+		}
+	}
 
 	// แสดง header การติดตั้ง
 	fmt.Fprintln(out, "============================================")
 	fmt.Fprintln(out, "  SoftSentry Agent — กำลังติดตั้ง")
 	fmt.Fprintf(out, "  Server: %s\n", emb.Config.ServerURL) // server ที่จะรายงานไป
+	fmt.Fprintf(out, "  Install: %s\n", dir)                 // โฟลเดอร์ปลายทางที่เลือก
 	fmt.Fprintln(out, "============================================")
 	fmt.Fprintln(out)
 
-	// หา install directory ตาม OS (Program Files บน Windows, /usr/local/softsentry บน macOS)
-	dir, err := installDir()
-	if err != nil {
-		return err
-	}
 	// สร้าง install directory ถ้ายังไม่มี (MkdirAll ไม่ error ถ้ามีอยู่แล้ว)
 	if err := os.MkdirAll(dir, 0o755); err != nil { // #nosec G301 — program dir
 		return fmt.Errorf("create install dir: %w", err)
@@ -191,6 +250,7 @@ func performInstall(ctx context.Context, exe string, emb installer.Embedded) err
 	// path เต็มของ agent binary ที่จะติดตั้ง เช่น C:\Program Files\SoftSentry\softsentry-agent.exe
 	dstExe := filepath.Join(dir, exeName())
 
+	report(0)
 	// Step 1 — replace any previous install. If the agent is already installed, a
 	// previous instance is almost certainly running as a service and holding
 	// dstExe open — on Windows the OS locks a running .exe. Stop and remove the
@@ -214,6 +274,7 @@ func performInstall(ctx context.Context, exe string, emb installer.Embedded) err
 	}
 	stepDone(out)
 
+	report(1)
 	// Step 2 — copy the agent into Program Files.
 	// (TH) ขั้นที่ 2 — คัดลอก agent ไปไว้ใน Program Files (ตัด trailer ออกด้วย OriginalLen)
 	step(out, 2, "Installing files")
@@ -222,6 +283,7 @@ func performInstall(ctx context.Context, exe string, emb installer.Embedded) err
 	}
 	stepDone(out)
 
+	report(2)
 	// Step 3 — enroll this machine with the embedded deployment token.
 	// (TH) ขั้นที่ 3 — enroll เครื่องนี้ด้วย deployment token ที่ฝังมา (ซ่อน progress ของ enroll)
 	step(out, 3, "Enrolling this machine")
@@ -230,6 +292,7 @@ func performInstall(ctx context.Context, exe string, emb installer.Embedded) err
 	}
 	stepDone(out)
 
+	report(3)
 	// Step 4 — register + start the background service.
 	// (TH) ขั้นที่ 4 — ลงทะเบียน + เริ่ม background service
 	step(out, 4, "Starting background service")
@@ -241,10 +304,9 @@ func performInstall(ctx context.Context, exe string, emb installer.Embedded) err
 }
 
 // showInstallSuccess แจ้งผลสำเร็จแบบ GUI (บน Windows) หรือ console (fallback)
-func showInstallSuccess() {
-	const heading = "ติดตั้งสำเร็จ"
-	const msg = "SoftSentry Agent ติดตั้งและกำลังทำงานแล้ว\n" +
-		"เครื่องนี้จะปรากฏใน dashboard ภายใน 1 นาที"
+// ในภาษาที่ผู้ใช้เลือก
+func showInstallSuccess(lang installer.Lang) {
+	heading, msg := installer.SuccessText(lang)
 	if installer.ShowResultGUI(true, heading, msg) {
 		return
 	}
@@ -255,13 +317,11 @@ func showInstallSuccess() {
 	closeWithCountdown(out, 8) // รอ 8 วินาทีแล้วปิดหน้าต่างอัตโนมัติ
 }
 
-// showInstallError แจ้งผลล้มเหลวแบบ GUI (บน Windows) หรือ console (fallback)
-// แล้วคืน err เดิมกลับไปให้ผู้เรียก (เพื่อให้ exit code สะท้อนความล้มเหลว) — ผู้เรียก
-// ไม่ต้องแสดง error ซ้ำอีก เพราะฟังก์ชันนี้แสดงให้ผู้ใช้แล้ว
-func showInstallError(err error) error {
-	const heading = "การติดตั้งล้มเหลว"
-	msg := err.Error() + "\n\nลองดาวน์โหลดและเรียกใช้ตัวติดตั้งอีกครั้ง " +
-		"หากยังไม่สำเร็จ โปรดติดต่อทีม IT"
+// showInstallError แจ้งผลล้มเหลวแบบ GUI (บน Windows) หรือ console (fallback) ในภาษา
+// ที่ผู้ใช้เลือก แล้วคืน err เดิมกลับไปให้ผู้เรียก (เพื่อให้ exit code สะท้อนความ
+// ล้มเหลว) — ผู้เรียกไม่ต้องแสดง error ซ้ำอีก เพราะฟังก์ชันนี้แสดงให้ผู้ใช้แล้ว
+func showInstallError(lang installer.Lang, err error) error {
+	heading, msg := installer.ErrorText(lang, err.Error())
 	if installer.ShowResultGUI(false, heading, msg) {
 		return err
 	}
@@ -279,7 +339,7 @@ func showInstallError(err error) error {
 // installDir() อาจคืน error — ในกรณีนั้นปล่อย dir ว่างให้ BuildConsentInfo ใส่
 // คำอธิบายทั่วไปแทน (disclosure ยังอ่านรู้เรื่อง) token ไม่ถูกส่งต่อไป (ความลับ)
 func buildConsentInfo(emb installer.Embedded) installer.ConsentInfo {
-	dir, _ := installDir() // error → dir == "" → BuildConsentInfo fallback
+	dir, _ := installDirDefault() // error → dir == "" → BuildConsentInfo fallback
 	return installer.BuildConsentInfo(emb.Config.ServerURL, dir)
 }
 
@@ -471,11 +531,13 @@ func copyAgentWithRetry(src, dst string, originalLen int64) error {
 	return err
 }
 
-// installDir returns the per-OS directory the agent is installed into.
-// (TH) คืนค่าไดเรกทอรีที่ใช้ติดตั้ง agent ของแต่ละ OS:
+// installDirDefault returns the per-OS DEFAULT directory the agent is installed
+// into — the value pre-filled in the wizard's location field, which the user may
+// override. (Renamed from installDir to avoid shadowing the installDir variable.)
+// (TH) คืนค่าไดเรกทอรี "เริ่มต้น" ที่ใช้ติดตั้ง agent ของแต่ละ OS (ผู้ใช้แก้ใน wizard ได้):
 // - Windows: %ProgramFiles%\SoftSentry (default: C:\Program Files\SoftSentry)
 // - macOS/Linux: /usr/local/softsentry
-func installDir() (string, error) {
+func installDirDefault() (string, error) {
 	// เลือก directory ตาม OS ปัจจุบัน
 	if runtime.GOOS == "windows" {
 		// อ่าน %ProgramFiles% env var สำหรับ path ที่ถูกต้องในทุก locale Windows

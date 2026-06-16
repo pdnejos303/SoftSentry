@@ -1,13 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { ChevronDown, Copy, Download, Loader2, Plus, ShieldAlert } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronDown,
+  Copy,
+  Download,
+  Loader2,
+  Pencil,
+  Plus,
+  ShieldAlert,
+  ShieldCheck,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import {
   defaultServerUrl,
   installerUrl,
+  useBinaryInfo,
   useCreateDeploymentToken,
   useDeploymentTokens,
   useRevokeDeploymentToken,
@@ -35,7 +46,9 @@ export default function DeployPage() {
   const isAdmin = user?.role === "admin" || user?.role === "dev";
 
   const [server, setServer] = useState(() => defaultServerUrl());
+  const [editingServer, setEditingServer] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const { data: binary } = useBinaryInfo();
 
   // One-click download reuses a single deployment token across clicks in this
   // session (a deployment token is reusable for any number of machines), so the
@@ -126,33 +139,89 @@ export default function DeployPage() {
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      {/* Primary flow — one button to get the installable agent. */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t("downloadTitle")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="max-w-md space-y-1.5">
-            <Label htmlFor="dl-server">{t("server")}</Label>
-            <Input
-              id="dl-server"
-              value={server}
-              onChange={(e) => setServer(e.target.value)}
-              placeholder="http://192.168.1.10:8001"
-            />
-            <p className="text-xs text-muted-foreground">{t("serverHint")}</p>
+      {/* Primary flow — a polished hero: one click to get the installable agent. */}
+      <Card className="relative overflow-hidden">
+        {/* subtle gradient accent at the top to lift the hero off the page */}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-primary/10 to-transparent" />
+        <CardContent className="relative space-y-6 pt-6">
+          {/* header: product icon + name + the version actually being served */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <ShieldCheck className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold leading-tight">{t("appName")}</h2>
+                <p className="text-sm text-muted-foreground">{t("heroTagline")}</p>
+              </div>
+            </div>
+            {binary && (
+              <Badge variant="secondary" className="shrink-0 font-mono">
+                v{binary.version} · {binary.os}
+              </Badge>
+            )}
           </div>
 
-          <Button size="lg" onClick={onDownload} disabled={create.isPending}>
-            {create.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="mr-2 h-4 w-4" />
-            )}
-            {t("downloadButton")}
-          </Button>
+          {/* the one big call to action, with the callback server tucked beneath it */}
+          <div className="flex flex-col items-center gap-3 py-1">
+            <Button
+              size="lg"
+              className="h-12 px-8 text-base"
+              onClick={onDownload}
+              disabled={create.isPending}
+            >
+              {create.isPending ? (
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-5 w-5" />
+              )}
+              {t("downloadButton")}
+            </Button>
 
-          <p className="text-sm text-muted-foreground">{t("downloadHint")}</p>
+            {editingServer ? (
+              <div className="w-full max-w-md space-y-1">
+                <Label htmlFor="dl-server" className="sr-only">
+                  {t("server")}
+                </Label>
+                <Input
+                  id="dl-server"
+                  value={server}
+                  onChange={(e) => setServer(e.target.value)}
+                  onBlur={() => setEditingServer(false)}
+                  placeholder="http://192.168.1.10:8001"
+                  autoFocus
+                />
+                <p className="text-xs text-muted-foreground">{t("serverHint")}</p>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setEditingServer(true)}
+                className="inline-flex max-w-full items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <span>{t("server")}:</span>
+                <span className="truncate font-mono text-foreground">{server || "—"}</span>
+                <Pencil className="h-3 w-3 shrink-0" />
+              </button>
+            )}
+          </div>
+
+          {/* what happens after they click — three plain steps */}
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-lg border bg-muted/30 p-4">
+            {[t("step1"), t("step2"), t("step3")].map((label, i) => (
+              <Fragment key={i}>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
+                    {i + 1}
+                  </span>
+                  <span className="text-xs text-muted-foreground">{label}</span>
+                </div>
+                {i < 2 && <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/50" />}
+              </Fragment>
+            ))}
+          </div>
+
+          {/* SmartScreen heads-up (the installer isn't code-signed yet) */}
           <div className="flex items-start gap-2 text-xs text-muted-foreground">
             <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
             <span>{t("smartScreen")}</span>

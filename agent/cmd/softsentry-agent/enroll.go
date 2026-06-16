@@ -86,12 +86,13 @@ func enrollMachine(ctx context.Context, out io.Writer, token, server string) err
 	client := transport.New(server, "")
 	// ส่ง enrollment request ไปยัง backend พร้อมข้อมูลเครื่องและ token
 	resp, err := client.Enroll(reqCtx, transport.EnrollRequest{
-		EnrollmentToken: token,           // one-time token จาก admin
-		Hostname:        host.Hostname,   // ชื่อเครื่อง
-		OS:              host.OS,         // ระบบปฏิบัติการ เช่น "windows", "darwin"
-		OSVersion:       host.OSVersion,  // เวอร์ชัน OS เช่น "10.0.22631"
-		Arch:            host.Arch,       // สถาปัตยกรรม เช่น "amd64"
-		AgentVersion:    agentVersion,    // เวอร์ชัน agent ที่กำลังรัน
+		EnrollmentToken: token,            // one-time token จาก admin
+		Hostname:        host.Hostname,    // ชื่อเครื่อง
+		OS:              host.OS,          // ระบบปฏิบัติการ เช่น "windows", "darwin"
+		OSVersion:       host.OSVersion,   // เวอร์ชัน OS เช่น "10.0.22631"
+		Arch:            host.Arch,        // สถาปัตยกรรม เช่น "amd64"
+		AgentVersion:    agentVersion,     // เวอร์ชัน agent ที่กำลังรัน
+		Fingerprint:     host.Fingerprint, // hardware id ที่คงที่ ใช้ dedup การ enroll ซ้ำ
 	})
 	if err != nil {
 		// server ปฏิเสธ หรือมีปัญหาเครือข่าย

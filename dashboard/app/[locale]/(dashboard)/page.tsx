@@ -16,9 +16,11 @@ import { VulnSummaryWidget } from "@/components/vulnerabilities/VulnSummaryWidge
 import { SignatureStatsWidget } from "@/components/signatures/SignatureStatsWidget";
 import { ComplianceSummaryWidget } from "@/components/licenses/ComplianceSummaryWidget";
 import { AlertFeed } from "@/components/alerts/AlertFeed";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const POLL_MS = 30_000;
+const ALERTS_PAGE_SIZE = 5;
 // Warn when more than this fraction of the fleet is offline (spec 7.1).
 const OFFLINE_WARN_RATIO = 0.1;
 
@@ -32,9 +34,11 @@ export default function OverviewPage() {
   const [paused, setPaused] = useState(false);
   const pollMs = paused ? undefined : POLL_MS;
 
+  const [alertsPage, setAlertsPage] = useState(1);
+
   const { data: overview, isLoading } = useOverview({ refetchInterval: pollMs });
   const { data: alerts, isLoading: alertsLoading } = useAlerts(
-    { status: "active", page_size: 10 },
+    { status: "active", page: alertsPage, page_size: ALERTS_PAGE_SIZE },
     { refetchInterval: pollMs },
   );
 
@@ -129,8 +133,37 @@ export default function OverviewPage() {
           <CardHeader>
             <CardTitle className="text-base">{t("alertFeedTitle")}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <AlertFeed alerts={alerts?.items} isLoading={alertsLoading} isAdmin={isAdmin} />
+            {alerts && alerts.total_pages > 1 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {t("alertFeedPageInfo", {
+                    page: alerts.page,
+                    total: alerts.total_pages,
+                    count: alerts.total,
+                  })}
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={alertsPage <= 1}
+                    onClick={() => setAlertsPage((p) => p - 1)}
+                  >
+                    {t("alertFeedPrev")}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={alertsPage >= alerts.total_pages}
+                    onClick={() => setAlertsPage((p) => p + 1)}
+                  >
+                    {t("alertFeedNext")}
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

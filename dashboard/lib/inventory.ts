@@ -8,6 +8,7 @@ import type {
   MachineDetail,
   MachineListItem,
   MachineSoftwareItem,
+  MachineUpdateInput,
   Paginated,
   ScanHistoryItem,
   SignatureStatus,
@@ -94,6 +95,22 @@ export function useTriggerScan(uuid: string) {
     mutationFn: async () => {
       const { data } = await api.post(`/machines/${uuid}/trigger-scan`);
       return data;
+    },
+  });
+}
+
+// Admin: rename / set owner / edit tags. PATCH is partial, so we send only the
+// fields the dialog changed; the response is the fresh detail we seed the cache with.
+export function useUpdateMachine() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ uuid, input }: { uuid: string; input: MachineUpdateInput }) => {
+      const { data } = await api.patch<MachineDetail>(`/machines/${uuid}`, input);
+      return data;
+    },
+    onSuccess: (data) => {
+      void qc.invalidateQueries({ queryKey: ["machines"] });
+      qc.setQueryData(["machine", data.uuid], data);
     },
   });
 }

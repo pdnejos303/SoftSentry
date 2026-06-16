@@ -12,6 +12,9 @@ export interface VulnerabilityCount {
 export interface MachineListItem {
   uuid: string;
   hostname: string;
+  // Admin-set friendly name + owner; null when unset (UI falls back to hostname).
+  display_name: string | null;
+  owner: string | null;
   os: string;
   os_version: string;
   agent_version: string;
@@ -27,6 +30,13 @@ export interface MachineListItem {
 export interface MachineDetail extends MachineListItem {
   arch: string;
   enrolled_at: string;
+}
+
+// Admin edit (PATCH /machines/{uuid}) — partial; omitted fields are left as-is.
+export interface MachineUpdateInput {
+  display_name?: string | null;
+  owner?: string | null;
+  tags?: string[];
 }
 
 export interface Paginated<T> {

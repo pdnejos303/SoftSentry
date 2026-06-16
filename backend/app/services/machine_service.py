@@ -86,7 +86,16 @@ async def list_machines(
     now = datetime.now(tz=UTC)
     conditions: list[ColumnElement[bool]] = [Machine.deleted_at.is_(None)]
     if q:
-        conditions.append(Machine.hostname.ilike(f"%{q}%"))
+        # Match the friendly name + owner too, so admins can find a box by who
+        # uses it ("Pranee") not just its raw hostname ("DESKTOP-AB12").
+        like = f"%{q}%"
+        conditions.append(
+            or_(
+                Machine.hostname.ilike(like),
+                Machine.display_name.ilike(like),
+                Machine.owner.ilike(like),
+            )
+        )
     if os:
         conditions.append(Machine.os == os)
     if tag:
@@ -128,6 +137,8 @@ def _to_item(machine: Machine, now: datetime, software_count: int) -> dict[str, 
     return {
         "uuid": machine.uuid,
         "hostname": machine.hostname,
+        "display_name": machine.display_name,
+        "owner": machine.owner,
         "os": machine.os,
         "os_version": machine.os_version,
         "arch": machine.arch,

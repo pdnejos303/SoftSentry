@@ -20,6 +20,8 @@ class VulnerabilityCount(BaseModel):
 class MachineListItem(BaseModel):
     uuid: uuid_lib.UUID
     hostname: str
+    display_name: str | None = None
+    owner: str | None = None
     os: str
     os_version: str
     agent_version: str
@@ -46,7 +48,13 @@ class MachineList(BaseModel):
 
 
 class MachineUpdate(BaseModel):
-    tags: list[str] = Field(..., max_length=50)
+    """Admin edit. All fields optional — only those present in the request body
+    are applied (partial update), so renaming a machine doesn't clobber its tags
+    and vice versa. ``None`` is a valid value to clear display_name/owner."""
+
+    tags: list[str] | None = Field(default=None, max_length=50)
+    display_name: str | None = Field(default=None, max_length=255)
+    owner: str | None = Field(default=None, max_length=255)
 
 
 class TriggerScanResponse(BaseModel):

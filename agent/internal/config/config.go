@@ -3,11 +3,11 @@
 package config
 
 import (
-	"errors" // ใช้ตรวจสอบประเภท error เช่น os.ErrNotExist
-	"fmt"    // ใช้จัดรูปแบบ error message
-	"os"     // ใช้อ่าน/เขียนไฟล์ และอ่าน environment variable
+	"errors"        // ใช้ตรวจสอบประเภท error เช่น os.ErrNotExist
+	"fmt"           // ใช้จัดรูปแบบ error message
+	"os"            // ใช้อ่าน/เขียนไฟล์ และอ่าน environment variable
 	"path/filepath" // ใช้สร้าง path ของไฟล์/ไดเรกทอรีแบบ cross-platform
-	"runtime" // ใช้ตรวจสอบ OS ที่รันอยู่ (windows หรือ อื่นๆ)
+	"runtime"       // ใช้ตรวจสอบ OS ที่รันอยู่ (windows หรือ อื่นๆ)
 
 	"gopkg.in/yaml.v3" // ใช้ marshal/unmarshal ไฟล์ config แบบ YAML
 )
@@ -16,10 +16,10 @@ import (
 // (TH) Config คือโครงสร้างข้อมูล config ของ agent ที่บันทึกอยู่บนดิสก์ในรูปแบบ YAML
 type Config struct {
 	ServerURL         string `yaml:"server_url"`          // URL ของ backend server ที่ agent จะรายงานผล
-	MachineUUID       string `yaml:"machine_uuid"`         // UUID เฉพาะของเครื่องนี้ที่ลงทะเบียนไว้กับ server
-	ScanIntervalHours int    `yaml:"scan_interval_hours"`  // ความถี่การสแกน software inventory (หน่วย: ชั่วโมง)
-	AutoUpdateEnabled bool   `yaml:"auto_update_enabled"`  // เปิด/ปิดการอัปเดต agent อัตโนมัติ
-	LogLevel          string `yaml:"log_level"`            // ระดับ log ที่ต้องการ เช่น "info", "debug", "warn"
+	MachineUUID       string `yaml:"machine_uuid"`        // UUID เฉพาะของเครื่องนี้ที่ลงทะเบียนไว้กับ server
+	ScanIntervalHours int    `yaml:"scan_interval_hours"` // ความถี่การสแกน software inventory (หน่วย: ชั่วโมง)
+	AutoUpdateEnabled bool   `yaml:"auto_update_enabled"` // เปิด/ปิดการอัปเดต agent อัตโนมัติ
+	LogLevel          string `yaml:"log_level"`           // ระดับ log ที่ต้องการ เช่น "info", "debug", "warn"
 
 	// FilesystemScanEnabled เปิดการเดิน filesystem หา .exe นอก registry (default true)
 	FilesystemScanEnabled bool `yaml:"filesystem_scan_enabled"`

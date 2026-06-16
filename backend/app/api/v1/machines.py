@@ -80,7 +80,7 @@ async def get_machine(
 @router.patch(
     "/{machine_uuid}",
     response_model=MachineDetail,
-    summary="Admin: edit machine tags",
+    summary="Admin: edit machine name/owner/tags",
     dependencies=[Depends(require_role("dev", "admin"))],
 )
 async def update_machine(
@@ -89,7 +89,15 @@ async def update_machine(
     session: DBSession,
 ) -> MachineDetail:
     machine = await _get_or_404(session, machine_uuid)
-    machine.tags = payload.tags
+    # Partial update: only apply fields the client actually sent, so editing the
+    # name doesn't wipe tags and vice versa.
+    fields = payload.model_dump(exclude_unset=True)
+    if "tags" in fields and fields["tags"] is not None:
+        machine.tags = fields["tags"]
+    if "display_name" in fields:
+        machine.display_name = fields["display_name"]
+    if "owner" in fields:
+        machine.owner = fields["owner"]
     await session.commit()
     return MachineDetail(**await machine_service.machine_detail(session, machine))
 

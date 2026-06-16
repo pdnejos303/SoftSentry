@@ -7,7 +7,9 @@ import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { machineLabel } from "@/lib/machine";
 import { DeleteMachineDialog } from "@/components/machines/DeleteMachineDialog";
+import { RenameMachineDialog } from "@/components/machines/RenameMachineDialog";
 import { useVulnerabilityGroups } from "@/lib/vulnerability";
 import type { VulnerabilityItem } from "@/lib/types";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
@@ -39,7 +41,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RefreshCw, Trash2 } from "lucide-react";
+import { Pencil, RefreshCw, Trash2 } from "lucide-react";
 
 export default function MachineDetailPage() {
   const params = useParams<{ uuid: string }>();
@@ -53,6 +55,7 @@ export default function MachineDetailPage() {
   const trigger = useTriggerScan(uuid);
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
 
   if (isLoading || !machine) {
     return <Skeleton className="h-40 w-full" />;
@@ -73,12 +76,14 @@ export default function MachineDetailPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{machine.hostname}</h1>
+            <h1 className="text-2xl font-bold">{machineLabel(machine)}</h1>
             <Badge variant={statusVariant(machine.status)}>
               {tm(`status.${machine.status}`)}
             </Badge>
           </div>
           <p className="text-sm text-muted-foreground">
+            {machine.display_name && machine.display_name.trim() ? `${machine.hostname} · ` : ""}
+            {machine.owner ? `${machine.owner} · ` : ""}
             {machine.os} {machine.os_version} · {machine.arch} · agent {machine.agent_version}
           </p>
         </div>
@@ -88,6 +93,12 @@ export default function MachineDetailPage() {
             <RefreshCw className="mr-2 h-4 w-4" />
             {t("triggerScan")}
           </Button>
+          {isAdmin && (
+            <Button variant="outline" onClick={() => setRenameOpen(true)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              {tm("rename")}
+            </Button>
+          )}
           {isAdmin && (
             <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
               <Trash2 className="mr-2 h-4 w-4" />
@@ -102,6 +113,20 @@ export default function MachineDetailPage() {
         hostname={machine.hostname}
         onOpenChange={setDeleteOpen}
         onDeleted={() => router.replace("/machines")}
+      />
+
+      <RenameMachineDialog
+        machine={
+          renameOpen
+            ? {
+                uuid,
+                hostname: machine.hostname,
+                display_name: machine.display_name,
+                owner: machine.owner,
+              }
+            : null
+        }
+        onOpenChange={setRenameOpen}
       />
 
       <Tabs defaultValue="overview">
@@ -137,6 +162,7 @@ function OverviewTab({ machine }: { machine: ReturnType<typeof useMachine>["data
   const t = useTranslations("machineDetail");
   if (!machine) return null;
   const facts: [string, string][] = [
+    [t("field.owner"), machine.owner || "—"],
     [t("field.software"), String(machine.software_count)],
     [t("field.tags"), machine.tags.join(", ") || "—"],
     [t("field.enrolled"), new Date(machine.enrolled_at).toLocaleString()],

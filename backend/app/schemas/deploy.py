@@ -34,3 +34,12 @@ class DeploymentTokenOut(BaseModel):
     use_count: int
     revoked_at: datetime | None
     created_at: datetime
+
+
+class BinaryInfoOut(BaseModel):
+    """The agent binary currently being served — shown as a version badge on the
+    deploy page so an admin can confirm which build a downloaded installer carries."""
+
+    version: str
+    os: str
+    arch: str

@@ -167,3 +167,24 @@ export function signatureVariant(
       return "outline"; // unknown / verify failed
   }
 }
+
+//hook for admin import data from mongoDB
+export function useTriggerMongoImport() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (opts?: { full?: boolean }) => {
+      const { data } = await api.post<{ queued: boolean }>(
+        "/admin/mongo-import/trigger",
+        null,
+        { params: opts?.full ? { full: true } : undefined },
+      );
+      return data;
+    },
+    onSuccess: () => {
+      setTimeout(() => {
+        void qc.invalidateQueries({ queryKey: ["machines"] });
+        void qc.invalidateQueries({ queryKey: ["dashboard-overview"] });
+      }, 2500);
+    },
+  });
+}

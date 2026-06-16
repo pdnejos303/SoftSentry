@@ -126,6 +126,12 @@
       "confirm": "Delete",
       "done": "Machine removed",
       "failed": "Could not remove the machine"
+    },
+    "mongoImport": {
+      "label": "Import from MongoDB",
+      "running": "Importing…",
+      "started": "Import started — refreshing shortly",
+      "failed": "Could not start the import"
     }
   },
   "machineDetail": {

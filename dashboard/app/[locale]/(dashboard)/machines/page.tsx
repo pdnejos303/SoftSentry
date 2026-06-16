@@ -7,6 +7,7 @@ import { Link } from "@/i18n/routing";
 import { useAuth } from "@/lib/auth";
 import { useMachines, statusVariant, type MachineFilters } from "@/lib/inventory";
 import { DeleteMachineDialog } from "@/components/machines/DeleteMachineDialog";
+import { ImportFromMongoButton } from "@/components/machines/ImportFromMongoButton";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -62,13 +63,16 @@ export default function MachinesPage() {
           <h1 className="text-2xl font-bold">{t("title")}</h1>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <ExportButton
-          resource="machines"
-          params={{
-            ...(debouncedQ ? { q: debouncedQ } : {}),
-            ...(status ? { status } : {}),
-          }}
-        />
+        <div className="flex items-center gap-2">
+          {isAdmin && <ImportFromMongoButton />}
+          <ExportButton
+            resource="machines"
+            params={{
+              ...(debouncedQ ? { q: debouncedQ } : {}),
+              ...(status ? { status } : {}),
+            }}
+          />
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

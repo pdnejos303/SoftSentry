@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    admin_import,
     agents,
     alerts,
     audit_logs,
@@ -48,3 +49,4 @@ api_router.include_router(dashboard.router, prefix="/dashboard", tags=["dashboar
 api_router.include_router(reports.router, prefix="/reports", tags=["reports"])
 api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(audit_logs.router, prefix="/audit-logs", tags=["audit"])
+api_router.include_router(admin_import.router, prefix="/admin", tags=["admin"])

@@ -126,6 +126,12 @@
       "confirm": "削除",
       "done": "マシンを削除しました",
       "failed": "マシンを削除できませんでした"
+    },
+    "mongoImport": {
+      "label": "MongoDB からインポート",
+      "running": "インポート中…",
+      "started": "インポートを開始しました — まもなく更新されます",
+      "failed": "インポートを開始できませんでした"
     }
   },
   "machineDetail": {

@@ -26,6 +26,15 @@
     "title": "เข้าสู่ระบบ",
     "heading": "ระบบจัดการซอฟต์แวร์",
     "subtitle": "เข้าสู่ SoftSentry dashboard",
+    "brandHeadline": "ระบบบริหารจัดการซอฟต์แวร์",
+    "brandTagline": "ระบบช่วยจัดการ software อัตโนมัติและติดตาม license",
+    "features": [
+      "สแกน software inventory อัตโนมัติ",
+      "จับคู่ CVE และแจ้งเตือนช่องโหว่",
+      "จัดการ license และต้นทุน"
+    ],
+    "secure": "เข้าสู่ระบบอย่างปลอดภัย",
+    "welcome": "ยินดีต้อนรับกลับมา",
     "email": "อีเมล",
     "password": "รหัสผ่าน",
     "rememberMe": "จดจำการเข้าสู่ระบบ",

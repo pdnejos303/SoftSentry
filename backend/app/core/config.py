@@ -43,6 +43,18 @@ class Settings(BaseSettings):
     nvd_api_key: str = ""
     osv_api_base: str = "https://api.osv.dev/v1"
 
+    # ─── MongoDB ingestion (Module 11) ───────────────────────────
+    # Blank MONGO_URI disables the importer (worker cron + endpoint no-op).
+    mongo_uri: str = ""
+    mongo_db: str = "softsentry"
+    mongo_collection: str = "inventory"
+    mongo_import_lookback_minutes: int = 1440
+    mongo_timestamp_field: str = "scanned_at"
+
+    @property
+    def mongo_import_enabled(self) -> bool:
+        return bool(self.mongo_uri)
+
     # Directory holding agent binaries + manifest.json for auto-update
     # (spec 1.6). Empty disables the auto-update distribution endpoints.
     agent_binary_dir: str = ""

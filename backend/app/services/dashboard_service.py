@@ -17,7 +17,7 @@ from app.models.cve import CveRecord, Vulnerability
 from app.models.machine import Machine
 from app.models.software import SoftwareRecord
 from app.services import risk_service
-from app.services.machine_service import ONLINE_WITHIN
+from app.services.machine_service import online_filter
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
@@ -33,12 +33,11 @@ async def overview(session: AsyncSession) -> dict[str, int]:
         )
     ).scalar_one()
 
-    online_cut = now - ONLINE_WITHIN
     agents_online = (
         await session.execute(
             select(func.count())
             .select_from(Machine)
-            .where(Machine.deleted_at.is_(None), Machine.last_seen_at >= online_cut)
+            .where(Machine.deleted_at.is_(None), online_filter(now))
         )
     ).scalar_one()
 

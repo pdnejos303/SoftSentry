@@ -10,19 +10,48 @@ import uuid as uuid_lib
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, and_, cast, func, or_, select
+from sqlalchemy import String, and_, case, cast, func, or_, select
 from sqlalchemy.sql.elements import ColumnElement
 
 from app.models.agent_config import AgentConfig
 from app.models.machine import Machine
 from app.models.software import SoftwareRecord
 from app.services import risk_service
+from app.services.agentless_service import AGENTLESS_VERSION
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
 ONLINE_WITHIN = timedelta(minutes=5)
+# Agentless (MongoDB-imported) machines never send a heartbeat; their last_seen_at
+# only advances when the mongo_import cron runs (every 30 min). Give them a window
+# that spans one import cycle plus slack so they don't flap offline between runs.
+AGENTLESS_ONLINE_WITHIN = timedelta(minutes=40)
 STALE_WITHIN = timedelta(hours=1)
+
+
+def online_cut_expr(now: datetime) -> ColumnElement[datetime]:
+    """SQL lower bound on last_seen_at for 'online'. Agentless machines get a
+    longer window because they refresh on the import cron, not a live heartbeat."""
+    return case(
+        (Machine.agent_version == AGENTLESS_VERSION, now - AGENTLESS_ONLINE_WITHIN),
+        else_=now - ONLINE_WITHIN,
+    )
+
+
+def online_filter(now: datetime) -> ColumnElement[bool]:
+    """Predicate: machine currently counts as online (agentless-aware window).
+
+    A NULL last_seen_at compares as NULL (never-seen → not online), as intended.
+    """
+    return Machine.last_seen_at >= online_cut_expr(now)
+
+
+def _online_within(agent_version: str | None) -> timedelta:
+    if agent_version == AGENTLESS_VERSION:
+        return AGENTLESS_ONLINE_WITHIN
+    return ONLINE_WITHIN
+
 
 _SORTABLE = {
     "hostname": Machine.hostname,
@@ -32,14 +61,16 @@ _SORTABLE = {
 }
 
 
-def compute_status(last_seen_at: datetime | None, now: datetime) -> str:
+def compute_status(
+    last_seen_at: datetime | None, now: datetime, agent_version: str | None = None
+) -> str:
     if last_seen_at is None:
         return "offline"
     # SQLite (test backend) hands back naive datetimes; treat them as UTC.
     if last_seen_at.tzinfo is None:
         last_seen_at = last_seen_at.replace(tzinfo=UTC)
     delta = now - last_seen_at
-    if delta < ONLINE_WITHIN:
+    if delta < _online_within(agent_version):
         return "online"
     if delta < STALE_WITHIN:
         return "stale"
@@ -47,12 +78,12 @@ def compute_status(last_seen_at: datetime | None, now: datetime) -> str:
 
 
 def _status_condition(status: str, now: datetime) -> ColumnElement[bool] | None:
-    online_cut = now - ONLINE_WITHIN
+    online_expr = online_cut_expr(now)
     stale_cut = now - STALE_WITHIN
     if status == "online":
-        return Machine.last_seen_at >= online_cut
+        return Machine.last_seen_at >= online_expr
     if status == "stale":
-        return and_(Machine.last_seen_at >= stale_cut, Machine.last_seen_at < online_cut)
+        return and_(Machine.last_seen_at >= stale_cut, Machine.last_seen_at < online_expr)
     if status == "offline":
         return or_(Machine.last_seen_at < stale_cut, Machine.last_seen_at.is_(None))
     return None
@@ -132,7 +163,7 @@ def _to_item(machine: Machine, now: datetime, software_count: int) -> dict[str, 
         "os_version": machine.os_version,
         "arch": machine.arch,
         "agent_version": machine.agent_version,
-        "status": compute_status(machine.last_seen_at, now),
+        "status": compute_status(machine.last_seen_at, now, machine.agent_version),
         "last_seen_at": machine.last_seen_at,
         "last_scan_at": machine.last_scan_at,
         "enrolled_at": machine.enrolled_at,

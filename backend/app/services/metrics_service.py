@@ -25,7 +25,7 @@ from app.models.cve import CveRecord, Vulnerability
 from app.models.machine import Machine
 from app.models.software import SoftwareRecord
 from app.services import license_service
-from app.services.machine_service import ONLINE_WITHIN, STALE_WITHIN
+from app.services.machine_service import STALE_WITHIN, online_cut_expr
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -45,17 +45,17 @@ class BusinessSnapshot:
 
 async def collect_business_snapshot(session: AsyncSession) -> BusinessSnapshot:
     now = datetime.now(tz=UTC)
-    online_cut = now - ONLINE_WITHIN
+    online_expr = online_cut_expr(now)
     stale_cut = now - STALE_WITHIN
 
     base = select(func.count()).select_from(Machine).where(Machine.deleted_at.is_(None))
     total = (await session.execute(base)).scalar_one()
     online = (
-        await session.execute(base.where(Machine.last_seen_at >= online_cut))
+        await session.execute(base.where(Machine.last_seen_at >= online_expr))
     ).scalar_one()
     stale = (
         await session.execute(
-            base.where(Machine.last_seen_at < online_cut, Machine.last_seen_at >= stale_cut)
+            base.where(Machine.last_seen_at < online_expr, Machine.last_seen_at >= stale_cut)
         )
     ).scalar_one()
     # Offline absorbs never-seen machines (last_seen_at IS NULL).

@@ -406,7 +406,7 @@ export interface RiskBreakdown {
 
 // ── Module 8: reporting + export ──────────────────────────────────────────────
 
-export type ReportType = "org_summary" | "machine_detail";
+export type ReportType = "org_summary" | "machine_detail" | "all_machine_detail";
 export type ReportFormat = "pdf" | "csv";
 export type ReportStatus = "queued" | "running" | "completed" | "failed";
 

@@ -96,3 +96,6 @@ tr:nth-child(even) td { background: #f8fafc; }
 .trend svg { width: 100%; height: auto; }
 .trend .legend { font-size: 8pt; color: var(--muted); }
 .trend .legend span { margin-right: 10pt; }
+
+.fit-table { table-layout: fixed; }
+td { overflow-wrap: anywhere; word-break: break-word; }

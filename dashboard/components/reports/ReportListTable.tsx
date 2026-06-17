@@ -27,6 +27,7 @@ export interface ReportListTableProps {
 const TYPE_KEYS: Record<string, string> = {
   org_summary: "typeOrg",
   machine_detail: "typeMachine",
+  all_machine_detail: "typeAllMachine",
 };
 
 export function ReportListTable({ reports, isLoading, isAdmin }: ReportListTableProps) {

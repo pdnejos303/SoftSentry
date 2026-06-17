@@ -8,7 +8,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-ReportType = Literal["org_summary", "machine_detail"]
+ReportType = Literal["org_summary", "machine_detail", "all_machine_detail"]
 ReportFormat = Literal["pdf", "csv"]
 ReportStatus = Literal["queued", "running", "completed", "failed"]
 

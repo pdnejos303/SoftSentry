@@ -562,6 +562,7 @@
     "type": "ประเภทรายงาน",
     "typeOrg": "สรุปทั้งองค์กร",
     "typeMachine": "รายละเอียดเครื่อง",
+    "typeAllMachine": "รายละเอียดทุกเครื่อง",
     "format": "รูปแบบ",
     "machineUuid": "UUID เครื่อง",
     "cancel": "ยกเลิก",

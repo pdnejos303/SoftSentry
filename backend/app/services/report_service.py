@@ -30,6 +30,7 @@ from app.models.report import (
     STATUS_QUEUED,
     STATUS_RUNNING,
     TYPE_MACHINE_DETAIL,
+    TYPE_ALL_MACHINE_DETAIL,
     TYPE_ORG_SUMMARY,
     Report,
     ReportSchedule,
@@ -231,6 +232,11 @@ async def _build_pdf(session: AsyncSession, report: Report) -> bytes:
             email = user.email if user else None
         org_ctx = await report_data.org_summary_context(session, generated_by=email)
         return pdf_service.render_pdf(pdf_service.TEMPLATES[TYPE_ORG_SUMMARY], org_ctx)
+    
+    # if all machine
+    if report.type == TYPE_ALL_MACHINE_DETAIL:
+        all_ctx = await report_data.all_machine_detail_context(session)
+        return pdf_service.render_pdf(pdf_service.TEMPLATES[TYPE_ALL_MACHINE_DETAIL], all_ctx)
 
     machine_uuid = _machine_uuid(report.params)
     if machine_uuid is None:

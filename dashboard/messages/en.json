@@ -562,6 +562,7 @@
     "type": "Report type",
     "typeOrg": "Org summary",
     "typeMachine": "Machine detail",
+    "typeAllMachine": "All machines (detailed)",
     "format": "Format",
     "machineUuid": "Machine UUID",
     "cancel": "Cancel",

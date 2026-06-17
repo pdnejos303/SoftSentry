@@ -187,3 +187,39 @@ def _aware(value: Any) -> datetime | None:
     if not isinstance(value, datetime):
         return None
     return value if value.tzinfo is not None else value.replace(tzinfo=UTC)
+
+
+# function to for list all machine detail in one report
+async def all_machine_detail_context(session: AsyncSession) -> dict[str, Any]:
+    """รวม machine_detail ของทุกเครื่อง (ที่ยังไม่ถูกลบ) ไว้ในเอกสารเดียว."""
+    rows = (
+        await session.execute(
+            select(Machine.uuid)
+            .where(Machine.deleted_at.is_(None))
+            .order_by(Machine.hostname.asc())
+        )
+    ).scalars().all()
+
+    machines: list[dict[str, Any]] = []
+    for machine_uuid in rows:
+        ctx = await machine_detail_context(session, machine_uuid)
+        if ctx is not None:
+            _annotate_software_vuln_counts(ctx)
+            machines.append(ctx)
+
+    return {
+        "generated_at": datetime.now(tz=UTC),
+        "machine_count": len(machines),
+        "machines": machines,
+    }
+
+# Mapped software with CVE for all_machine report
+def _annotate_software_vuln_counts(ctx: dict[str, Any]) -> None:
+    """นับจำนวน CVE ที่ตรงกับซอฟต์แวร์แต่ละตัว (จับคู่ด้วย name+version)
+    แล้วเก็บไว้ใน s["vuln_count"] เพื่อให้ template แสดงคอลัมน์ Vulnerabilities ได้."""
+    counts: dict[tuple[Any, Any], int] = {}
+    for v in ctx.get("vulnerabilities", []):
+        key = (v.get("software_name"), v.get("software_version"))
+        counts[key] = counts.get(key, 0) + 1
+    for s in ctx.get("software", []):
+        s["vuln_count"] = counts.get((s.get("name"), s.get("version")), 0)

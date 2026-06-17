@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}All Machines — Detailed Report{% endblock %}
+
+{% block cover %}
+  <h1>All Machines</h1>
+  <p class="subtitle">Detailed Endpoint Report</p>
+  <div class="meta">
+    <div>Report date: {{ generated_at | dt }}</div>
+    <div>Machines: {{ machine_count }}</div>
+  </div>
+{% endblock %}
+
+{% block content %}
+{% for m in machines %}
+  <section style="page-break-before: always;">
+    <h2>{{ m.machine.hostname }}</h2>
+    <table>
+      <tbody>
+        <tr><td>OS</td><td>{{ m.machine.os }} {{ m.machine.os_version }} ({{ m.machine.arch }})</td></tr>
+        <tr><td>Risk score</td>
+            <td><span class="dot risk-{{ m.risk_color }}"></span>
+                <strong>{{ m.machine.risk_score }}</strong> ({{ m.risk_color }})</td></tr>
+        <tr><td>Last scan</td><td>{{ m.machine.last_scan_at | dt }}</td></tr>
+        <tr><td>Tags</td><td>{{ m.machine.tags | join(", ") | dash }}</td></tr>
+      </tbody>
+    </table>
+
+    {% if m.vulnerabilities %}
+      <h3>Vulnerabilities ({{ m.vulnerabilities_total }})</h3>
+      <table>
+        <thead><tr><th>CVE</th><th>Severity</th><th>Software</th><th>Installed</th></tr></thead>
+        <tbody>
+        {% for v in m.vulnerabilities %}
+          <tr>
+            <td>{{ v.cve_id }}</td>
+            <td><span class="badge sev-{{ v.severity }}">{{ v.severity }}</span></td>
+            <td>{{ v.software_name }}</td>
+            <td>{{ v.software_version }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+
+    <h3>Software inventory ({{ m.software_total }})</h3>
+        {% if m.software %}
+        <table class="fit-table">
+            <colgroup>
+            <col style="width: 46%;">
+            <col style="width: 24%;">
+            <col style="width: 18%;">
+            <col style="width: 12%;">
+            </colgroup>
+            <thead>
+            <tr><th>Name</th><th>Version</th><th>Signature status</th><th>Vulnerabilities</th></tr>
+            </thead>
+            <tbody>
+            {% for s in m.software %}
+            <tr>
+                <td>{{ s.name }}</td>
+                <td>{{ s.version }}</td>
+                <td>{{ s.signature_status | dash }}</td>
+                <td>{{ s.vuln_count }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}<p class="empty">No software inventory.</p>{% endif %}
+    </section>
+    {% else %}
+    <p class="empty">No machines enrolled.</p>
+{% endfor %}
+{% endblock %}

@@ -26,7 +26,8 @@ Json = JSON().with_variant(JSONB, "postgresql")
 # Report types (spec 8.1 / 8.2).
 TYPE_ORG_SUMMARY = "org_summary"
 TYPE_MACHINE_DETAIL = "machine_detail"
-REPORT_TYPES = (TYPE_ORG_SUMMARY, TYPE_MACHINE_DETAIL)
+TYPE_ALL_MACHINE_DETAIL = "all_machine_detail" 
+REPORT_TYPES = (TYPE_ORG_SUMMARY, TYPE_MACHINE_DETAIL, TYPE_ALL_MACHINE_DETAIL)
 
 # Output formats.
 FORMAT_PDF = "pdf"

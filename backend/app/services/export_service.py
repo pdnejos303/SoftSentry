@@ -271,3 +271,31 @@ async def alerts_csv(
         for i in items
     ]
     return header, rows
+
+
+async def all_machine_software_csv(session: AsyncSession) -> Export:
+    """Software inventory ของทุกเครื่อง (ใช้กับ all_machine_detail CSV report)."""
+    machines, _ = await machine_service.list_machines(
+        session, page=1, page_size=EXPORT_CAP
+    )
+    header = ["hostname", "name", "version", "publisher", "install_date", "signature_status"]
+    rows: list[list[object]] = []
+    for m in machines:
+        machine = await machine_service.get_machine(session, m["uuid"])
+        if machine is None:
+            continue
+        items, _ = await software_service.machine_software(
+            session, machine, page=1, page_size=EXPORT_CAP
+        )
+        for i in items:
+            rows.append(
+                [
+                    m["hostname"],
+                    i["name"],
+                    i["version"],
+                    i.get("publisher") or "",
+                    _dt(i.get("install_date")),
+                    i.get("signature_status") or "",
+                ]
+            )
+    return header, rows

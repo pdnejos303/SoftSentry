@@ -21,6 +21,7 @@ TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "reports" / "templates"
 TEMPLATES = {
     "org_summary": "org_summary.html",
     "machine_detail": "machine_detail.html",
+    "all_machine_detail": "all_machine_detail.html",
 }
 
 

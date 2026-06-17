@@ -65,6 +65,7 @@ export function ReportGenerateButton({
                   onChange={(e) => setType(e.target.value as ReportType)}
                 >
                   <option value="org_summary">{t("typeOrg")}</option>
+                  <option value="all_machine_detail">{t("typeAllMachine")}</option>
                 </Select>
               </div>
             )}

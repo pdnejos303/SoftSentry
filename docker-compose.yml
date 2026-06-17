@@ -63,6 +63,7 @@ services:
       AGENT_BINARY_DIR: /app/agent-binaries
     # host port ปรับได้ (default 47800) ป้องกันชนกับ service อื่นบน shared server
     # container ยังฟัง port 8000 ภายใน
+      REPORTS_DIR: /app/reports
     ports:
       - "${BACKEND_HOST_PORT:-47800}:8000"
     volumes:
@@ -92,6 +93,7 @@ services:
     environment:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      REPORTS_DIR: /app/reports
     volumes:
       - ./backend/app:/app/app
       - reports_data:/app/reports

@@ -209,7 +209,7 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="h-12 w-full gap-2 rounded-xl bg-[#1f1b14] text-sm tracking-wide text-white hover:bg-[#332c20]"
+                  className="h-12 w-full gap-2 rounded-xl bg-[#BF2002] text-sm tracking-wide text-white hover:bg-[#332c20]"
                 >
                   {submitting ? t("submitting") : t("submit")}
                   {!submitting && <ArrowRight className="h-4 w-4" />}

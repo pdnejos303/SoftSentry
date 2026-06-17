@@ -14,6 +14,22 @@ const config: Config = {
       screens: { "2xl": "1400px" },
     },
     extend: {
+      fontFamily: {
+        sans: [
+          "var(--font-th)",
+          "var(--font-sans-jp)",
+          "ui-sans-serif",
+          "system-ui",
+          "sans-serif",
+        ],
+        serif: [
+          "var(--font-th)",
+          "var(--font-serif-jp)",
+          "ui-serif",
+          "Georgia",
+          "serif",
+        ],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

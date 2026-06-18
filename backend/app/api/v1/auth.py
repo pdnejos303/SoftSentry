@@ -77,7 +77,8 @@ async def login(
     access, refresh, ttl = await auth_service.issue_token_pair(
         redis=redis, user=user, remember_me=payload.remember_me
     )
-    max_age = settings.jwt_refresh_ttl_seconds if payload.remember_me else 24 * 3600
+    # setting session time login without remember me
+    max_age = settings.jwt_refresh_ttl_seconds if payload.remember_me else 12 * 3600
     _set_refresh_cookie(response, refresh, max_age)
     await audit_service.record(
         session,
@@ -102,14 +103,17 @@ async def refresh_tokens(
     if not softsentry_refresh:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing refresh cookie")
     try:
-        access, new_refresh, ttl = await auth_service.rotate_refresh(
+        access, new_refresh, ttl, remember_me = await auth_service.rotate_refresh(
             session=session, redis=redis, refresh_token=softsentry_refresh
         )
     except auth_service.AuthError as exc:
         _clear_refresh_cookie(response)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid refresh token") from exc
 
-    _set_refresh_cookie(response, new_refresh, settings.jwt_refresh_ttl_seconds)
+    # cookie session time with remember me but need to match with ttl redis in auth_service -> issue_token_pair
+    max_age = settings.jwt_refresh_ttl_seconds if remember_me else 24 * 3600
+    _set_refresh_cookie(response, new_refresh, max_age)
+
     return RefreshResponse(access_token=access, expires_in=ttl)
 
 

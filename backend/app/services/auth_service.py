@@ -119,7 +119,7 @@ async def issue_token_pair(
     payload = decode_token(refresh, expected_type="refresh")
     jti = payload["jti"]
     ttl = settings.jwt_refresh_ttl_seconds if remember_me else 24 * 3600
-    await redis.set(f"{REFRESH_PREFIX}{jti}", str(user.uuid), ex=ttl)
+    await redis.set(f"{REFRESH_PREFIX}{jti}", f"{user.uuid}|{int(remember_me)}", ex=ttl)
     return access, refresh, settings.jwt_access_ttl_seconds
 
 
@@ -132,8 +132,8 @@ async def rotate_refresh(
     payload = decode_token(refresh_token, expected_type="refresh")
     jti = payload["jti"]
     key = f"{REFRESH_PREFIX}{jti}"
-    user_uuid = await redis.get(key)
-    if user_uuid is None:
+    stored = await redis.get(key)
+    if stored is None:
         raise InvalidCredentials()
 
     # Delete the old token before the DB lookup — one-time-use enforcement.
@@ -141,9 +141,13 @@ async def rotate_refresh(
     # re-authenticate (security-over-UX trade-off).
     await redis.delete(key)
 
+    # value = "<uuid>|<0|1>"; รองรับ token เก่าที่ยังเป็น "<uuid>" ล้วน (remember=False)
+    raw_uuid, _, remember_flag = stored.partition("|")
+    remember_me = remember_flag == "1"
+
     # Stored in Redis as a string; the uuid column expects a UUID object.
     try:
-        user_uuid_obj = uuid_lib.UUID(user_uuid)
+        user_uuid_obj = uuid_lib.UUID(raw_uuid)
     except (ValueError, TypeError) as exc:
         raise InvalidCredentials() from exc
 
@@ -151,8 +155,12 @@ async def rotate_refresh(
     user = (await session.execute(stmt)).scalar_one_or_none()
     if user is None or not user.is_active:
         raise InvalidCredentials()
+    
+    access, new_refresh, ttl = await issue_token_pair(
+        redis=redis, user=user, remember_me=remember_me
+    )
+    return access, new_refresh, ttl, remember_me
 
-    return await issue_token_pair(redis=redis, user=user)
 
 
 async def revoke_refresh(*, redis: Redis, refresh_token: str) -> None:

@@ -379,6 +379,38 @@
       "invalid": "ไม่ถูกต้อง"
     }
   },
+  "softwareDetail": {
+    "tabs": { 
+      "detail": "รายละเอียด", 
+      "machines": "เครื่อง" 
+    },
+    "installedOn": "ติดตั้งบน {count} เครื่อง",
+    "notFound": "ไม่พบซอฟต์แวร์",
+    "notFoundHint": "ไม่มีซอฟต์แวร์ที่ติดตั้งตรงกับชื่อนี้",
+    "overviewTitle": "ภาพรวม",
+    "versionsTitle": "เวอร์ชันตามจำนวนการติดตั้ง",
+    "field": { 
+      "publisher": "ผู้เผยแพร่", 
+      "installs": "จำนวนติดตั้ง",
+      "signature": "ลายเซ็น", 
+      "license": "ไลเซนส์" 
+    },
+    "col": { 
+      "version": "เวอร์ชัน", 
+      "count": "จำนวนติดตั้ง", 
+      "hostname": "ชื่อเครื่อง",
+      "owner": "เจ้าของ", 
+      "installDate": "วันที่ติดตั้ง",
+      "signature": "ลายเซ็น", 
+      "status": "สถานะ" 
+    },
+    "noMachines": "ไม่มีเครื่องใดติดตั้งซอฟต์แวร์นี้",
+    "totalMachines": "{count} เครื่อง",
+    "back": "กลับไปหน้าซอฟต์แวร์",
+    "prev": "ก่อนหน้า",
+    "next": "ถัดไป",
+    "pageInfo": "หน้า {page} จาก {total}"
+  },
   "signatures": {
     "title": "ลายเซ็นดิจิทัล",
     "subtitle": "สถานะลายเซ็นดิจิทัลของซอฟต์แวร์ทั่วทั้งระบบ",

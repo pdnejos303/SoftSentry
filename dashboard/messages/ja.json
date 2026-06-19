@@ -376,6 +376,38 @@
       "invalid": "無効"
     }
   },
+  "softwareDetail": {
+    "tabs": { 
+      "detail": "詳細", 
+      "machines": "マシン" 
+    },
+    "installedOn": "{count} 台のマシンにインストール済み",
+    "notFound": "ソフトウェアが見つかりません",
+    "notFoundHint": "この名前に一致するインストール済みソフトウェアはありません。",
+    "overviewTitle": "概要",
+    "versionsTitle": "インストール数別バージョン",
+    "field": { 
+      "publisher": "発行元", 
+      "installs": "インストール数",
+      "signature": "署名", 
+      "license": "ライセンス" 
+    },
+    "col": { 
+      "version": "バージョン", 
+      "count": "インストール数", 
+      "hostname": "ホスト名",
+      "owner": "所有者", 
+      "installDate": "インストール日",
+      "signature": "署名", 
+      "status": "ステータス" 
+    },
+    "noMachines": "このソフトウェアがインストールされているマシンはありません",
+    "totalMachines": "{count} 台のマシン",
+    "back": "ソフトウェア一覧へ戻る",
+    "prev": "前へ",
+    "next": "次へ",
+    "pageInfo": "ページ {page} / {total}"
+  },
   "signatures": {
     "title": "署名",
     "subtitle": "フリート全体のソフトウェアのデジタル署名ステータス",

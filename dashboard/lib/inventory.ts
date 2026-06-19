@@ -14,6 +14,8 @@ import type {
   SignatureStatus,
   SoftwareHistoryItem,
   TopSoftwareItem,
+  SoftwareDetail,
+  SoftwareMachineItem,
 } from "./types";
 
 // ── machines ────────────────────────────────────────────────────────────────
@@ -200,4 +202,30 @@ export function signatureVariant(
     default:
       return "outline"; // unknown / verify failed
   }
+}
+
+// --- hook for software detail page ----------------------------------
+export function useSoftwareDetail(name: string) {
+  return useQuery({
+    queryKey: ["software-detail", name],
+    queryFn: async () => {
+      const { data } = await api.get<SoftwareDetail>("/software/detail", { params: { name } });
+      return data;
+    },
+    enabled: Boolean(name),
+  });
+}
+
+export function useSoftwareMachines(name: string, params: { page?: number; page_size?: number }) {
+  return useQuery({
+    queryKey: ["software-machines", name, params],
+    queryFn: async () => {
+      const { data } = await api.get<Paginated<SoftwareMachineItem>>(
+        "/software/detail/machines",
+        { params: { name, ...params } },
+      );
+      return data;
+    },
+    enabled: Boolean(name),
+  });
 }

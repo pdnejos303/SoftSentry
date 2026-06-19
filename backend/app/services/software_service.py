@@ -366,3 +366,86 @@ async def compare(
         "only_in_b": only_in_b,
         "version_diff": version_diff,
     }
+
+# --- For Software detail page -----------------------------------------------------
+async def software_detail(session: AsyncSession, *, name: str) -> dict[str, object] | None:
+    rows = (
+        await session.execute(
+            select(
+                SoftwareRecord.version,
+                SoftwareRecord.publisher,
+                Machine.uuid,
+                SignatureRecord.status,
+            )
+            .join(Machine, Machine.id == SoftwareRecord.machine_id)
+            .outerjoin(SignatureRecord, SignatureRecord.id == SoftwareRecord.signature_id)
+            .where(
+                SoftwareRecord.name == name,           # exact match จากชื่อใน list
+                SoftwareRecord.uninstalled_at.is_(None),
+                Machine.deleted_at.is_(None),
+            )
+        )
+    ).all()
+    if not rows:
+        return None
+
+    machines: set = set()
+    by_version: dict[str, set] = {}
+    publisher = None
+    sig = None
+    for version, pub, machine_uuid, sig_status in rows:
+        machines.add(machine_uuid)
+        by_version.setdefault(version, set()).add(machine_uuid)
+        publisher = publisher or pub
+        sig = sig or sig_status
+
+    detail = {
+        "name": name,
+        "publisher": publisher,
+        "installed_count": len(machines),
+        "versions": [
+            {"version": v, "installed_count": len(s)}
+            for v, s in sorted(by_version.items(), key=lambda kv: -len(kv[1]))
+        ],
+        "signature_status": sig,
+    }
+    # ใช้ helper เดิมเติม license_status (รับ list ของ dict ที่มี key "name")
+    return (await _enrich_license_status(session, [detail]))[0]
+
+async def software_machines(
+    session: AsyncSession, *, name: str, page: int = 1, page_size: int = 50
+) -> tuple[list[dict[str, object]], int]:
+    #create query but didn't run (not session.execute()) 
+    base = (
+        select(SoftwareRecord, Machine, SignatureRecord.status)
+        .join(Machine, Machine.id == SoftwareRecord.machine_id)
+        .outerjoin(SignatureRecord, SignatureRecord.id == SoftwareRecord.signature_id)
+        .where(
+            SoftwareRecord.name == name,
+            SoftwareRecord.uninstalled_at.is_(None),
+            Machine.deleted_at.is_(None),
+        )
+    )
+    # base.subquery() ใช้คำสั่งใน base เป็น subquery
+    total = (await session.execute(select(func.count()).select_from(base.subquery()))).scalar_one()
+    rows = (
+        await session.execute(
+            base.order_by(Machine.hostname.asc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+    ).all()
+    items = [
+        {
+            "machine_uuid": m.uuid,
+            "hostname": m.hostname,
+            "display_name": m.display_name,
+            "owner": m.owner,
+            "status": m.status,                
+            "version": rec.version,
+            "install_date": rec.install_date,
+            "signature_status": sig_status,
+        }
+        for rec, m, sig_status in rows
+    ]
+    return items, int(total)

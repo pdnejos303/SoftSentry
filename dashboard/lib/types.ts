@@ -460,3 +460,27 @@ export interface ReportScheduleInput {
   recipients?: string[];
   is_active?: boolean;
 }
+
+// ── for each software detail page ─────────────────────────────────────────────────────────────
+
+export interface SoftwareVersionCount { version: string; installed_count: number; }
+
+export interface SoftwareDetail {
+  name: string;
+  publisher: string | null;
+  installed_count: number;
+  versions: SoftwareVersionCount[];
+  signature_status: SignatureStatus | null;
+  license_status: string | null;
+}
+
+export interface SoftwareMachineItem {
+  machine_uuid: string;
+  hostname: string;
+  display_name: string | null;
+  owner: string | null;
+  status: string;
+  version: string;
+  install_date: string | null;
+  signature_status: SignatureStatus | null;
+}

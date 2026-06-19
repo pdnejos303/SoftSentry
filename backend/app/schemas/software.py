@@ -120,3 +120,35 @@ class CompareResponse(BaseModel):
     only_in_a: list[CompareEntry]
     only_in_b: list[CompareEntry]
     version_diff: list[VersionDiffEntry]
+
+# ── for each software detail page ─────────────────────────────────────────────────────────────
+class SoftwareVersionCount(BaseModel):
+    version: str
+    installed_count: int
+
+
+class SoftwareDetailOut(BaseModel):
+    name: str
+    publisher: str | None = None
+    installed_count: int                      # distinct machines 
+    versions: list[SoftwareVersionCount]      # Keep a list of all versions of this software, along with the number of machines that have each version installed.
+    signature_status: str | None = None       
+    license_status: str | None = None
+
+
+class SoftwareMachineItem(BaseModel):
+    machine_uuid: uuid_lib.UUID
+    hostname: str
+    display_name: str | None = None
+    owner: str | None = None
+    status: str                               # online | stale | offline
+    version: str
+    install_date: date | None = None
+    signature_status: str | None = None
+
+class SoftwareMachineList(BaseModel):
+    items: list[SoftwareMachineItem]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

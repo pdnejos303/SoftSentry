@@ -379,6 +379,38 @@
       "invalid": "Invalid"
     }
   },
+  "softwareDetail": {
+    "tabs": { 
+      "detail": "Detail", 
+      "machines": "Machines" 
+    },
+    "installedOn": "Installed on {count} machines",
+    "notFound": "Software not found",
+    "notFoundHint": "No installed software matches this name.",
+    "overviewTitle": "Overview",
+    "versionsTitle": "Versions by install count",
+    "field": { 
+      "publisher": "Publisher", 
+      "installs": "Installs",
+      "signature": "Signature", 
+      "license": "License" 
+    },
+    "col": { 
+      "version": "Version", 
+      "count": "Installs",
+      "hostname": "Hostname",
+      "owner": "Owner", 
+      "installDate": "Install date",
+      "signature": "Signature", 
+      "status": "Status" 
+    },
+    "noMachines": "No machines have this software",
+    "totalMachines": "{count} machines",
+    "back": "Back to software",
+    "prev": "Previous",
+    "next": "Next",
+    "pageInfo": "Page {page} of {total}"
+  },
   "signatures": {
     "title": "Signatures",
     "subtitle": "Digital signature status of software across the fleet",

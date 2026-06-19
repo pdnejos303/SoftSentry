@@ -15,6 +15,8 @@ from app.schemas.software import (
     CompareResponse,
     CrossSoftwareList,
     TopSoftwareItem,
+    SoftwareDetailOut,
+    SoftwareMachineList,
 )
 from app.services import machine_service, software_service
 
@@ -68,3 +70,31 @@ async def compare_software(
 
     result = await software_service.compare(session, machine_a, machine_b)
     return CompareResponse(**result)
+
+@router.get("/detail", response_model=SoftwareDetailOut, summary="Software detail by name")
+async def software_detail(
+    session: DBSession,
+    _: CurrentUser,
+    name: Annotated[str, Query(min_length=1)],
+) -> SoftwareDetailOut:
+    detail = await software_service.software_detail(session, name=name)
+    if detail is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Software not found")
+    return SoftwareDetailOut(**detail)
+
+@router.get("/detail/machines", response_model=SoftwareMachineList,
+            summary="Machines that have this software")
+async def software_machines(
+    session: DBSession,
+    _: CurrentUser,
+    name: Annotated[str, Query(min_length=1)],
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=200)] = 50,
+) -> SoftwareMachineList:
+    items, total = await software_service.software_machines(
+        session, name=name, page=page, page_size=page_size
+    )
+    total_pages = (total + page_size - 1) // page_size
+    return SoftwareMachineList(
+        items=items, total=total, page=page, page_size=page_size, total_pages=total_pages
+    )

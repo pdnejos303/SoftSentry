@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { Link } from "@/i18n/routing";
 import { signatureVariant, useSoftware, useTopSoftware } from "@/lib/inventory";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -130,7 +131,15 @@ export default function SoftwarePage() {
             )}
             {data?.items.map((s, i) => (
               <TableRow key={`${s.name}-${s.version}-${i}`}>
-                <TableCell className="font-medium">{s.name}</TableCell>
+                {/* Software name links to its detail page */}
+                <TableCell className="font-medium">
+                  <Link
+                    href={{ pathname: "/software/detail", query: { name: s.name } }}
+                    className="text-primary hover:underline"
+                  >
+                    {s.name}
+                  </Link>
+                </TableCell>
                 <TableCell className="tabular-nums">{s.version || "—"}</TableCell>
                 <TableCell className="text-muted-foreground">{s.publisher || "—"}</TableCell>
                 <TableCell>

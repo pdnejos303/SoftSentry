@@ -23,8 +23,9 @@ import (
 	"strings"      // ใช้ build disclosure text และแปลง input เป็น lowercase
 	"time"         // ใช้สร้าง timestamp สำหรับชื่อไฟล์ backup และ countdown timer
 
-	"github.com/softsentry/agent/internal/installer" // ใช้อ่าน config trailer, ตรวจสิทธิ์ admin, relaunch elevated, คัดลอกไบนารี
-	"github.com/softsentry/agent/internal/service"   // ใช้ตรวจสอบ/ถอดถอน/ติดตั้ง OS service
+	"github.com/softsentry/agent/internal/installer"  // ใช้อ่าน config trailer, ตรวจสิทธิ์ admin, relaunch elevated, คัดลอกไบนารี
+	"github.com/softsentry/agent/internal/service"    // ใช้ตรวจสอบ/ถอดถอน/ติดตั้ง OS service
+	"github.com/softsentry/agent/internal/transport"  // ใช้ transport.Version สำหรับ ARP entry
 )
 
 // elevatedInstallFlag is the internal argument we pass to ourselves when
@@ -300,6 +301,18 @@ func performInstall(ctx context.Context, exe string, emb installer.Embedded, dir
 		return fmt.Errorf("install service: %w", err)
 	}
 	stepDone(out)
+
+	// Step 5 — register the Add/Remove Programs entry so the user can uninstall
+	// from Settings → Apps (the consent screen promised this). Best-effort: a
+	// failure here must not fail an otherwise-successful install — the CLI
+	// `uninstall` command still works without the ARP entry.
+	//
+	// (TH) ขั้นที่ 5 — ลงทะเบียน Add/Remove Programs เพื่อให้ผู้ใช้ถอนได้จาก
+	// Settings → Apps (ตามที่หน้า consent สัญญาไว้) ทำแบบ best-effort: ถ้าล้มเหลว
+	// ต้องไม่ทำให้การติดตั้งที่สำเร็จแล้วกลายเป็นล้มเหลว — คำสั่ง uninstall ยังใช้ได้
+	if err := installer.RegisterUninstall(buildUninstallInfo(dir)); err != nil {
+		fmt.Fprintf(out, "      (Apps & features entry not written: %v; continuing)\n", err)
+	}
 	return nil
 }
 
@@ -559,6 +572,22 @@ func exeName() string {
 		return "softsentry-agent.exe" // Windows ต้องมีนามสกุล .exe
 	}
 	return "softsentry-agent" // macOS/Linux ไม่มีนามสกุล
+}
+
+// buildUninstallInfo รวบรวมค่าที่จะเขียนลง Add/Remove Programs จากโฟลเดอร์ที่ติดตั้ง
+// dstExe เป็นไบนารีที่ติดตั้งแล้ว — ใช้เป็นทั้งคำสั่งถอนและไอคอนของรายการ Apps
+func buildUninstallInfo(installDir string) installer.UninstallInfo {
+	dstExe := filepath.Join(installDir, exeName())
+	quoted := quoteArg(dstExe) // ครอบด้วย " เพราะ path มีช่องว่าง
+	return installer.UninstallInfo{
+		DisplayName:          service.DisplayName, // "SoftSentry Agent"
+		DisplayVersion:       transport.Version,
+		Publisher:            "SoftSentry",
+		InstallLocation:      installDir,
+		DisplayIcon:          dstExe,
+		UninstallString:      quoted + " --uninstall",
+		QuietUninstallString: quoted + " --uninstall --silent",
+	}
 }
 
 // closeWithCountdown auto-closes the installer window after a short, visible

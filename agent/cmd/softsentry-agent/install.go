@@ -10,7 +10,8 @@ import (
 
 	"github.com/spf13/cobra" // framework สำหรับสร้าง CLI subcommand
 
-	"github.com/softsentry/agent/internal/service" // ใช้ติดตั้งและจัดการ OS service
+	"github.com/softsentry/agent/internal/installer" // ใช้ลงทะเบียน Add/Remove Programs entry
+	"github.com/softsentry/agent/internal/service"   // ใช้ติดตั้งและจัดการ OS service
 )
 
 // installCmd สร้าง subcommand `install` ที่ลงทะเบียน agent เป็น OS service
@@ -53,6 +54,14 @@ machine first, so the service starts already connected to the server.`,
 				// ลงทะเบียน service ล้มเหลว (เช่น ไม่มีสิทธิ์ admin)
 				return err
 			}
+
+			// ลงทะเบียน Add/Remove Programs ด้วย เพื่อให้การติดตั้งผ่าน CLI ถอนได้จาก
+			// Settings → Apps เช่นเดียวกับ one-click installer (best-effort)
+			installDir := filepath.Dir(exe)
+			if err := installer.RegisterUninstall(buildUninstallInfo(installDir)); err != nil {
+				cmd.Printf("  (Apps & features entry not written: %v)\n", err)
+			}
+
 			// แสดงผลสำเร็จพร้อมชื่อ service และ path ของไบนารี
 			cmd.Printf("✓ Service %q installed and started (binary: %s).\n", service.Name, exe)
 			return nil

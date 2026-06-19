@@ -17,9 +17,13 @@ import (
 func RemoveInstallDir(dir string) error {
 	// ลบทุกไฟล์ที่ไม่ได้ถูกล็อก (config สำรอง, ไฟล์ .old-*, ฯลฯ) ทันที — ไม่ fatal
 	_ = os.RemoveAll(dir)
-	// ถ้าหายหมดแล้ว (ไม่มีไฟล์ถูกล็อก) ไม่ต้องตั้ง sweeper
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		return nil
+	// ถ้ายืนยันได้ว่าหายหมดแล้ว (ไม่มีไฟล์ถูกล็อก) ไม่ต้องตั้ง sweeper
+	// กรณีอื่น (dir ยังอยู่ หรือ Stat error อื่นที่ยืนยันไม่ได้) ให้ตกไปตั้ง sweeper
+	// แบบ best-effort เสมอ — sweeper ที่ลบของที่ไม่มีอยู่/ลบไม่ได้ ไม่เป็นอันตราย
+	if _, err := os.Stat(dir); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
 	}
 	// ปล่อย cmd /c: รอ ~2 วินาทีด้วย ping (ไม่พึ่ง timeout ที่ต้อง console) แล้ว rd
 	// /s /q เพื่อกวาดโฟลเดอร์ที่ยังถูกไบนารีเราล็อกอยู่ หลังจาก process นี้ออก

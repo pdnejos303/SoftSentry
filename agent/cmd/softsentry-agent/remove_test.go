@@ -7,7 +7,6 @@ import (
 	"testing"
 )
 
-// removeDataTree เป็น helper เลียนแบบ config.Dir โดยให้ test ชี้ไป temp dir ได้
 func TestRemoveAgentPurgeDeletesDataDir(t *testing.T) {
 	tmp := t.TempDir()
 	dataDir := filepath.Join(tmp, "SoftSentry")

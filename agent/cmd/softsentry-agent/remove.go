@@ -56,7 +56,7 @@ func removeAgent(out io.Writer, opts removeOptions) error {
 	} else if !opts.KeepConfig {
 		removed, err := removeLocalState() // ลบ token + config.yaml, คง queue (spec 1.8)
 		if err != nil {
-			return err
+			return fmt.Errorf("remove local state: %w", err)
 		}
 		for _, p := range removed {
 			fmt.Fprintf(out, "  removed %s\n", p)

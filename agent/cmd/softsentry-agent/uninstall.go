@@ -46,6 +46,8 @@ Use --keep-config to retain config + token, or --purge to remove everything.`,
 	// มีประโยชน์เมื่อต้องการ reinstall โดยไม่ต้อง enroll ใหม่
 	c.Flags().BoolVar(&keepConfig, "keep-config", false, "keep local config + agent token")
 	c.Flags().BoolVar(&purge, "purge", false, "also remove all stored data incl. the retry queue")
+	// --keep-config (เก็บ config) กับ --purge (ลบทุกอย่าง) ขัดแย้งกันเอง — ห้ามใส่พร้อมกัน
+	c.MarkFlagsMutuallyExclusive("keep-config", "purge")
 	return c
 }
 

@@ -364,6 +364,7 @@
     "empty": "No software found",
     "prev": "Previous",
     "next": "Next",
+    "goToPage": "Go to page",
     "pageInfo": "Page {page} of {total} · {count} entries",
     "col": {
       "name": "Name",
@@ -409,6 +410,7 @@
     "back": "Back to software",
     "prev": "Previous",
     "next": "Next",
+    "goToPage": "Go to page",
     "pageInfo": "Page {page} of {total}"
   },
   "signatures": {

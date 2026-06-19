@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
+import { Pagination } from "@/components/ui/pagination";
 import {
   licenseVariant,
   signatureVariant,
@@ -12,7 +13,6 @@ import {
   useSoftwareMachines,
 } from "@/lib/inventory";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -239,24 +239,12 @@ function MachinesTab({ name }: { name: string }) {
           <span className="text-muted-foreground">
             {t("pageInfo", { page: data.page, total: data.total_pages })}
           </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              {t("prev")}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= data.total_pages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              {t("next")}
-            </Button>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={data.total_pages}
+            onChange={setPage}
+            labels={{ prev: t("prev"), next: t("next"), goToPage: t("goToPage") }}
+          />
         </div>
       )}
     </div>

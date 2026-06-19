@@ -364,6 +364,7 @@
     "empty": "ไม่พบซอฟต์แวร์",
     "prev": "ก่อนหน้า",
     "next": "ถัดไป",
+    "goToPage": "ไปที่หน้า",
     "pageInfo": "หน้า {page} จาก {total} · {count} รายการ",
     "col": {
       "name": "ชื่อ",
@@ -409,6 +410,7 @@
     "back": "กลับไปหน้าซอฟต์แวร์",
     "prev": "ก่อนหน้า",
     "next": "ถัดไป",
+    "goToPage": "ไปที่หน้า",
     "pageInfo": "หน้า {page} จาก {total}"
   },
   "signatures": {

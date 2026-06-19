@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { Pagination } from "@/components/ui/pagination";
 import {
   Bar,
   BarChart,
@@ -15,7 +16,6 @@ import { Link } from "@/i18n/routing";
 import { signatureVariant, useSoftware, useTopSoftware } from "@/lib/inventory";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExportButton } from "@/components/reports/ExportButton";
@@ -165,19 +165,12 @@ export default function SoftwarePage() {
           <span className="text-muted-foreground">
             {t("pageInfo", { page: data.page, total: data.total_pages, count: data.total })}
           </span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-              {t("prev")}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= data.total_pages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              {t("next")}
-            </Button>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={data.total_pages}
+            onChange={setPage}
+            labels={{ prev: t("prev"), next: t("next"), goToPage: t("goToPage") }}
+          />
         </div>
       )}
     </div>

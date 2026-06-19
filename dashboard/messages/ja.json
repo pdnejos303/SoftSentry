@@ -361,6 +361,7 @@
     "empty": "ソフトウェアが見つかりません",
     "prev": "前へ",
     "next": "次へ",
+    "goToPage": "ページへ移動",
     "pageInfo": "{total} ページ中 {page} ページ · {count} 件",
     "col": {
       "name": "名前",
@@ -406,6 +407,7 @@
     "back": "ソフトウェア一覧へ戻る",
     "prev": "前へ",
     "next": "次へ",
+    "goToPage": "ページへ移動",
     "pageInfo": "ページ {page} / {total}"
   },
   "signatures": {

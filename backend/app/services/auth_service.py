@@ -118,7 +118,13 @@ async def issue_token_pair(
     )
     payload = decode_token(refresh, expected_type="refresh")
     jti = payload["jti"]
-    ttl = settings.jwt_refresh_ttl_seconds if remember_me else 24 * 3600
+    # edit jwt_reresh_ttl_seconds, jwt_refresh_ttl_no_remember_seconds on backend/app/core/config.py 
+    # can set in .env to overwrite default value in config.py
+    ttl = (
+        settings.jwt_refresh_ttl_seconds
+        if remember_me
+        else settings.jwt_refresh_ttl_no_remember_seconds
+    )
     await redis.set(f"{REFRESH_PREFIX}{jti}", f"{user.uuid}|{int(remember_me)}", ex=ttl)
     return access, refresh, settings.jwt_access_ttl_seconds
 
@@ -128,7 +134,7 @@ async def rotate_refresh(
     session: AsyncSession,
     redis: Redis,
     refresh_token: str,
-) -> tuple[str, str, int]:
+) -> tuple[str, str, int, bool]:
     payload = decode_token(refresh_token, expected_type="refresh")
     jti = payload["jti"]
     key = f"{REFRESH_PREFIX}{jti}"

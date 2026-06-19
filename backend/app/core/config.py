@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     jwt_secret: str
     jwt_access_ttl_seconds: int = 3600
     jwt_refresh_ttl_seconds: int = 60 * 60 * 24 * 30
+    # Refresh TTL when the user did NOT tick "remember me" — shorter session.
+    # Single source of truth so cookie max_age and Redis TTL never diverge.
+    jwt_refresh_ttl_no_remember_seconds: int = 24 * 3600
     jwt_algorithm: str = "HS256"
     bcrypt_pepper: str = ""
 

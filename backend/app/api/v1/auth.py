@@ -77,8 +77,13 @@ async def login(
     access, refresh, ttl = await auth_service.issue_token_pair(
         redis=redis, user=user, remember_me=payload.remember_me
     )
-    # setting session time login without remember me
-    max_age = settings.jwt_refresh_ttl_seconds if payload.remember_me else 12 * 3600
+    # edit jwt_reresh_ttl_seconds, jwt_refresh_ttl_no_remember_seconds on backend/app/core/config.py 
+    # can set in .env to overwrite default value in config.py
+    max_age = (
+        settings.jwt_refresh_ttl_seconds
+        if payload.remember_me
+        else settings.jwt_refresh_ttl_no_remember_seconds
+    )
     _set_refresh_cookie(response, refresh, max_age)
     await audit_service.record(
         session,
@@ -110,8 +115,13 @@ async def refresh_tokens(
         _clear_refresh_cookie(response)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid refresh token") from exc
 
-    # cookie session time with remember me but need to match with ttl redis in auth_service -> issue_token_pair
-    max_age = settings.jwt_refresh_ttl_seconds if remember_me else 24 * 3600
+    # edit jwt_reresh_ttl_seconds, jwt_refresh_ttl_no_remember_seconds on backend/app/core/config.py 
+    # can set in .env to overwrite default value in config.py
+    max_age = (
+        settings.jwt_refresh_ttl_seconds
+        if remember_me
+        else settings.jwt_refresh_ttl_no_remember_seconds
+    )
     _set_refresh_cookie(response, new_refresh, max_age)
 
     return RefreshResponse(access_token=access, expires_in=ttl)

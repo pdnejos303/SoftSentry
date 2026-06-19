@@ -64,7 +64,7 @@ func runSelfUninstall(ctx context.Context, preConsented, silent bool, lang insta
 			} else {
 				// non-Windows → console prompt
 				installer.ShowConsoleWindow()
-				if !confirmUninstallConsole(os.Stdout, os.Stdin) {
+				if !confirmUninstallConsole(lang, os.Stdout, os.Stdin) {
 					return nil
 				}
 			}
@@ -119,9 +119,9 @@ func showUninstallError(lang installer.Lang, silent bool, err error) error {
 	return err
 }
 
-// confirmUninstallConsole ถาม y/N บน console (fallback นอก Windows)
-func confirmUninstallConsole(w io.Writer, r io.Reader) bool {
-	heading, body, _, _ := installer.UninstallConfirmText(installer.DefaultLang())
+// confirmUninstallConsole ถาม y/N บน console (fallback นอก Windows) ใช้ภาษาที่ผู้ใช้เลือก
+func confirmUninstallConsole(lang installer.Lang, w io.Writer, r io.Reader) bool {
+	heading, body, _, _ := installer.UninstallConfirmText(lang)
 	fmt.Fprintf(w, "%s\n%s\n[y/N]: ", heading, body)
 	var resp string
 	_, _ = fmt.Fscanln(r, &resp)

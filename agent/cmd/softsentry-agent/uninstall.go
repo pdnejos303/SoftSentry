@@ -10,7 +10,6 @@ import (
 	"github.com/spf13/cobra" // framework สำหรับสร้าง CLI subcommand
 
 	"github.com/softsentry/agent/internal/config"  // ใช้หา path ของ config file
-	"github.com/softsentry/agent/internal/service" // ใช้หยุดและลบ OS service
 	"github.com/softsentry/agent/internal/storage" // ใช้หา path ของ agent token file
 )
 
@@ -19,47 +18,34 @@ import (
 // รองรับ flag --keep-config เพื่อเก็บ config และ token ไว้สำหรับการติดตั้งใหม่
 func uninstallCmd() *cobra.Command {
 	var keepConfig bool // flag สำหรับเก็บ config + token ไว้ (ไม่ลบ)
+	var purge bool      // flag สำหรับลบทุกอย่างรวม queue
 	c := &cobra.Command{
-		Use:   "uninstall",                                               // ชื่อ subcommand
+		Use:   "uninstall",                                             // ชื่อ subcommand
 		Short: "Stop + remove the agent service (admin/root required)", // คำอธิบายสั้น
-		Long: `Stop and delete the OS service. By default the local config + agent token
-are also removed; the retry queue dir (scans waiting to upload) is always kept.
-The agent binary itself is left in place. Use --keep-config to retain config.`,
-		// (TH) หยุดและลบ OS service ค่า default จะลบ config + agent token ด้วย
-		// แต่ queue directory (ผลสแกนที่รอ upload) จะถูกเก็บไว้เสมอ
-		// ไบนารีของ agent เองจะไม่ถูกลบ ใช้ --keep-config เพื่อเก็บ config ไว้
+		Long: `Stop and delete the OS service, remove the ARP (Apps & features) entry,
+and delete the install directory including the agent binary.
+By default the retry queue dir (scans waiting to upload) is kept.
+Use --keep-config to retain config + token, or --purge to remove everything.`,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			// หยุดและลบ OS service (ต้องการสิทธิ์ admin)
-			if err := service.Uninstall(); err != nil {
-				// ลบ service ล้มเหลว (เช่น ไม่มีสิทธิ์ หรือ service ไม่ได้ติดตั้ง)
+			// --purge ลบทุกอย่างรวมโฟลเดอร์ข้อมูล+queue; ค่า default ยังคงพฤติกรรมเดิม
+			// (เก็บ queue ตาม spec 1.8) และตอนนี้ลบ ARP entry + โฟลเดอร์ติดตั้งให้ด้วย
+			opts := removeOptions{KeepConfig: keepConfig, Purge: purge}
+			if err := removeAgent(cmd.OutOrStdout(), opts); err != nil {
 				return err
 			}
-			// แสดงผลสำเร็จพร้อมชื่อ service
-			cmd.Printf("✓ Service %q removed.\n", service.Name)
-
-			// ถ้าระบุ --keep-config ให้คง config + token ไว้ (ไม่ลบ)
 			if keepConfig {
 				cmd.Println("  Config + token kept (--keep-config).")
-				return nil
+			} else if !purge {
+				cmd.Println("  Retry queue kept (in case scans are still pending upload).")
 			}
-			// ลบ config file และ agent token (กรณี default ที่ไม่มี --keep-config)
-			removed, err := removeLocalState()
-			if err != nil {
-				// ลบ local state ล้มเหลว
-				return err
-			}
-			// แสดงรายการไฟล์ที่ถูกลบ เพื่อให้ผู้ใช้รู้ว่าอะไรถูกลบไปบ้าง
-			for _, p := range removed {
-				cmd.Printf("  removed %s\n", p)
-			}
-			// แจ้งว่า queue directory ยังคงอยู่ (ตาม spec 1.8)
-			cmd.Println("  Retry queue kept (in case scans are still pending upload).")
+			cmd.Println("✓ SoftSentry Agent uninstalled.")
 			return nil
 		},
 	}
 	// ลงทะเบียน flag --keep-config สำหรับเก็บ config + token ไว้
 	// มีประโยชน์เมื่อต้องการ reinstall โดยไม่ต้อง enroll ใหม่
 	c.Flags().BoolVar(&keepConfig, "keep-config", false, "keep local config + agent token")
+	c.Flags().BoolVar(&purge, "purge", false, "also remove all stored data incl. the retry queue")
 	return c
 }
 

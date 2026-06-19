@@ -7,6 +7,16 @@ import (
 	"testing"
 )
 
+func TestUninstallCmdPurgeFlag(t *testing.T) {
+	cmd := uninstallCmd()
+	if cmd.Flags().Lookup("purge") == nil {
+		t.Fatal("uninstall command missing --purge flag")
+	}
+	if cmd.Flags().Lookup("keep-config") == nil {
+		t.Fatal("uninstall command missing --keep-config flag")
+	}
+}
+
 func TestRemoveAgentPurgeDeletesDataDir(t *testing.T) {
 	tmp := t.TempDir()
 	dataDir := filepath.Join(tmp, "SoftSentry")

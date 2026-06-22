@@ -68,10 +68,7 @@
     "title": "Overview",
     "subtitle": "Fleet risk and health at a glance",
     "pollLive": "Live · auto-refresh 30s",
-    "pollPaused": "Auto-refresh paused",
     "refreshNow": "Refresh",
-    "pause": "Pause",
-    "resume": "Resume",
     "allOffline": "All agents are offline. Check the network or the agent service.",
     "kpi": {
       "machines": "Machines",

@@ -31,8 +31,7 @@ export default function OverviewPage() {
   const isAdmin = user?.role === "admin" || user?.role === "dev";
   const qc = useQueryClient();
 
-  const [paused, setPaused] = useState(false);
-  const pollMs = paused ? undefined : POLL_MS;
+  const pollMs = POLL_MS;
 
   const [alertsPage, setAlertsPage] = useState(1);
 
@@ -70,8 +69,6 @@ export default function OverviewPage() {
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
         <RefreshControl
-          paused={paused}
-          onToggle={() => setPaused((p) => !p)}
           onRefreshNow={refreshNow}
         />
       </div>

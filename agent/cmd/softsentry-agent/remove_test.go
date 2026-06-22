@@ -28,13 +28,14 @@ func TestRemoveAgentPurgeDeletesDataDir(t *testing.T) {
 	}
 
 	// inject data dir + ปิดการแตะ service/registry/install-dir จริงระหว่าง test
-	prevData, prevSvc, prevReg, prevInstall := dataDirFn, removeServiceFn, unregisterFn, removeInstallFn
+	prevData, prevSvc, prevReg, prevTray, prevInstall := dataDirFn, removeServiceFn, unregisterFn, unregisterTrayFn, removeInstallFn
 	dataDirFn = func() (string, error) { return dataDir, nil }
 	removeServiceFn = func() error { return nil }
 	unregisterFn = func() error { return nil }
+	unregisterTrayFn = func() error { return nil }
 	removeInstallFn = func(string) error { return nil }
 	t.Cleanup(func() {
-		dataDirFn, removeServiceFn, unregisterFn, removeInstallFn = prevData, prevSvc, prevReg, prevInstall
+		dataDirFn, removeServiceFn, unregisterFn, unregisterTrayFn, removeInstallFn = prevData, prevSvc, prevReg, prevTray, prevInstall
 	})
 
 	var out bytes.Buffer

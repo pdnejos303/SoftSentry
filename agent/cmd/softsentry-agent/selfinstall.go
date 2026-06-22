@@ -313,6 +313,11 @@ func performInstall(ctx context.Context, exe string, emb installer.Embedded, dir
 	if err := installer.RegisterUninstall(buildUninstallInfo(dir)); err != nil {
 		fmt.Fprintf(out, "      (Apps & features entry not written: %v; continuing)\n", err)
 	}
+
+	// ตั้งให้ tray เปิดอัตโนมัติตอน user login (best-effort เช่นเดียวกับ ARP entry)
+	if err := installer.RegisterTrayAutostart(filepath.Join(dir, exeName())); err != nil {
+		fmt.Fprintf(out, "      (tray autostart not registered: %v; continuing)\n", err)
+	}
 	return nil
 }
 

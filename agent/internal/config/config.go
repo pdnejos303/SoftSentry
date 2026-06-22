@@ -105,6 +105,8 @@ func Load() (*Config, error) {
 	}
 	// อ่านเนื้อหาไฟล์ config ทั้งหมด
 	// #nosec G304 — path มาจากการคำนวณภายใน ไม่ได้รับมาจากผู้ใช้ จึงปลอดภัย
+	// ต้องเช็คเพราะ Admin สามารถเปลี่ยน Config ได้เองเช่น port ที่จะส่งไป หรือเวลา สแกน ก็เปลี่ยนได้ log level ก็เปลี่ยนได้
+	// ถ้าไฟลมีอยู่แล้วก็ใช้อันเดิมถ้าไม่มีค่อยอา defailt ยัดเข้าไปนั่นเอง
 	data, err := os.ReadFile(p) // #nosec G304 — path derived internally
 	if err != nil {
 		// ถ้าไม่พบไฟล์ (ErrNotExist) ให้คืนค่า Default แทนการคืน error

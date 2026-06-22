@@ -16,10 +16,11 @@ import (
 
 // seams ที่ test แทนค่าได้ — production ชี้ไปฟังก์ชันจริง
 var (
-	dataDirFn       = config.Dir
-	removeServiceFn = removeServiceTolerant
-	unregisterFn    = installer.UnregisterUninstall
-	removeInstallFn = installer.RemoveInstallDir
+	dataDirFn        = config.Dir
+	removeServiceFn  = removeServiceTolerant
+	unregisterFn     = installer.UnregisterUninstall
+	unregisterTrayFn = installer.UnregisterTrayAutostart
+	removeInstallFn  = installer.RemoveInstallDir
 )
 
 // removeOptions ควบคุมระดับการลบ
@@ -41,6 +42,11 @@ func removeAgent(out io.Writer, opts removeOptions) error {
 		fmt.Fprintf(out, "  (Apps & features entry: %v)\n", err)
 	} else {
 		fmt.Fprintln(out, "  Apps & features entry removed")
+	}
+
+	// 2b) ลบ tray autostart Run key (best-effort — ไม่ fatal)
+	if err := unregisterTrayFn(); err != nil {
+		fmt.Fprintf(out, "  (tray autostart entry: %v)\n", err)
 	}
 
 	// 3) ลบ config/token หรือ purge ทั้งโฟลเดอร์ข้อมูล

@@ -62,6 +62,11 @@ machine first, so the service starts already connected to the server.`,
 				cmd.Printf("  (Apps & features entry not written: %v)\n", err)
 			}
 
+			// ตั้งให้ tray (ไอคอนแสดง progress) เปิดอัตโนมัติตอน user login (best-effort)
+			if err := installer.RegisterTrayAutostart(exe); err != nil {
+				cmd.Printf("  (tray autostart not registered: %v)\n", err)
+			}
+
 			// แสดงผลสำเร็จพร้อมชื่อ service และ path ของไบนารี
 			cmd.Printf("✓ Service %q installed and started (binary: %s).\n", service.Name, exe)
 			return nil

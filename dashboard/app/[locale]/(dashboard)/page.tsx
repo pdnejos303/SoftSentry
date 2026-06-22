@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { Monitor, Package, ShieldAlert, Wifi } from "lucide-react";
-import { useRouter } from "@/i18n/routing";
+import { useRouter, Link } from "@/i18n/routing";
 import { useAuth } from "@/lib/auth";
 import { useOverview } from "@/lib/dashboard";
 import { useAlerts } from "@/lib/policy";
@@ -15,8 +15,8 @@ import { RiskyMachinesBar } from "@/components/dashboard/RiskyMachinesBar";
 import { VulnSummaryWidget } from "@/components/vulnerabilities/VulnSummaryWidget";
 import { SignatureStatsWidget } from "@/components/signatures/SignatureStatsWidget";
 import { AlertFeed } from "@/components/alerts/AlertFeed";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 
 const POLL_MS = 30_000;
 const ALERTS_PAGE_SIZE = 5;
@@ -113,8 +113,8 @@ export default function OverviewPage() {
         />
       </div>
 
-      {/* Charts row: severity donut, signature donut, license gauge */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      {/* Charts row: severity donut + signature donut */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <VulnSummaryWidget onSelect={() => router.push("/vulnerabilities")} />
         <SignatureStatsWidget onSelect={() => router.push("/signatures")} />
       </div>
@@ -125,38 +125,29 @@ export default function OverviewPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <RiskyMachinesBar refetchInterval={pollMs} />
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">{t("alertFeedTitle")}</CardTitle>
+            <Link href="/alerts" className="text-sm text-primary hover:underline">
+              {t("alertFeedViewAll")}
+            </Link>
           </CardHeader>
           <CardContent className="space-y-4">
             <AlertFeed alerts={alerts?.items} isLoading={alertsLoading} isAdmin={isAdmin} />
             {alerts && alerts.total_pages > 1 && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
-                  {t("alertFeedPageInfo", {
-                    page: alerts.page,
-                    total: alerts.total_pages,
-                    count: alerts.total,
-                  })}
+                  {t("alertFeedPageInfo", { page: alerts.page, total: alerts.total_pages, count: alerts.total })}
                 </span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={alertsPage <= 1}
-                    onClick={() => setAlertsPage((p) => p - 1)}
-                  >
-                    {t("alertFeedPrev")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={alertsPage >= alerts.total_pages}
-                    onClick={() => setAlertsPage((p) => p + 1)}
-                  >
-                    {t("alertFeedNext")}
-                  </Button>
-                </div>
+                <Pagination
+                  page={alertsPage}
+                  totalPages={alerts.total_pages}
+                  onChange={setAlertsPage}
+                  labels={{
+                    prev: t("alertFeedPrev"),
+                    next: t("alertFeedNext"),
+                    goToPage: t("alertFeedGoToPage"),
+                  }}
+                />
               </div>
             )}
           </CardContent>

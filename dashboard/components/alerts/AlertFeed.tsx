@@ -61,56 +61,57 @@ export function AlertFeed({ alerts, isLoading, isAdmin, compact }: AlertFeedProp
   return (
     <div className="space-y-2">
       {alerts.map((a) => (
-        <div
-          key={a.uuid}
-          className="flex flex-wrap items-center gap-3 rounded-md border px-4 py-3 text-sm"
-        >
-          <Badge variant={severityVariant(a.severity)}>{t(`severity.${a.severity}`)}</Badge>
-          <Badge variant={alertStatusVariant(a.status)}>{t(`status.${a.status}`)}</Badge>
-          <div className="min-w-0">
-            <span className="font-medium">{a.title}</span>
+        <div key={a.uuid} className="rounded-md border px-4 py-3 text-sm">
+          <div className="flex items-center gap-2">
+            <Badge variant={severityVariant(a.severity)}>{t(`severity.${a.severity}`)}</Badge>
+            <Badge variant={alertStatusVariant(a.status)}>{t(`status.${a.status}`)}</Badge>
+            <span className="min-w-0 flex-1 truncate font-medium">{a.title}</span>
+            <span className="whitespace-nowrap text-xs text-muted-foreground">
+              {timeAgo(a.created_at)}
+            </span>
+          </div>
+
+          <div className="mt-1 flex items-center gap-2 text-muted-foreground">
+            {a.machine_uuid && (
+              <Link
+                href={`/machines/${a.machine_uuid}`}
+                className="truncate text-primary hover:underline"
+              >
+                {a.machine_hostname}
+              </Link>
+            )}
             {a.software_name && (
-              <span className="ml-2 text-muted-foreground">
+              <span className="truncate">
+                {a.machine_uuid ? "· " : ""}
                 {a.software_name}
                 {a.software_version ? ` ${a.software_version}` : ""}
               </span>
             )}
-          </div>
-          {a.machine_uuid ? (
-            <Link
-              href={`/machines/${a.machine_uuid}`}
-              className="text-primary hover:underline"
-            >
-              {a.machine_hostname}
-            </Link>
-          ) : null}
-          <span className="ml-auto whitespace-nowrap text-muted-foreground">
-            {timeAgo(a.created_at)}
-          </span>
-          {isAdmin && !compact && a.status !== "resolved" && (
-            <div className="flex gap-1">
-              {a.status === "active" && (
+            {isAdmin && !compact && a.status !== "resolved" && (
+              <div className="ml-auto flex shrink-0 gap-1">
+                {a.status === "active" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onAck(a.uuid)}
+                    disabled={ack.isPending}
+                  >
+                    <Check className="mr-1 h-3.5 w-3.5" />
+                    {t("acknowledge")}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onAck(a.uuid)}
-                  disabled={ack.isPending}
+                  onClick={() => onResolve(a.uuid)}
+                  disabled={resolve.isPending}
                 >
-                  <Check className="mr-1 h-3.5 w-3.5" />
-                  {t("acknowledge")}
+                  <CircleCheck className="mr-1 h-3.5 w-3.5" />
+                  {t("resolve")}
                 </Button>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onResolve(a.uuid)}
-                disabled={resolve.isPending}
-              >
-                <CircleCheck className="mr-1 h-3.5 w-3.5" />
-                {t("resolve")}
-              </Button>
-            </div>
-          )}
+              </div>
+            )}
+          </div>
         </div>
       ))}
     </div>

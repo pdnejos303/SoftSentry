@@ -69,6 +69,8 @@
     "subtitle": "フリート全体のリスクと健全性を一目で把握",
     "pollLive": "ライブ · 30秒ごとに自動更新",
     "refreshNow": "更新",
+    "alertFeedViewAll": "すべて表示",
+    "alertFeedGoToPage": "ページへ移動",
     "allOffline": "すべてのエージェントがオフラインです。ネットワークまたはエージェントサービスを確認してください。",
     "kpi": {
       "machines": "マシン",

@@ -69,6 +69,8 @@
     "subtitle": "ดูความเสี่ยงและสุขภาพของ fleet ในหน้าเดียว",
     "pollLive": "เรียลไทม์ · รีเฟรชทุก 30 วิ",
     "refreshNow": "รีเฟรช",
+    "alertFeedViewAll": "ดูทั้งหมด",
+    "alertFeedGoToPage": "ไปที่หน้า",
     "allOffline": "agent ออฟไลน์ทั้งหมด ตรวจสอบเครือข่ายหรือ service ของ agent",
     "kpi": {
       "machines": "เครื่อง",

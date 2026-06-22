@@ -83,10 +83,6 @@ export function AlertFeed({ alerts, isLoading, isAdmin, compact }: AlertFeedProp
             >
               {a.machine_hostname}
             </Link>
-          ) : a.license_name ? (
-            <Link href="/licenses" className="text-primary hover:underline">
-              {a.license_name}
-            </Link>
           ) : null}
           <span className="ml-auto whitespace-nowrap text-muted-foreground">
             {timeAgo(a.created_at)}

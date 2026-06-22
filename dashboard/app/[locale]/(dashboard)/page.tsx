@@ -14,7 +14,6 @@ import { VulnTrendChart } from "@/components/dashboard/VulnTrendChart";
 import { RiskyMachinesBar } from "@/components/dashboard/RiskyMachinesBar";
 import { VulnSummaryWidget } from "@/components/vulnerabilities/VulnSummaryWidget";
 import { SignatureStatsWidget } from "@/components/signatures/SignatureStatsWidget";
-import { ComplianceSummaryWidget } from "@/components/licenses/ComplianceSummaryWidget";
 import { AlertFeed } from "@/components/alerts/AlertFeed";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -118,7 +117,6 @@ export default function OverviewPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <VulnSummaryWidget onSelect={() => router.push("/vulnerabilities")} />
         <SignatureStatsWidget onSelect={() => router.push("/signatures")} />
-        <ComplianceSummaryWidget onSelect={() => router.push("/licenses")} />
       </div>
 
       <VulnTrendChart refetchInterval={pollMs} />

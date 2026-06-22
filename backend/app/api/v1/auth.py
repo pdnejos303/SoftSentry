@@ -26,7 +26,7 @@ def _set_refresh_cookie(response: Response, value: str, max_age: int) -> None:
         value,
         max_age=max_age,
         httponly=True,
-        secure=settings.is_production,
+        secure=settings.refresh_cookie_secure,
         samesite="strict",
         path="/api/v1/auth",
     )

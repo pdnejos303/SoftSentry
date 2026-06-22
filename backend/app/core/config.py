@@ -37,6 +37,12 @@ class Settings(BaseSettings):
 
     dashboard_url: str = "http://localhost:3000"
 
+    # มาร์ก refresh cookie เป็น Secure หรือไม่ ถ้าเป็น None จะอิงตาม is_production
+    # (HTTPS prod = Secure). ตั้งเป็น false สำหรับ deployment ที่เสิร์ฟผ่าน HTTP ล้วน
+    # เช่น server intranet ที่ไม่มี TLS — เบราว์เซอร์จะทิ้ง Secure cookie บน HTTP
+    # ทำให้ /auth/refresh หา cookie ไม่เจอแล้วเด้งกลับหน้า login
+    cookie_secure: bool | None = None
+
     initial_admin_email: str = "admin@local"
     initial_admin_password: str = "ChangeMe!2026"
 
@@ -61,6 +67,13 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.env == "production"
+
+    @property
+    def refresh_cookie_secure(self) -> bool:
+        """ค่า Secure จริงของ refresh cookie — override ชนะ ไม่งั้นอิง is_production."""
+        if self.cookie_secure is None:
+            return self.is_production
+        return self.cookie_secure
 
 
 @lru_cache(maxsize=1)

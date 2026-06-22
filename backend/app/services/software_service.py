@@ -12,7 +12,7 @@ import fnmatch
 from datetime import date
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import ColumnElement, func, select
+from sqlalchemy import ColumnElement, func, or_, select
 
 from app.models.license import License
 from app.models.machine import Machine
@@ -236,9 +236,10 @@ async def _active_rows(
         Machine.deleted_at.is_(None),
     ]
     if q:
-        conditions.append(SoftwareRecord.name.ilike(f"%{q}%"))
-    if publisher:
-        conditions.append(SoftwareRecord.publisher.ilike(f"%{publisher}%"))
+        like = f"%{q}%"
+        conditions.append(
+            or_(SoftwareRecord.name.ilike(like), SoftwareRecord.publisher.ilike(like),)
+        )
     if signature_status:
         conditions.append(SignatureRecord.status == signature_status)
 

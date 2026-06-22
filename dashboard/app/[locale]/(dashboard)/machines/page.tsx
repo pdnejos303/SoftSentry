@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Pagination } from "@/components/ui/pagination";
 import { ExportButton } from "@/components/reports/ExportButton";
 import {
   Table,
@@ -178,10 +179,10 @@ export default function MachinesPage() {
                       variant="ghost"
                       size="icon"
                       onClick={() => setPendingRename(m)}
-                      title={t("rename")}
+                      title={t("edit")}
                     >
                       <Pencil className="h-4 w-4" />
-                      <span className="sr-only">{t("rename")}</span>
+                      <span className="sr-only">{t("edit")}</span>
                     </Button>
                     <Button
                       variant="ghost"
@@ -216,24 +217,12 @@ export default function MachinesPage() {
           <span className="text-muted-foreground">
             {t("pageInfo", { page: data.page, total: data.total_pages, count: data.total })}
           </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              {t("prev")}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= data.total_pages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              {t("next")}
-            </Button>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={data.total_pages}
+            onChange={setPage}
+            labels={{ prev: t("prev"), next: t("next"), goToPage: t("goToPage") }}
+          />
         </div>
       )}
     </div>

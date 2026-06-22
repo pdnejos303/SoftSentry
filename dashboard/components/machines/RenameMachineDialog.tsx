@@ -21,29 +21,41 @@ export function RenameMachineDialog({
   machine,
   onOpenChange,
 }: {
-  machine: { uuid: string; hostname: string; display_name: string | null; owner: string | null } | null;
+  machine: {
+    uuid: string;
+    hostname: string;
+    display_name: string | null;
+    owner: string | null;
+    tags: string[];                       
+  } | null;
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations("machines.renameDialog");
   const update = useUpdateMachine();
   const [displayName, setDisplayName] = useState("");
   const [owner, setOwner] = useState("");
+  const [tags, setTags] = useState("");
 
   // Seed the inputs whenever a new machine opens the dialog.
   useEffect(() => {
     setDisplayName(machine?.display_name ?? "");
     setOwner(machine?.owner ?? "");
+    setTags(machine?.tags?.join(", ") ?? "");   
   }, [machine]);
+
 
   async function onSave() {
     if (!machine) return;
     try {
-      // Empty input clears the field (null), so an admin can remove a name.
       await update.mutateAsync({
         uuid: machine.uuid,
         input: {
           display_name: displayName.trim() || null,
           owner: owner.trim() || null,
+          // แปลง "a, b, c" → ["a","b","c"], ตัดช่องว่าง/ค่าว่าง/ซ้ำ
+          tags: Array.from(
+            new Set(tags.split(",").map((s) => s.trim()).filter(Boolean)),
+          ),
         },
       });
       toast.success(t("done"));
@@ -52,7 +64,6 @@ export function RenameMachineDialog({
       toast.error(t("failed"));
     }
   }
-
   return (
     <Dialog open={Boolean(machine)} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -80,6 +91,16 @@ export function RenameMachineDialog({
               value={owner}
               onChange={(e) => setOwner(e.target.value)}
               placeholder={t("ownerPlaceholder")}
+              maxLength={255}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="machine-tags">{t("tags")}</Label>
+            <Input
+              id="machine-tags"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+              placeholder={t("tagsPlaceholder")}
               maxLength={255}
             />
           </div>

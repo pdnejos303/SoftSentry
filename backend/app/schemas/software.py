@@ -51,6 +51,9 @@ class SoftwareHistoryItem(BaseModel):
 class SoftwareHistoryList(BaseModel):
     items: list[SoftwareHistoryItem]
     total: int
+    page: int
+    page_size: int
+    total_pages: int
 
 
 # ── A3: scans ───────────────────────────────────────────────────────────────
@@ -69,6 +72,9 @@ class ScanHistoryItem(BaseModel):
 class ScanHistoryList(BaseModel):
     items: list[ScanHistoryItem]
     total: int
+    page: int            
+    page_size: int     
+    total_pages: int    
 
 
 # ── A4: cross-machine software ──────────────────────────────────────────────

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useParams } from "next/navigation";
-import { useRouter } from "@/i18n/routing";
+import { useRouter, Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import { DeleteMachineDialog } from "@/components/machines/DeleteMachineDialog";
 import { RenameMachineDialog } from "@/components/machines/RenameMachineDialog";
 import { useVulnerabilityGroups } from "@/lib/vulnerability";
 import type { VulnerabilityItem } from "@/lib/types";
+import { Pagination } from "@/components/ui/pagination";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
 import { ReportGenerateButton } from "@/components/reports/ReportGenerateButton";
 import { VulnGroupTable } from "@/components/vulnerabilities/VulnGroupTable";
@@ -42,6 +43,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Pencil, RefreshCw, Trash2 } from "lucide-react";
+
+const PAGE_SIZE = 50; 
 
 export default function MachineDetailPage() {
   const params = useParams<{ uuid: string }>();
@@ -75,6 +78,9 @@ export default function MachineDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
+          <Link href="/machines" className="text-sm text-primary hover:underline">
+              ← {t("back")}
+          </Link>
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold">{machineLabel(machine)}</h1>
             <Badge variant={statusVariant(machine.status)}>
@@ -96,7 +102,7 @@ export default function MachineDetailPage() {
           {isAdmin && (
             <Button variant="outline" onClick={() => setRenameOpen(true)}>
               <Pencil className="mr-2 h-4 w-4" />
-              {tm("rename")}
+              {tm("edit")}
             </Button>
           )}
           {isAdmin && (
@@ -123,6 +129,7 @@ export default function MachineDetailPage() {
                 hostname: machine.hostname,
                 display_name: machine.display_name,
                 owner: machine.owner,
+                tags: machine.tags,
               }
             : null
         }
@@ -198,11 +205,13 @@ function OverviewTab({ machine }: { machine: ReturnType<typeof useMachine>["data
 }
 
 function SoftwareTab({ uuid }: { uuid: string }) {
+  const [page, setPage] = useState(1);
   const t = useTranslations("machineDetail");
   const [q, setQ] = useState("");
   const [sig, setSig] = useState("");
   const { data, isLoading } = useMachineSoftware(uuid, {
-    page_size: 100,
+    page,
+    page_size: PAGE_SIZE,
     ...(q ? { q } : {}),
     ...(sig ? { signature_status: sig } : {}),
   });
@@ -214,7 +223,7 @@ function SoftwareTab({ uuid }: { uuid: string }) {
         <Input
           placeholder={t("searchSoftware")}
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => { setQ(e.target.value); setPage(1); }}
           className="max-w-xs"
         />
         <div className="flex gap-1">
@@ -223,7 +232,7 @@ function SoftwareTab({ uuid }: { uuid: string }) {
               key={s || "all"}
               size="sm"
               variant={sig === s ? "default" : "outline"}
-              onClick={() => setSig(s)}
+              onClick={() => { setSig(s); setPage(1); }}
             >
               {s ? t(`sig.${s}`) : t("sig.all")}
             </Button>
@@ -289,11 +298,25 @@ function SoftwareTab({ uuid }: { uuid: string }) {
       {data && (
         <p className="text-sm text-muted-foreground">{t("totalSoftware", { count: data.total })}</p>
       )}
+      {data && data.total_pages > 1 && (
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">
+            {t("pageInfo", { page: data.page, total: data.total_pages, count: data.total })}
+          </span>
+          <Pagination
+            page={page}
+            totalPages={data.total_pages}
+            onChange={setPage}
+            labels={{ prev: t("prev"), next: t("next"), goToPage: t("goToPage") }}
+          />
+        </div>
+      )}
     </div>
   );
 }
 
 function VulnerabilitiesTab({ uuid }: { uuid: string }) {
+  const [page, setPage] = useState(1);
   const t = useTranslations("vulnerabilities");
   const { user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.role === "dev";
@@ -304,7 +327,7 @@ function VulnerabilitiesTab({ uuid }: { uuid: string }) {
   // Grouped view: one row per affected software (reuses the global grouped
   // endpoint filtered to this machine). Each group expands to its CVEs.
   const baseFilters = { machine_uuid: uuid, show_dismissed: showDismissed };
-  const { data, isLoading } = useVulnerabilityGroups({ ...baseFilters, page_size: 200 });
+  const { data, isLoading } = useVulnerabilityGroups({ ...baseFilters, page, page_size: PAGE_SIZE });
   const cveTotal = data?.items.reduce((sum, g) => sum + g.cve_count, 0);
 
   return (
@@ -316,7 +339,7 @@ function VulnerabilitiesTab({ uuid }: { uuid: string }) {
         <Button
           size="sm"
           variant={showDismissed ? "default" : "outline"}
-          onClick={() => setShowDismissed((v) => !v)}
+          onClick={() => { setShowDismissed((v) => !v); setPage(1); }}
         >
           {t("showDismissed")}
         </Button>
@@ -339,66 +362,130 @@ function VulnerabilitiesTab({ uuid }: { uuid: string }) {
         cveId={dismissVuln?.cve_id}
         onOpenChange={(open) => !open && setDismissVuln(null)}
       />
+      {data && data.total_pages > 1 && (
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">
+          {t("pageInfoGroups", { page: data.page, total: data.total_pages, count: data.total })}
+        </span>
+        <Pagination
+          page={page}
+          totalPages={data.total_pages}
+          onChange={setPage}
+          labels={{ prev: t("prev"), next: t("next"), goToPage: t("goToPage") }}
+        />
+      </div>
+    )}
     </div>
   );
 }
 
 function HistoryTab({ uuid }: { uuid: string }) {
   const t = useTranslations("machineDetail");
-  const { data, isLoading } = useMachineHistory(uuid);
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useMachineHistory(uuid, {
+    page,
+    page_size: PAGE_SIZE,
+  });
+
   if (isLoading) return <Skeleton className="h-32 w-full" />;
-  if (!data || data.items.length === 0) {
-    return <p className="py-6 text-center text-muted-foreground">{t("noHistory")}</p>;
-  }
+
   const eventVariant = (e: string) =>
     e === "installed" ? "success" : e === "uninstalled" ? "danger" : "warning";
+
   return (
-    <div className="space-y-2">
-      {data.items.map((h, i) => (
-        <div key={i} className="flex items-center gap-3 rounded-md border px-4 py-2 text-sm">
-          <Badge variant={eventVariant(h.event)}>{t(`event.${h.event}`)}</Badge>
-          <span className="font-medium">{h.software_name}</span>
+    <div className="space-y-3">
+      <div className="space-y-2">
+        {(!data || data.items.length === 0) && (
+          <p className="py-6 text-center text-muted-foreground">{t("noHistory")}</p>
+        )}
+        {data?.items.map((h, i) => (
+          <div key={i} className="flex items-center gap-3 rounded-md border px-4 py-2 text-sm">
+            <Badge variant={eventVariant(h.event)}>{t(`event.${h.event}`)}</Badge>
+            <span className="font-medium">{h.software_name}</span>
+            <span className="text-muted-foreground">
+              {h.previous_version
+                ? `${h.previous_version} → ${h.software_version}`
+                : h.software_version}
+            </span>
+            <span className="ml-auto text-muted-foreground">
+              {new Date(h.occurred_at).toLocaleString()}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {data && data.total_pages > 1 && (
+        <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">
-            {h.previous_version ? `${h.previous_version} → ${h.software_version}` : h.software_version}
+            {t("pageInfo", { page: data.page, total: data.total_pages, count: data.total })}
           </span>
-          <span className="ml-auto text-muted-foreground">
-            {new Date(h.occurred_at).toLocaleString()}
-          </span>
+          <Pagination
+            page={page}
+            totalPages={data.total_pages}
+            onChange={setPage}
+            labels={{ prev: t("prev"), next: t("next"), goToPage: t("goToPage") }}
+          />
         </div>
-      ))}
+      )}
     </div>
   );
 }
 
 function ScansTab({ uuid }: { uuid: string }) {
   const t = useTranslations("machineDetail");
-  const { data, isLoading } = useMachineScans(uuid);
+  const [page, setPage] = useState(1);
+  const { data, isLoading } = useMachineScans(uuid, {
+    page,
+    page_size: PAGE_SIZE,
+  });
+
   if (isLoading) return <Skeleton className="h-32 w-full" />;
-  if (!data || data.items.length === 0) {
-    return <p className="py-6 text-center text-muted-foreground">{t("noScans")}</p>;
-  }
+
   return (
-    <div className="rounded-lg border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t("col.scanTime")}</TableHead>
-            <TableHead>{t("col.type")}</TableHead>
-            <TableHead>{t("col.trigger")}</TableHead>
-            <TableHead className="text-right">{t("col.software")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {data.items.map((s) => (
-            <TableRow key={s.uuid}>
-              <TableCell>{new Date(s.received_at).toLocaleString()}</TableCell>
-              <TableCell>{s.scan_type}</TableCell>
-              <TableCell className="text-muted-foreground">{s.trigger || "—"}</TableCell>
-              <TableCell className="text-right tabular-nums">{s.software_count}</TableCell>
+    <div className="space-y-3">
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t("col.scanTime")}</TableHead>
+              <TableHead>{t("col.type")}</TableHead>
+              <TableHead>{t("col.trigger")}</TableHead>
+              <TableHead className="text-right">{t("col.software")}</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {(!data || data.items.length === 0) && (
+              <TableRow>
+                <TableCell colSpan={4} className="py-6 text-center text-muted-foreground">
+                  {t("noScans")}
+                </TableCell>
+              </TableRow>
+            )}
+            {data?.items.map((s) => (
+              <TableRow key={s.uuid}>
+                <TableCell>{new Date(s.received_at).toLocaleString()}</TableCell>
+                <TableCell>{s.scan_type}</TableCell>
+                <TableCell className="text-muted-foreground">{s.trigger || "—"}</TableCell>
+                <TableCell className="text-right tabular-nums">{s.software_count}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {data && data.total_pages > 1 && (
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">
+            {t("pageInfo", { page: data.page, total: data.total_pages, count: data.total })}
+          </span>
+          <Pagination
+            page={page}
+            totalPages={data.total_pages}
+            onChange={setPage}
+            labels={{ prev: t("prev"), next: t("next"), goToPage: t("goToPage") }}
+          />
+        </div>
+      )}
     </div>
   );
 }

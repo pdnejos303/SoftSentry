@@ -87,7 +87,7 @@ async def machine_software(
 
 
 async def machine_history(
-    session: AsyncSession, machine_id: int, *, limit: int = 100
+    session: AsyncSession, machine_id: int, *, page: int = 1, page_size: int = 50
 ) -> tuple[list[dict[str, object]], int]:
     total = (
         await session.execute(
@@ -98,16 +98,13 @@ async def machine_history(
     ).scalar_one()
 
     rows = (
-        (
-            await session.execute(
-                select(SoftwareHistory)
-                .where(SoftwareHistory.machine_id == machine_id)
-                .order_by(SoftwareHistory.occurred_at.desc(), SoftwareHistory.id.desc())
-                .limit(limit)
-            )
-        )
-        .scalars()
-        .all()
+        (await session.execute(
+            select(SoftwareHistory)
+            .where(SoftwareHistory.machine_id == machine_id)
+            .order_by(SoftwareHistory.occurred_at.desc(), SoftwareHistory.id.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )).scalars().all()
     )
     items: list[dict[str, object]] = [
         {
@@ -123,7 +120,7 @@ async def machine_history(
 
 
 async def machine_scans(
-    session: AsyncSession, machine_id: int, *, limit: int = 50
+    session: AsyncSession, machine_id: int, *, page: int = 1, page_size: int = 50
 ) -> tuple[list[dict[str, object]], int]:
     total = (
         await session.execute(
@@ -137,7 +134,8 @@ async def machine_scans(
                 select(Scan)
                 .where(Scan.machine_id == machine_id)
                 .order_by(Scan.received_at.desc(), Scan.id.desc())
-                .limit(limit)
+                .offset((page - 1) * page_size)   
+                .limit(page_size)                 
             )
         )
         .scalars()

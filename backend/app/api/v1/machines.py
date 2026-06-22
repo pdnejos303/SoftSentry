@@ -193,11 +193,17 @@ async def machine_history(
     machine_uuid: uuid_lib.UUID,
     session: DBSession,
     _: CurrentUser,
-    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> SoftwareHistoryList:
     machine = await _get_or_404(session, machine_uuid)
-    items, total = await software_service.machine_history(session, machine.id, limit=limit)
-    return SoftwareHistoryList(items=items, total=total)
+    items, total = await software_service.machine_history(
+        session, machine.id, page=page, page_size=page_size
+    )
+    total_pages = (total + page_size - 1) // page_size
+    return SoftwareHistoryList(
+        items=items, total=total, page=page, page_size=page_size, total_pages=total_pages
+    )
 
 
 @router.get(
@@ -243,8 +249,14 @@ async def machine_scans(
     machine_uuid: uuid_lib.UUID,
     session: DBSession,
     _: CurrentUser,
-    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    page: Annotated[int, Query(ge=1)] = 1,
+    page_size: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> ScanHistoryList:
     machine = await _get_or_404(session, machine_uuid)
-    items, total = await software_service.machine_scans(session, machine.id, limit=limit)
-    return ScanHistoryList(items=items, total=total)
+    items, total = await software_service.machine_scans(
+        session, machine.id, page=page, page_size=page_size
+    )
+    total_pages = (total + page_size - 1) // page_size
+    return ScanHistoryList(
+        items=items, total=total, page=page, page_size=page_size, total_pages=total_pages
+    )

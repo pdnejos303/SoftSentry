@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import type {
   CrossSoftwareItem,
-  ListResult,
   MachineDetail,
   MachineListItem,
   MachineSoftwareItem,
@@ -68,12 +67,16 @@ export function useMachineSoftware(
   });
 }
 
-export function useMachineHistory(uuid: string) {
+export function useMachineHistory(
+  uuid: string,
+  params: { page?: number; page_size?: number },
+) {
   return useQuery({
-    queryKey: ["machine-history", uuid],
+    queryKey: ["machine-history", uuid, params],
     queryFn: async () => {
-      const { data } = await api.get<ListResult<SoftwareHistoryItem>>(
+      const { data } = await api.get<Paginated<SoftwareHistoryItem>>(
         `/machines/${uuid}/history`,
+        { params },
       );
       return data;
     },
@@ -81,11 +84,17 @@ export function useMachineHistory(uuid: string) {
   });
 }
 
-export function useMachineScans(uuid: string) {
+export function useMachineScans(
+  uuid: string,
+  params: { page?: number; page_size?: number },
+) {
   return useQuery({
-    queryKey: ["machine-scans", uuid],
+    queryKey: ["machine-scans", uuid, params],
     queryFn: async () => {
-      const { data } = await api.get<ListResult<ScanHistoryItem>>(`/machines/${uuid}/scans`);
+      const { data } = await api.get<Paginated<ScanHistoryItem>>(
+        `/machines/${uuid}/scans`,
+        { params },
+      );
       return data;
     },
     enabled: Boolean(uuid),

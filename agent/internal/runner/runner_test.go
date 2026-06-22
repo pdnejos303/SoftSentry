@@ -97,24 +97,20 @@ func TestMaybeUpdateSkipsSameVersion(t *testing.T) {
 	}
 }
 
-// TestScanBudgetIncremental ตรวจสอบว่ารอบ incremental (cache มีแล้ว) ใช้งบ 2 นาที
-func TestScanBudgetIncremental(t *testing.T) {
-	if got := scanBudget(false, 15); got != 2*time.Minute {
-		t.Errorf("incremental budget: want 2m, got %s", got)
+// TestScanBudgetUsesConfiguredMinutes ตรวจสอบว่าทุกรอบใช้งบตามค่าที่ตั้งไว้
+// (เลิกแยก first/incremental — ดูเหตุผลที่ scanBudget)
+func TestScanBudgetUsesConfiguredMinutes(t *testing.T) {
+	if got := scanBudget(15); got != 15*time.Minute {
+		t.Errorf("budget: want 15m, got %s", got)
+	}
+	if got := scanBudget(60); got != 60*time.Minute {
+		t.Errorf("budget: want 60m, got %s", got)
 	}
 }
 
-// TestScanBudgetFirstScan ตรวจสอบว่ารอบแรกใช้งบตาม firstScanMinutes ที่ตั้งไว้
-func TestScanBudgetFirstScan(t *testing.T) {
-	if got := scanBudget(true, 15); got != 15*time.Minute {
-		t.Errorf("first-scan budget: want 15m, got %s", got)
-	}
-}
-
-// TestScanBudgetFirstScanFallsBackWhenUnset ตรวจสอบว่ารอบแรกที่ไม่ได้ตั้งค่า
-// (0) ใช้ fallback 15 นาที
-func TestScanBudgetFirstScanFallsBackWhenUnset(t *testing.T) {
-	if got := scanBudget(true, 0); got != 15*time.Minute {
-		t.Errorf("first-scan budget with unset minutes: want 15m fallback, got %s", got)
+// TestScanBudgetFallsBackWhenUnset ตรวจสอบว่าค่า 0 (ไม่ได้ตั้ง) ใช้ fallback 15 นาที
+func TestScanBudgetFallsBackWhenUnset(t *testing.T) {
+	if got := scanBudget(0); got != 15*time.Minute {
+		t.Errorf("budget with unset minutes: want 15m fallback, got %s", got)
 	}
 }

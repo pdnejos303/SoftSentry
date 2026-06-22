@@ -24,23 +24,49 @@ type windowsScanner struct {
 func New() Scanner { return &windowsScanner{verifier: newAuthenticodeVerifier()} }
 
 // Scan รวบรวมซอฟต์แวร์จาก registry + filesystem แล้วตรวจลายเซ็นผ่าน disk cache
-func (s *windowsScanner) Scan(ctx context.Context) ([]Software, error) {
+// แบบ two-pass: pass 1 นับไฟล์ทั้งหมดก่อน (phase counting) เพื่อรู้ Total → pass 2
+// เดินจริงพร้อมรายงานความคืบหน้าผ่าน report (ดู Phase ใน progress.go)
+func (s *windowsScanner) Scan(ctx context.Context, report ProgressFunc) ([]Software, error) {
+	tr := newProgressTracker(report)
+
 	// 1. registry collector (source=registry)
 	reg, err := s.scanRegistry(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. filesystem collector (source=filesystem) — ข้าม path ที่ registry รายงานแล้ว
+	// เตรียม option ของ filesystem scan ครั้งเดียว ใช้ทั้ง pass นับและ pass เดินจริง
 	cfg, _ := config.Load() // โหลดไม่ได้ → ใช้พฤติกรรม default (เปิด filesystem scan)
-	var fsList []Software
-	if cfg == nil || cfg.FilesystemScanEnabled {
-		opt := fsOptions{}
-		if cfg != nil {
-			opt.deep = cfg.FilesystemDeepMode
-			opt.extraRoots = cfg.FilesystemExtraRoots
+	fsEnabled := cfg == nil || cfg.FilesystemScanEnabled
+	opt := fsOptions{}
+	if cfg != nil {
+		opt.deep = cfg.FilesystemDeepMode
+		opt.extraRoots = cfg.FilesystemExtraRoots
+	}
+	skip := installPathSet(reg)
+
+	// PASS 1 (counting): นับ .exe ทั้งหมดแบบไม่อ่าน PE เพื่อคำนวณ Total ที่แท้จริง
+	// Total = registry entries (รู้ทันที) + จำนวน .exe จาก filesystem
+	tr.setPhase(PhaseCounting)
+	total := len(reg)
+	if fsEnabled {
+		n, err := countFilesystem(ctx, opt, skip)
+		if err != nil {
+			return nil, err // ctx ถูก cancel ระหว่างนับ
 		}
-		fsList, err = collectFilesystem(ctx, opt, installPathSet(reg))
+		total += n
+	}
+	tr.setTotal(total)
+
+	// PASS 2 (scanning): นับ registry entry เป็น Done ก่อน (เร็ว) แล้วเดิน filesystem
+	// จริงพร้อม step ต่อไฟล์ — Done เดินถึง Total เมื่อค้นพบครบ
+	tr.setPhase(PhaseScanning)
+	for i := range reg {
+		tr.step(reg[i].InstallPath)
+	}
+	var fsList []Software
+	if fsEnabled {
+		fsList, err = collectFilesystem(ctx, opt, skip, tr.step)
 		if err != nil {
 			return nil, err // ctx ถูก cancel ระหว่างเดิน filesystem
 		}
@@ -49,7 +75,8 @@ func (s *windowsScanner) Scan(ctx context.Context) ([]Software, error) {
 	// 3. merge (registry ชนะเมื่อ name+version ชนกัน — กัน DB unique conflict)
 	merged := mergeWindows(reg, fsList)
 
-	// 4. verify ทุก entry ที่มี InstallPath ผ่าน persistent cache
+	// 4. verify ทุก entry ที่มี InstallPath ผ่าน persistent cache (phase verifying)
+	tr.setPhase(PhaseVerifying)
 	cache := loadSigCache()
 	for i := range merged {
 		if err := ctx.Err(); err != nil {
@@ -59,6 +86,7 @@ func (s *windowsScanner) Scan(ctx context.Context) ([]Software, error) {
 		if merged[i].InstallPath == "" {
 			continue
 		}
+		tr.update(func(p *Progress) { p.CurrentPath = merged[i].InstallPath }) // โชว์ไฟล์ที่กำลัง verify (ไม่ขยับ Done)
 		if sig := s.verifyCached(cache, merged[i].InstallPath); sig != nil {
 			merged[i].Signature = sig
 		}

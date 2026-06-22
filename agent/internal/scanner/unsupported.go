@@ -28,7 +28,7 @@ func New() Scanner { return &unsupportedScanner{} }
 // Return:
 //   - nil: ไม่มีผลลัพธ์
 //   - error: error ที่ระบุชื่อ OS ที่ไม่รองรับ
-func (unsupportedScanner) Scan(context.Context) ([]Software, error) {
+func (unsupportedScanner) Scan(context.Context, ProgressFunc) ([]Software, error) {
 	// สร้าง error message พร้อมชื่อ OS จริง เช่น "linux" หรือ "freebsd"
 	return nil, fmt.Errorf("software scanning is not supported on %s", runtime.GOOS)
 }

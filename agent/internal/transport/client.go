@@ -201,15 +201,36 @@ type HeartbeatResponse struct {
 	AgentUpdateAvailable *AgentUpdate `json:"agent_update_available"`  // ข้อมูล update ถ้ามี หรือ nil
 }
 
+// ScanProgress คือ snapshot ความคืบหน้าการสแกนที่แนบไปกับ heartbeat เพื่อให้
+// dashboard แสดง progress bar สด ตรงกับ backend ScanProgressIn schema
+// (nil = ไม่มีการสแกนอยู่ จึงไม่แนบ field นี้)
+type ScanProgress struct {
+	Phase       string `json:"phase"`                  // idle/counting/scanning/verifying/uploading
+	Done        int    `json:"done"`                   // จำนวนที่ทำเสร็จแล้ว
+	Total       int    `json:"total"`                  // จำนวนทั้งหมด
+	CurrentPath string `json:"current_path,omitempty"` // ไฟล์ที่กำลังประมวลผล
+	UpdatedAt   string `json:"updated_at,omitempty"`   // เวลาอัปเดตล่าสุด (RFC3339)
+}
+
 // Heartbeat ส่ง liveness ping ไปยัง server และรับ flag ตอบกลับมา
 // ต้องการ bearer token และคืน error ถ้าไม่มี
-func (c *Client) Heartbeat(ctx context.Context, uptimeSeconds int64) (*HeartbeatResponse, error) {
+// progress (อาจเป็น nil) แนบ snapshot ความคืบหน้าการสแกนเพื่อให้ dashboard แสดงผลสด
+func (c *Client) Heartbeat(ctx context.Context, uptimeSeconds int64, progress *ScanProgress) (*HeartbeatResponse, error) {
 	// ตรวจสอบว่ามี bearer token ก่อน heartbeat ต้องการ authentication
 	if c.bearer == "" {
 		return nil, errors.New("heartbeat requires bearer token")
 	}
-	// สร้าง request body พร้อม agent version และ uptime เพื่อ diagnostic
-	body := map[string]any{"agent_version": Version, "uptime_seconds": uptimeSeconds}
+	// สร้าง request body พร้อม agent version, uptime, และ server_url ที่ agent คุยด้วย
+	// (= baseURL จาก config) เพื่อให้ dashboard แสดงปลายทางจริงที่แต่ละ agent รายงานเข้า
+	body := map[string]any{
+		"agent_version":  Version,
+		"uptime_seconds": uptimeSeconds,
+		"server_url":     c.baseURL,
+	}
+	// แนบ progress เฉพาะตอนมีการสแกนอยู่ (ไม่งั้นเว้นไว้ให้ backend คงค่าเดิม/idle)
+	if progress != nil {
+		body["scan_progress"] = progress
+	}
 	// เตรียม struct สำหรับรับ response
 	var out HeartbeatResponse
 	// ส่ง POST request ไปยัง heartbeat endpoint

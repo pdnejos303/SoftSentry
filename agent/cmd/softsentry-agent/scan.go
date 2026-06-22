@@ -43,7 +43,14 @@ the result as JSON. Nothing is sent to the server — use 'run' for that.
 			// แสดงข้อความบอกว่ากำลังสแกน — ส่งไป stderr เพื่อแยกจาก JSON output ใน stdout
 			cmd.PrintErrln("Scanning installed software ...")
 			// รันการสแกนจริง — enumerate software และยืนยัน signature
-			res, err := scanner.Run(ctx)
+			// พิมพ์ความคืบหน้าไป stderr เพื่อให้ admin เห็นว่าสแกนถึงไหน (ไม่ปน JSON ใน stdout)
+			report := func(p scanner.Progress) {
+				if p.Total > 0 {
+					cmd.PrintErrf("\r[%s] %d/%d", p.Phase, p.Done, p.Total)
+				}
+			}
+			res, err := scanner.Run(ctx, report)
+			cmd.PrintErrln() // ขึ้นบรรทัดใหม่หลัง progress แบบ \r
 			if err != nil {
 				// การสแกนล้มเหลว (เช่น ไม่มีสิทธิ์อ่าน registry หรือ context ถูกยกเลิก)
 				return fmt.Errorf("scan: %w", err)

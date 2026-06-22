@@ -44,8 +44,6 @@ import {
 } from "@/components/ui/table";
 import { Pencil, RefreshCw, Trash2 } from "lucide-react";
 
-const PAGE_SIZE = 50; 
-
 export default function MachineDetailPage() {
   const params = useParams<{ uuid: string }>();
   const uuid = params.uuid;
@@ -205,6 +203,7 @@ function OverviewTab({ machine }: { machine: ReturnType<typeof useMachine>["data
 }
 
 function SoftwareTab({ uuid }: { uuid: string }) {
+  const PAGE_SIZE = 25; 
   const [page, setPage] = useState(1);
   const t = useTranslations("machineDetail");
   const [q, setQ] = useState("");
@@ -316,6 +315,7 @@ function SoftwareTab({ uuid }: { uuid: string }) {
 }
 
 function VulnerabilitiesTab({ uuid }: { uuid: string }) {
+  const PAGE_SIZE = 50; 
   const [page, setPage] = useState(1);
   const t = useTranslations("vulnerabilities");
   const { user } = useAuth();
@@ -380,6 +380,7 @@ function VulnerabilitiesTab({ uuid }: { uuid: string }) {
 }
 
 function HistoryTab({ uuid }: { uuid: string }) {
+  const PAGE_SIZE = 25; 
   const t = useTranslations("machineDetail");
   const [page, setPage] = useState(1);
   const { data, isLoading } = useMachineHistory(uuid, {
@@ -432,6 +433,7 @@ function HistoryTab({ uuid }: { uuid: string }) {
 }
 
 function ScansTab({ uuid }: { uuid: string }) {
+  const PAGE_SIZE = 50; 
   const t = useTranslations("machineDetail");
   const [page, setPage] = useState(1);
   const { data, isLoading } = useMachineScans(uuid, {

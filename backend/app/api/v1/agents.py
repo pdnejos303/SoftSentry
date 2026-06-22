@@ -12,6 +12,7 @@ from app.core import metrics
 from app.core.config import settings
 from app.core.deps import CurrentAgent, DBSession, require_role
 from app.models.agent_config import AgentConfig
+from app.models.machine import Machine
 from app.schemas.agents import (
     AgentConfigOut,
     AgentEnrollRequest,
@@ -22,6 +23,7 @@ from app.schemas.agents import (
     HeartbeatRequest,
     HeartbeatResponse,
     MachineOut,
+    ScanProgressIn,
 )
 from app.schemas.scans import ScanAccepted, ScanIn
 from app.services import (
@@ -112,6 +114,9 @@ async def heartbeat(
     agent.status = "online"
     if payload and payload.agent_version:
         agent.agent_version = payload.agent_version
+    if payload and payload.server_url:
+        agent.reported_server_url = payload.server_url
+    _apply_scan_progress(agent, payload.scan_progress if payload else None)
 
     cfg = await session.get(AgentConfig, agent.id)
     await session.commit()
@@ -124,6 +129,26 @@ async def heartbeat(
         if auto_update
         else None,
     )
+
+
+def _apply_scan_progress(agent: Machine, progress: ScanProgressIn | None) -> None:
+    """Store live scan progress from a heartbeat, or reset to idle when absent.
+
+    The agent only sends ``scan_progress`` mid-scan; an idle heartbeat omits it,
+    which we treat as "no scan running" and clear so the dashboard hides the bar.
+    """
+    if progress is None or progress.phase in ("", "idle"):
+        agent.scan_phase = "idle"
+        agent.scan_done = None
+        agent.scan_total = None
+        agent.scan_current_path = None
+        agent.scan_progress_at = progress.updated_at if progress else datetime.now(tz=UTC)
+        return
+    agent.scan_phase = progress.phase
+    agent.scan_done = progress.done
+    agent.scan_total = progress.total
+    agent.scan_current_path = progress.current_path
+    agent.scan_progress_at = progress.updated_at or datetime.now(tz=UTC)
 
 
 def _offer_update(os: str, arch: str, current_version: str) -> AgentUpdateAvailable | None:

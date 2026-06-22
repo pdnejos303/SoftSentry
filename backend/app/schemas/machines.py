@@ -17,6 +17,17 @@ class VulnerabilityCount(BaseModel):
     low: int = 0
 
 
+class ScanProgress(BaseModel):
+    """Live scan progress for the dashboard bar. Present only while a scan runs
+    (phase != idle); ``None`` on the machine means no bar is shown."""
+
+    phase: str
+    done: int = 0
+    total: int = 0
+    current_path: str | None = None
+    updated_at: datetime | None = None
+
+
 class MachineListItem(BaseModel):
     uuid: uuid_lib.UUID
     hostname: str
@@ -26,12 +37,18 @@ class MachineListItem(BaseModel):
     os_version: str
     agent_version: str
     status: str
+    # Backend URL the agent reports phoning home to (None until first heartbeat
+    # from an agent new enough to send it).
+    reported_server_url: str | None = None
     last_seen_at: datetime | None
     last_scan_at: datetime | None
     tags: list[str]
     software_count: int
     vulnerability_count: VulnerabilityCount = Field(default_factory=VulnerabilityCount)
     risk_score: float = 0
+    # Live scan progress (None when idle / never scanned) so the list and detail
+    # views can render a progress bar that updates as heartbeats arrive.
+    scan_progress: ScanProgress | None = None
 
 
 class MachineDetail(MachineListItem):

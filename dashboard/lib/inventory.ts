@@ -26,6 +26,11 @@ export interface MachineFilters {
   page_size?: number;
 }
 
+// Poll faster while any machine is mid-scan so the progress bar updates live,
+// and back off when everything is idle to keep the dashboard cheap.
+const SCAN_POLL_MS = 5_000;
+const IDLE_POLL_MS = 30_000;
+
 export function useMachines(filters: MachineFilters) {
   return useQuery({
     queryKey: ["machines", filters],
@@ -35,6 +40,8 @@ export function useMachines(filters: MachineFilters) {
       });
       return data;
     },
+    refetchInterval: (query) =>
+      query.state.data?.items.some((m) => m.scan_progress) ? SCAN_POLL_MS : IDLE_POLL_MS,
   });
 }
 
@@ -46,6 +53,7 @@ export function useMachine(uuid: string) {
       return data;
     },
     enabled: Boolean(uuid),
+    refetchInterval: (query) => (query.state.data?.scan_progress ? SCAN_POLL_MS : IDLE_POLL_MS),
   });
 }
 

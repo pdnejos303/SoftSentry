@@ -123,11 +123,18 @@
       "stale": "Stale",
       "offline": "Offline"
     },
+    "scanProgress": {
+      "counting": "Counting files",
+      "scanning": "Scanning",
+      "verifying": "Verifying signatures",
+      "uploading": "Uploading"
+    },
     "col": {
       "hostname": "Hostname",
       "owner": "Owner",
       "os": "OS",
       "status": "Status",
+      "server": "Server",
       "software": "Software",
       "lastSeen": "Last seen",
       "tags": "Tags",
@@ -162,6 +169,9 @@
     "noHistory": "No history events yet",
     "noScans": "No scans recorded yet",
     "totalSoftware": "{count} software entries",
+    "scanProgress": {
+      "title": "Scan in progress"
+    },
     "tabs": {
       "overview": "Overview",
       "software": "Software",
@@ -176,6 +186,7 @@
       "enrolled": "Enrolled",
       "lastSeen": "Last seen",
       "lastScan": "Last scan",
+      "server": "Server",
       "riskScore": "Risk score"
     },
     "sig": {

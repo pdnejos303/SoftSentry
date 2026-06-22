@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { machineLabel } from "@/lib/machine";
 import { DeleteMachineDialog } from "@/components/machines/DeleteMachineDialog";
 import { RenameMachineDialog } from "@/components/machines/RenameMachineDialog";
+import { ScanProgressBar } from "@/components/machines/ScanProgressBar";
 import { useVulnerabilityGroups } from "@/lib/vulnerability";
 import type { VulnerabilityItem } from "@/lib/types";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
@@ -129,6 +130,22 @@ export default function MachineDetailPage() {
         onOpenChange={setRenameOpen}
       />
 
+      {machine.scan_progress && (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">{t("scanProgress.title")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <ScanProgressBar progress={machine.scan_progress} />
+            {machine.scan_progress.current_path && (
+              <p className="truncate font-mono text-xs text-muted-foreground">
+                {machine.scan_progress.current_path}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">{t("tabs.overview")}</TabsTrigger>
@@ -174,6 +191,7 @@ function OverviewTab({ machine }: { machine: ReturnType<typeof useMachine>["data
       t("field.lastScan"),
       machine.last_scan_at ? new Date(machine.last_scan_at).toLocaleString() : "—",
     ],
+    [t("field.server"), machine.reported_server_url || "—"],
   ];
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

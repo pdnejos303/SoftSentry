@@ -9,6 +9,18 @@ export interface VulnerabilityCount {
   low: number;
 }
 
+// Live scan progress — mirrors backend ScanProgress. null on a machine that is
+// idle or has never scanned (no progress bar shown).
+export type ScanPhase = "counting" | "scanning" | "verifying" | "uploading" | "idle";
+
+export interface ScanProgress {
+  phase: ScanPhase | string;
+  done: number;
+  total: number;
+  current_path: string | null;
+  updated_at: string | null;
+}
+
 export interface MachineListItem {
   uuid: string;
   hostname: string;
@@ -19,12 +31,17 @@ export interface MachineListItem {
   os_version: string;
   agent_version: string;
   status: "online" | "stale" | "offline" | string;
+  // Backend URL the agent reports phoning home to; null until first heartbeat
+  // from an agent new enough to send it.
+  reported_server_url: string | null;
   last_seen_at: string | null;
   last_scan_at: string | null;
   tags: string[];
   software_count: number;
   vulnerability_count: VulnerabilityCount;
   risk_score: number;
+  // Live scan progress; null when the machine is idle / has never scanned.
+  scan_progress: ScanProgress | null;
 }
 
 export interface MachineDetail extends MachineListItem {

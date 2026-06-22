@@ -120,11 +120,18 @@
       "stale": "応答なし",
       "offline": "オフライン"
     },
+    "scanProgress": {
+      "counting": "ファイルを集計中",
+      "scanning": "スキャン中",
+      "verifying": "署名を検証中",
+      "uploading": "アップロード中"
+    },
     "col": {
       "hostname": "ホスト名",
       "owner": "所有者",
       "os": "OS",
       "status": "ステータス",
+      "server": "サーバー",
       "software": "ソフトウェア",
       "lastSeen": "最終確認",
       "tags": "タグ",
@@ -159,6 +166,9 @@
     "noHistory": "履歴イベントはまだありません",
     "noScans": "記録されたスキャンはまだありません",
     "totalSoftware": "{count} 件のソフトウェア",
+    "scanProgress": {
+      "title": "スキャン実行中"
+    },
     "tabs": {
       "overview": "概要",
       "software": "ソフトウェア",
@@ -173,6 +183,7 @@
       "enrolled": "登録日",
       "lastSeen": "最終確認",
       "lastScan": "最終スキャン",
+      "server": "サーバー",
       "riskScore": "リスクスコア"
     },
     "sig": {

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, Float, String
+from sqlalchemy import JSON, DateTime, Float, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -32,6 +32,11 @@ class Machine(Base, UuidMixin, TimestampMixin):
     os_version: Mapped[str] = mapped_column(String(50), nullable=False)
     arch: Mapped[str] = mapped_column(String(10), nullable=False)
     agent_version: Mapped[str] = mapped_column(String(20), nullable=False)
+    # Backend URL the agent reports phoning home to (its config.yaml server_url),
+    # sent on every heartbeat. The dashboard shows this so admins can tell which
+    # backend a machine talks to (local vs LAN) without opening config.yaml — and
+    # it's the *reported* value, the real destination, not what deploy assumed.
+    reported_server_url: Mapped[str | None] = mapped_column(String(512))
     agent_token_hash: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     enrolled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     last_seen_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -41,4 +46,13 @@ class Machine(Base, UuidMixin, TimestampMixin):
     # Risk score recomputed inline after each scan (Module 7); stored so the
     # "top-N risky machines" query stays a cheap indexed sort.
     risk_score: Mapped[float] = mapped_column(Float, nullable=False, default=0, index=True)
+    # Live scan progress, refreshed from each heartbeat while a scan runs (and
+    # reset to "idle" when it ends). Lets the dashboard show a live progress bar
+    # without a separate endpoint. All nullable: a machine that has never scanned
+    # (or is idle) simply has no progress to show.
+    scan_phase: Mapped[str | None] = mapped_column(String(20))
+    scan_done: Mapped[int | None] = mapped_column(Integer)
+    scan_total: Mapped[int | None] = mapped_column(Integer)
+    scan_current_path: Mapped[str | None] = mapped_column(String(512))
+    scan_progress_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

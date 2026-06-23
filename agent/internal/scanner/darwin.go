@@ -1,4 +1,5 @@
 //go:build darwin
+
 // build tag นี้บอกให้ Go compiler รวมไฟล์นี้เฉพาะเมื่อ build สำหรับ macOS เท่านั้น
 
 // Package scanner รวมซอฟต์แวร์ที่ติดตั้งอยู่บนเครื่อง macOS
@@ -6,7 +7,7 @@
 package scanner
 
 import (
-	"context" // ใช้สำหรับรองรับ context cancellation ระหว่างการสแกน
+	"context"       // ใช้สำหรับรองรับ context cancellation ระหว่างการสแกน
 	"encoding/json" // ใช้ parse ข้อมูล JSON ที่ได้จาก plutil
 	"os"            // ใช้อ่านรายการไฟล์/โฟลเดอร์ในระบบ
 	"os/exec"       // ใช้เรียกคำสั่ง external เช่น plutil และ codesign
@@ -34,9 +35,20 @@ func New() Scanner { return &darwinScanner{} }
 // Return:
 //   - []Software: รายการซอฟต์แวร์ที่พบ
 //   - error: error ถ้า context ถูกยกเลิก
-func (s *darwinScanner) Scan(ctx context.Context) ([]Software, error) {
+//
+// S is resiver Scan is name of FN
+//   - report: callback รับความคืบหน้า (nil = ไม่รายงาน) — macOS รายงานแบบ
+//     best-effort: นับ .app ก่อน (counting) แล้ว step ต่อแอปที่ verify (scanning)
+func (s *darwinScanner) Scan(ctx context.Context, report ProgressFunc) ([]Software, error) {
+	tr := newProgressTracker(report)
 	var out []Software // ตัวแปรสะสมรายการซอฟต์แวร์ที่พบ
 
+	// PASS 1 (counting): นับ .app bundle ทั้งหมดเพื่อคำนวณ Total
+	tr.setPhase(PhaseCounting)
+	tr.setTotal(countApps())
+
+	// PASS 2 (scanning): อ่าน plist + verify codesign ต่อแอป พร้อม step
+	tr.setPhase(PhaseScanning)
 	// วนซ้ำแต่ละโฟลเดอร์แอปพลิเคชันที่กำหนดไว้ใน appDirs
 	for _, dir := range appDirs {
 		entries, err := os.ReadDir(dir) // อ่านรายการไฟล์/โฟลเดอร์ในไดเรกทอรีนั้น
@@ -57,6 +69,7 @@ func (s *darwinScanner) Scan(ctx context.Context) ([]Software, error) {
 			}
 
 			appPath := filepath.Join(dir, e.Name()) // สร้าง path เต็มของ .app bundle
+			tr.step(appPath)
 
 			// อ่านข้อมูลแอปจาก Info.plist และเพิ่มเข้าผลลัพธ์ถ้าสำเร็จ
 			if sw, ok := readApp(appPath); ok {
@@ -68,10 +81,27 @@ func (s *darwinScanner) Scan(ctx context.Context) ([]Software, error) {
 	return out, nil // คืนรายการซอฟต์แวร์ทั้งหมดที่พบ
 }
 
+// countApps นับจำนวน .app bundle ใน appDirs (pass 1) เพื่อใช้เป็น Total ของ progress
+func countApps() int {
+	n := 0
+	for _, dir := range appDirs {
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, e := range entries {
+			if strings.HasSuffix(e.Name(), ".app") {
+				n++
+			}
+		}
+	}
+	return n
+}
+
 // infoPlist คือ subset ของ Contents/Info.plist ที่เราสนใจเท่านั้น
 // ใช้ tag json เพื่อ map กับ key ที่มีชื่อเฉพาะใน plist format
 type infoPlist struct {
-	Name      string `json:"CFBundleName"`              // ชื่อแอปพลิเคชันตาม Bundle
+	Name      string `json:"CFBundleName"`               // ชื่อแอปพลิเคชันตาม Bundle
 	Version   string `json:"CFBundleShortVersionString"` // เวอร์ชันที่แสดงผลต่อผู้ใช้
 	Copyright string `json:"NSHumanReadableCopyright"`   // ข้อความลิขสิทธิ์ที่อ่านได้
 }
@@ -110,8 +140,8 @@ func readApp(appPath string) (Software, bool) {
 		Name:        name,
 		Version:     strings.TrimSpace(p.Version),   // เวอร์ชันจาก CFBundleShortVersionString
 		Publisher:   strings.TrimSpace(p.Copyright), // ผู้เผยแพร่จาก NSHumanReadableCopyright
-		InstallPath: appPath,                         // path ของ .app bundle
-		Source:      "plist",                         // ระบุว่าข้อมูลมาจาก plist
+		InstallPath: appPath,                        // path ของ .app bundle
+		Source:      "plist",                        // ระบุว่าข้อมูลมาจาก plist
 	}, true
 }
 
@@ -137,8 +167,29 @@ func codesignVerify(appPath string) *Signature {
 		return &Signature{Status: SigUnsigned} // แอปไม่มีลายเซ็น
 	}
 
-	// กรณีอื่นๆ ถือว่าลายเซ็นไม่ถูกต้อง เช่น ถูกแก้ไขหลังลงนาม
-	return &Signature{Status: SigInvalid}
+	// กรณีอื่นๆ ถือว่ามีลายเซ็นแต่ตรวจไม่ผ่าน — best-effort เดาเหตุผลจาก output ของ codesign
+	return &Signature{Status: SigInvalid, StatusReason: codesignReason(string(combined))}
+}
+
+// codesignReason เดา reason code จากข้อความ codesign (best-effort)
+// ข้อความที่ codesign คืนไม่คงรูปแบบเป๊ะ จึงจับเฉพาะ pattern ที่ชัดเจน
+// ที่เหลือคืน "other" ให้ dashboard แสดงเป็น "ตรวจสอบไม่ผ่าน" ทั่วไป
+// Parameter:
+//   - out: รวม stdout+stderr ของ codesign --verify
+//
+// Return:
+//   - string: reason code
+func codesignReason(out string) string {
+	l := strings.ToLower(out)
+	switch {
+	case strings.Contains(l, "resource") || strings.Contains(l, "modified") ||
+		strings.Contains(l, "main executable failed") || strings.Contains(l, "sealed"):
+		return ReasonTampered // ไฟล์/ทรัพยากรถูกแก้ไขหลังลงนาม
+	case strings.Contains(l, "not trusted") || strings.Contains(l, "no certificate"):
+		return ReasonUntrustedRoot
+	default:
+		return "other"
+	}
 }
 
 // codesignAuthority ดึงชื่อ leaf signing authority จากผลลัพธ์ codesign -dvvv

@@ -6,6 +6,7 @@
   "nav": {
     "overview": "Overview",
     "machines": "Machines",
+    "recentInstalls": "Recently installed",
     "software": "Software",
     "signatures": "Signatures",
     "whitelist": "Whitelist",
@@ -20,7 +21,12 @@
     "users": "Users",
     "auditLog": "Audit log",
     "language": "Language",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "themeToggle": "Toggle light / dark theme",
+    "sectionMonitor": "Monitor",
+    "sectionInventory": "Inventory",
+    "sectionGovernance": "Governance",
+    "sectionSystem": "System"
   },
   "login": {
     "title": "Sign in",
@@ -124,11 +130,18 @@
       "stale": "Stale",
       "offline": "Offline"
     },
+    "scanProgress": {
+      "counting": "Counting files",
+      "scanning": "Scanning",
+      "verifying": "Verifying signatures",
+      "uploading": "Uploading"
+    },
     "col": {
       "hostname": "Hostname",
       "owner": "Owner",
       "os": "OS",
       "status": "Status",
+      "server": "Server",
       "software": "Software",
       "lastSeen": "Last seen",
       "tags": "Tags",
@@ -160,6 +173,10 @@
     "triggerScan": "Trigger scan",
     "scanRequested": "Scan requested — the agent will scan on its next heartbeat",
     "scanFailed": "Could not request a scan",
+    "triggerUpdate": "Update agent now",
+    "updateRequested": "Update requested — the agent will pull the latest binary on its next heartbeat (~60s)",
+    "updateFailed": "Could not request an update",
+    "updateNoBinary": "No agent binary available for {os}/{arch} on the server",
     "searchSoftware": "Search software...",
     "noSoftware": "No software found",
     "noHistory": "No history events yet",
@@ -170,6 +187,9 @@
     "next": "Next",
     "goToPage": "Go to page",
     "pageInfo": "Page {page} of {total}",
+    "scanProgress": {
+      "title": "Scan in progress"
+    },
     "tabs": {
       "overview": "Overview",
       "software": "Software",
@@ -184,6 +204,7 @@
       "enrolled": "Enrolled",
       "lastSeen": "Last seen",
       "lastScan": "Last scan",
+      "server": "Server",
       "riskScore": "Risk score"
     },
     "sig": {
@@ -191,7 +212,7 @@
       "valid": "Valid",
       "unsigned": "Unsigned",
       "expired": "Expired",
-      "invalid": "Invalid"
+      "invalid": "Verification failed"
     },
     "event": {
       "installed": "Installed",
@@ -364,16 +385,74 @@
       "low": "Low"
     }
   },
+  "recentInstalls": {
+    "title": "Recently installed",
+    "subtitle": "New and updated apps across the fleet, with how trustworthy each one looks",
+    "empty": "No new installs in the selected period",
+    "approx": "(approx.)",
+    "filter": {
+      "period": "Period",
+      "lastDays": "Last {days} days",
+      "custom": "Custom range",
+      "from": "From",
+      "to": "To"
+    },
+    "col": {
+      "app": "App",
+      "machine": "Machine",
+      "event": "Change",
+      "when": "Installed",
+      "age": "Age",
+      "signature": "Signature",
+      "trust": "Trust"
+    },
+    "event": {
+      "installed": "Installed",
+      "updated": "Updated"
+    },
+    "trust": {
+      "trusted": "Trusted",
+      "suspicious": "Suspicious",
+      "risky": "Risky"
+    },
+    "sig": {
+      "valid": "Valid",
+      "unsigned": "Unsigned",
+      "expired": "Expired",
+      "invalid": "Verification failed",
+      "unknown": "Unknown"
+    }
+  },
   "software": {
     "title": "Software",
     "subtitle": "Cross-machine software inventory across the fleet",
-    "topTitle": "Most installed software",
-    "searchPlaceholder": "Search software or publisher...",
+    "searchPlaceholder": "Search software...",
     "empty": "No software found",
+    "clearFilters": "Clear filters",
+    "sigAll": "All",
     "prev": "Previous",
     "next": "Next",
     "goToPage": "Go to page",
     "pageInfo": "Page {page} of {total} · {count} entries",
+    "stat": {
+      "uniqueApps": "Unique apps",
+      "totalInstalls": "Total installs",
+      "unsigned": "Unsigned",
+      "invalid": "Verification failed"
+    },
+    "chart": {
+      "installedTitle": "Most installed software",
+      "riskyTitle": "Most widespread untrusted software",
+      "installed": "Most installed",
+      "risky": "Untrusted",
+      "riskyEmpty": "No untrusted software on the fleet"
+    },
+    "drill": {
+      "open": "Show machines",
+      "installedOn": "Installed on {count} machines",
+      "view": "View",
+      "capped": "Showing first {shown} of {count} machines"
+    },
     "col": {
       "name": "Name",
       "version": "Version",
@@ -385,7 +464,7 @@
       "valid": "Valid",
       "unsigned": "Unsigned",
       "expired": "Expired",
-      "invalid": "Invalid"
+      "invalid": "Verification failed"
     }
   },
   "softwareDetail": {
@@ -435,9 +514,17 @@
     "status": {
       "valid": "Valid",
       "expired": "Expired",
-      "invalid": "Invalid",
+      "invalid": "Verification failed",
       "unsigned": "Unsigned",
       "unknown": "Unknown"
+    },
+    "reason": {
+      "tampered": "File modified after signing (hash mismatch)",
+      "untrusted_root": "Issued by an untrusted CA (or self-signed)",
+      "broken_chain": "Certificate chain could not be built",
+      "revoked": "Certificate has been revoked",
+      "distrusted": "Explicitly distrusted on this machine",
+      "unknownCode": "Verification failed (code {code})"
     },
     "col": {
       "name": "Name",
@@ -448,6 +535,7 @@
     },
     "detail": {
       "title": "Certificate detail",
+      "reason": "Why verification failed",
       "issues": "Issues",
       "chain": "Certificate chain",
       "noChain": "No chain information available",

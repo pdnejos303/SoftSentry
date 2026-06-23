@@ -129,7 +129,13 @@ async def latest_binary_info(
     entry = binary_service.latest_for(settings.agent_binary_dir, os, arch)
     if entry is None:
         return None
-    return BinaryInfoOut(version=entry.version, os=entry.os, arch=entry.arch)
+    return BinaryInfoOut(
+        version=entry.version,
+        os=entry.os,
+        arch=entry.arch,
+        sha256=entry.sha256,
+        build_stamp=entry.build_stamp,
+    )
 
 
 @router.get(
@@ -177,5 +183,12 @@ async def download_installer(
     return Response(
         content=blob,
         media_type="application/octet-stream",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            # installer ต้องสดเสมอ — URL คงที่ต่อ token ทำให้ browser cache bytes เก่า
+            # (ผู้ใช้กด download ซ้ำได้ตัวเดิมแม้ volume อัปเดตแล้ว) → ห้าม cache เด็ดขาด
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
     )

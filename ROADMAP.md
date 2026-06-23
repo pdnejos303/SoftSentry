@@ -1,5 +1,11 @@
 # SoftSentry Roadmap
 
+> 🔴 **แผนเก่า — HISTORICAL ONLY (Phase 1–5, ทิศ "Software Asset Management").**
+> ไฟล์นี้เป็น **บันทึกของที่ build เสร็จไปแล้ว (Module 1–9)** ใช้เพื่อเข้าใจโค้ดเดิมได้
+> **ห้ามเอาไปอิงเป็นทิศทางใหม่เด็ดขาด** — ทิศทางปัจจุบัน (security posture) อยู่ที่
+> [`docs/security-posture/00-START-HERE.md`](docs/security-posture/00-START-HERE.md)
+> งานใหม่ทั้งหมดเป็น **additive** บนของในไฟล์นี้ (ไม่ลบ)
+
 แบ่งงานเป็น 5 phase. **ห้ามข้าม phase** — แต่ละ phase ต้อง test ผ่านก่อน move ไป phase ถัดไป
 
 ---

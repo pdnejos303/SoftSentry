@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Sarabun, Noto_Sans_JP, Noto_Serif_JP } from "next/font/google";
+import { Sarabun } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -14,28 +14,21 @@ const sarabun = Sarabun({
   variable: "--font-th",
   display: "swap",
 });
-// Japanese glyphs are large (CJK) — don't preload; the browser pulls them only
-// when a Japanese character actually needs rendering.
-const notoSansJP = Noto_Sans_JP({
-  weight: ["400", "500", "700"],
-  subsets: ["latin"],
-  variable: "--font-sans-jp",
-  display: "swap",
-  preload: false,
-});
-const notoSerifJP = Noto_Serif_JP({
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin"],
-  variable: "--font-serif-jp",
-  display: "swap",
-  preload: false,
-});
 
-const fontVariables = [
-  sarabun.variable,
-  notoSansJP.variable,
-  notoSerifJP.variable,
-].join(" ");
+// Japanese (CJK) fonts are NOT loaded via next/font/google: that fetches every
+// CJK subset chunk at build time, which fails in offline/air-gapped Docker
+// builds (ETIMEDOUT). Instead we load them at runtime via a stylesheet link in
+// <head> below, so the browser pulls only the glyphs it actually needs — and
+// falls back to system CJK fonts when Google Fonts is unreachable.
+const jpFontStylesheet =
+  "https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@400;500;600;700&display=swap";
+
+// Map the Tailwind CSS variables to the runtime-loaded font-family names.
+const fontVariables = sarabun.variable;
+const jpFontVars = {
+  "--font-sans-jp": '"Noto Sans JP"',
+  "--font-serif-jp": '"Noto Serif JP"',
+} as React.CSSProperties;
 
 export async function generateMetadata({
   params,
@@ -60,7 +53,31 @@ export default async function LocaleLayout({
   }
   const messages = await getMessages();
   return (
-    <html lang={locale} className={fontVariables} suppressHydrationWarning>
+    <html
+      lang={locale}
+      className={fontVariables}
+      style={jpFontVars}
+      suppressHydrationWarning
+    >
+      <head>
+        {/*
+          Apply the persisted (or system-preferred) theme before first paint so
+          the SOC night surface never flashes light. Kept dependency-free and
+          inline; the ThemeProvider adopts whatever class this sets.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('ss-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`,
+          }}
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link rel="stylesheet" href={jpFontStylesheet} />
+      </head>
       <body className="font-sans">
         <NextIntlClientProvider messages={messages}>
           <Providers>{children}</Providers>

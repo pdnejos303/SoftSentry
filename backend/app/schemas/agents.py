@@ -66,11 +66,34 @@ class AgentUpdateAvailable(BaseModel):
     version: str
     download_url: str
     sha256: str
+    # True when an admin forced this update via "Update agent now": the agent must
+    # apply it even if auto-update is off, the version matches, or it already
+    # installed this SHA. Absent/false on the normal version-compare path.
+    forced: bool = False
+
+
+class ScanProgressIn(BaseModel):
+    """Live scan progress reported on a heartbeat while a scan is running.
+
+    Sent only mid-scan; an idle agent omits it so the backend can reset the
+    machine to idle.
+    """
+
+    phase: str = Field(max_length=20)
+    done: int = Field(default=0, ge=0)
+    total: int = Field(default=0, ge=0)
+    current_path: str | None = Field(default=None, max_length=512)
+    updated_at: datetime | None = None
 
 
 class HeartbeatRequest(BaseModel):
     agent_version: str | None = Field(default=None, max_length=20)
     uptime_seconds: int | None = Field(default=None, ge=0)
+    # The backend URL the agent is configured to report to (from config.yaml).
+    # Stored on the machine so the dashboard can show where each agent phones home.
+    server_url: str | None = Field(default=None, max_length=512)
+    # Present only while a scan is in progress; absent on idle heartbeats.
+    scan_progress: ScanProgressIn | None = None
 
 
 class HeartbeatResponse(BaseModel):

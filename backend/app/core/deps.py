@@ -66,7 +66,9 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 # Role groups — sync กับ dashboard/lib/permissions.ts เสมอ
 #   dev    — superuser เข้าได้ทุกอย่าง
-#   admin  — Overview + Machines + Deploy เท่านั้น มี full actions ในขอบเขตนั้น
+#   admin  — Overview + Machines + Recent installs + Software + Signatures +
+#            Vulnerabilities + Deploy (ไม่เห็น Licenses / Policy / Alerts / Reports /
+#            Users / Audit Log)
 #   viewer — read-only กว้าง (ทุกหน้า ยกเว้น Deploy / Users / Audit Log)
 ALL_ROLES = ("dev", "admin", "viewer")
 DEV = ("dev",)

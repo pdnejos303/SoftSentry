@@ -12,11 +12,16 @@
 package installer
 
 import (
+	"fmt"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/lxn/walk"
 	. "github.com/lxn/walk/declarative"
 	"github.com/lxn/win"
+
+	"github.com/softsentry/agent/internal/transport"
 )
 
 // lockFixedSize ทำให้หน้าต่างเป็น "ขนาดคงที่" — ปิดปุ่มขยายเต็มจอ (WS_MAXIMIZEBOX)
@@ -32,6 +37,16 @@ func lockFixedSize(hwnd win.HWND) {
 	// บังคับวาดกรอบใหม่ทันทีหลังเปลี่ยน style (ไม่ย้าย/ปรับขนาด)
 	win.SetWindowPos(hwnd, 0, 0, 0, 0, 0,
 		win.SWP_NOMOVE|win.SWP_NOSIZE|win.SWP_NOZORDER|win.SWP_FRAMECHANGED)
+}
+
+// redrawFull บังคับ erase + repaint ของ widget และลูกทั้งหมด "ทันที" (synchronous)
+// walk.Invalidate() เรียกแค่ InvalidateRect(hwnd, nil, true) — ตั้งเวลาวาดทีหลังและ
+// ไม่รวม child window จึงลบ "เงาซ้อน" ของ panel เก่าที่เพิ่ง dispose ไม่หมด (เห็นเป็น
+// ตัวอักษรซ้อนกันเวลาสลับภาษา/เปลี่ยน step). RDW_ERASE ลบพื้นหลังเดิม, RDW_ALLCHILDREN
+// วาด child ใหม่ด้วย, RDW_UPDATENOW สั่งวาดทันทีไม่รอ message loop.
+func redrawFull(hwnd win.HWND) {
+	win.RedrawWindow(hwnd, nil, 0,
+		win.RDW_ERASE|win.RDW_INVALIDATE|win.RDW_ALLCHILDREN|win.RDW_UPDATENOW)
 }
 
 // procGetUserDefaultUILanguage ใช้ตรวจภาษา UI ของ Windows เพื่อตั้งภาษาเริ่มต้น
@@ -94,15 +109,25 @@ func RunWizard(serverURL string, defaultLang Lang, defaultDir string) (WizardRes
 		Title:    "SoftSentry Agent — " + t.setupSuffix,
 		// ฟอนต์ฐานของทั้งหน้าต่าง — system default ของ walk เล็ก (~8pt) อ่านยาก
 		// โดยเฉพาะไทย/ญี่ปุ่น จึงตั้ง 10pt ให้ทุก widget สืบทอด (header/footer/เนื้อหา)
-		Font:    Font{PointSize: 10},
-		MinSize: Size{Width: 620, Height: 520},
-		Size:    Size{Width: 620, Height: 520},
-		Layout:  VBox{Margins: Margins{Left: 16, Top: 12, Right: 16, Bottom: 12}, Spacing: 8},
+		Font: Font{PointSize: 10},
+		// พื้นหลังจริงที่ root (clientComposite) ด้วย — กัน backgroundEffective ของ
+		// widget ใดๆ ไล่ขึ้นมาจนสุดแล้วคืน nil (ทำให้ WM_ERASEBKGND ไม่ลบเงา)
+		Background: SystemColorBrush{Color: walk.SysColorBtnFace},
+		MinSize:    Size{Width: 620, Height: 520},
+		Size:       Size{Width: 620, Height: 520},
+		Layout:     VBox{Margins: Margins{Left: 16, Top: 12, Right: 16, Bottom: 12}, Spacing: 8},
 		Children: []Widget{
 			// header: ป้าย+กล่องเลือกภาษา ชิดขวาบน (จำกัดความสูงไม่ให้ยืด)
+			//
+			// ต้องตั้ง Background สีจริงเหมือน content ด้วย มิฉะนั้น langLbl (static
+			// control) ที่ความกว้างเปลี่ยนตามภาษา ("Language:" → "言語:" → "ภาษา:")
+			// จะ "ซ้อน" ข้อความเก่าทุกครั้งที่สลับภาษา เพราะ backgroundEffective ไล่ขึ้น
+			// ไปเจอ NullBrush → WM_ERASEBKGND ไม่ลบพื้นหลังของ label เดิม (เดิมแก้แค่
+			// content จึงเหลือเงาที่แถบ header — เป็นจุดที่ผู้ใช้ยังเห็นบั๊กอยู่)
 			Composite{
-				MaxSize: Size{Height: 36},
-				Layout:  HBox{MarginsZero: true, Spacing: 6},
+				MaxSize:    Size{Height: 36},
+				Background: SystemColorBrush{Color: walk.SysColorBtnFace},
+				Layout:     HBox{MarginsZero: true, Spacing: 6},
 				Children: []Widget{
 					HSpacer{},
 					Label{AssignTo: &ui.langLbl, Text: t.languageLabel + ":"},
@@ -120,16 +145,29 @@ func RunWizard(serverURL string, defaultLang Lang, defaultDir string) (WizardRes
 			// เส้นคั่นบางใต้ header ให้แยกแถบเลือกภาษาออกจากเนื้อหา
 			HSeparator{},
 			// content: พื้นที่ยืดได้ เติม panel ของ step ปัจจุบัน
+			//
+			// ต้องตั้ง Background เป็นสีจริง (ไม่ใช่ NullBrush ที่ walk ตั้งให้ทุก
+			// Composite โดยปริยาย) มิฉะนั้น backgroundEffective() จะไล่หา parent
+			// ขึ้นไปจนถึง clientComposite ของ MainWindow ที่ background=nil แล้วคืน nil
+			// ทำให้ตัวจัดการ WM_ERASEBKGND ของ walk "break" ไม่ลบพื้นหลังเลย → ตัวอักษร
+			// ของ panel เก่าที่ dispose ไปแล้วค้างเป็นเงาซ้อนทุกครั้งที่สลับภาษา/step.
+			// ใส่สี BtnFace (เทาเดียวกับพื้นหลัง dialog มาตรฐาน) ให้ทั้ง content และ
+			// panel (สืบทอดผ่าน backgroundEffective) มีพื้นหลังจริงที่ FillRectangle
+			// ทับเงาเก่าได้จริง
 			Composite{
-				AssignTo: &ui.content,
-				Layout:   VBox{MarginsZero: true},
+				AssignTo:   &ui.content,
+				Background: SystemColorBrush{Color: walk.SysColorBtnFace},
+				Layout:     VBox{MarginsZero: true},
 			},
 			// เส้นคั่นเหนือปุ่มนำทาง
 			HSeparator{},
-			// footer: ปุ่มนำทาง (จำกัดความสูง)
+			// footer: ปุ่มนำทาง (จำกัดความสูง) — ตั้ง Background สีจริงด้วยเหตุผลเดียวกับ
+			// header/content (ปุ่มวาดพื้นหลังตัวเองอยู่แล้ว แต่พื้นที่ว่างรอบปุ่มต้องมี
+			// brush จริงให้ WM_ERASEBKGND ลบเงา ไม่งั้น backgroundEffective คืน nil)
 			Composite{
-				MaxSize: Size{Height: 48},
-				Layout:  HBox{MarginsZero: true, Spacing: 8},
+				MaxSize:    Size{Height: 48},
+				Background: SystemColorBrush{Color: walk.SysColorBtnFace},
+				Layout:     HBox{MarginsZero: true, Spacing: 8},
 				Children: []Widget{
 					PushButton{AssignTo: &ui.backBtn, Text: t.back, MinSize: Size{Width: 96, Height: 34}, OnClicked: ui.onBack},
 					HSpacer{},
@@ -155,6 +193,30 @@ func RunWizard(serverURL string, defaultLang Lang, defaultDir string) (WizardRes
 		ui.refreshChrome() // อัปเดตข้อความ header/footer
 		ui.showStep(ui.step)
 	})
+
+	// แม้ lockFixedSize ปิดปุ่ม maximize/กรอบ resize แล้ว แต่ Aero Snap (Win+ลูกศร),
+	// double-click title bar หรือการเปลี่ยน DPI ระหว่างจอ ยังปรับขนาดหน้าต่างได้ ซึ่ง
+	// relayout เนื้อหาแล้วทิ้งเงาซ้อน → force redraw ทั้งพื้นที่เนื้อหาทุกครั้งที่ขนาดเปลี่ยน
+	ui.content.SizeChanged().Attach(func() {
+		redrawFull(ui.content.Handle())
+	})
+
+	// DEBUG (ชั่วคราว): ตั้ง WIZ_AUTOCYCLE เพื่อให้สลับภาษาเองทุก ~700ms — ใช้ทำซ้ำ
+	// อาการ "ตัวอักษรซ้อน" แล้ว screenshot ตรวจ (ลบออกหลังดีบั๊กเสร็จ)
+	if os.Getenv("WIZ_AUTOCYCLE") != "" {
+		go func() {
+			for i := 0; ; i++ {
+				time.Sleep(700 * time.Millisecond)
+				if os.Getenv("WIZ_STEPS") != "" {
+					s := i % wizardStepCount
+					ui.mw.Synchronize(func() { ui.showStep(s) })
+					continue
+				}
+				n := i % len(wizardLangs)
+				ui.mw.Synchronize(func() { ui.langCombo.SetCurrentIndex(n) })
+			}
+		}()
+	}
 
 	ui.showStep(0)
 	ui.mw.Show()
@@ -204,8 +266,10 @@ func (ui *wizardUI) showStep(i int) {
 		ui.buildLocation()
 	}
 	ui.content.SetSuspended(false)
-	// บังคับวาดพื้นที่เนื้อหาใหม่ทั้งหมด กันเศษ panel เดิมค้าง (ghost) หลัง dispose
-	ui.content.Invalidate()
+	// redraw "ทั้งหน้าต่าง" (ไม่ใช่แค่ content) — การสลับภาษาเปลี่ยนข้อความที่ header
+	// (langLbl) + footer (ปุ่ม) ด้วย จึงต้อง erase+repaint ทั้ง client area ครอบคลุม
+	// header/separator/footer ไม่งั้นเงาข้อความเก่าที่ header ยังค้าง
+	redrawFull(ui.mw.Handle())
 	ui.updateNav()
 }
 
@@ -236,13 +300,35 @@ func (ui *wizardUI) buildWelcome() {
 	t := textFor(ui.lang)
 	_ = (Composite{
 		AssignTo: &ui.panel,
-		Layout:   VBox{Margins: Margins{Left: 12, Top: 20, Right: 12, Bottom: 8}, Spacing: 14},
+		// พื้นหลังจริงของ panel เอง (สำคัญสุด!): panel คือ widget ที่วาง "ทับ" พื้นที่ที่
+		// panel เก่าเพิ่ง dispose ไป ถ้า panel ไม่มี brush จริง (default = NullBrush) มันจะ
+		// ไม่ทาพื้นหลังของตัวเอง → ตัวอักษรของ panel เก่าทะลุขึ้นมาเห็นเป็นเงาซ้อน แม้ content
+		// /header/footer จะตั้ง brush ครบแล้วก็ตาม (fix ก่อนหน้าตั้งให้ container แต่ลืม panel)
+		Background: SystemColorBrush{Color: walk.SysColorBtnFace},
+		Layout:     VBox{Margins: Margins{Left: 12, Top: 20, Right: 12, Bottom: 8}, Spacing: 14},
 		Children: []Widget{
+			// ───────────────────────────────────────────────────────────────────
+			// ⚠️ MARKER ชั่วคราว: ถ้าเห็นคำว่า "FIX" สีแดงตัวใหญ่นี้บนหน้าแรก = ตัวที่
+			// โหลด/รัน ถูก build ใหม่จาก source ล่าสุดผ่าน compose จริง (ไม่ใช่ของเก่าค้าง)
+			// ถ้าไม่เห็น = ยังเป็นตัวเก่า agent-builder ไม่ได้ rebuild → ลบทิ้งหลังยืนยันแล้ว
+			Label{
+				Text:      "FIX",
+				Font:      Font{PointSize: 28, Bold: true},
+				TextColor: walk.RGB(0xD0, 0x21, 0x21),
+			},
 			Label{Text: t.welcomeHeading, Font: Font{PointSize: 17, Bold: true}},
 			Label{Text: crlf(t.welcomeIntro), Font: Font{PointSize: 11}},
 			// ดันเนื้อหาขึ้นชิดบน — VSpacer เดียวด้านล่าง (ไม่ใช่สองตัวคร่อมที่ทำให้
 			// ข้อความลอยกลางจอเกิดช่องว่างเยอะ)
 			VSpacer{},
+			// build stamp = "ลายนิ้วมือของ build" (เปลี่ยนทุกครั้งที่ build) โชว์ค่าเดียว
+			// กับที่หน้า deploy แสดง → ผู้ใช้/แอดมินเทียบได้ทันทีว่า "ตัวที่กำลังรันนี้ =
+			// ตัวล่าสุดที่ build จาก source จริงไหม" (Version ถูก fix 0.1.0 เลยใช้เทียบไม่ได้)
+			Label{
+				Text:      fmt.Sprintf("v%s · build %s", transport.Version, transport.BuildStamp),
+				Font:      Font{PointSize: 8, Family: "Consolas"},
+				TextColor: walk.RGB(0x88, 0x88, 0x88),
+			},
 		},
 	}).Create(NewBuilder(ui.content))
 }
@@ -256,7 +342,9 @@ func (ui *wizardUI) buildConsent() {
 	var agreeCB *walk.CheckBox
 	_ = (Composite{
 		AssignTo: &ui.panel,
-		Layout:   VBox{Margins: Margins{Left: 12, Top: 16, Right: 12, Bottom: 8}, Spacing: 12},
+		// พื้นหลังจริงของ panel เอง — กันตัวอักษร panel เก่าทะลุเป็นเงาซ้อน (ดู buildWelcome)
+		Background: SystemColorBrush{Color: walk.SysColorBtnFace},
+		Layout:     VBox{Margins: Margins{Left: 12, Top: 16, Right: 12, Bottom: 8}, Spacing: 12},
 		Children: []Widget{
 			Label{Text: t.consentHeading, Font: Font{PointSize: 14, Bold: true}},
 			// TextEdit เป็น widget ที่ยืดได้ → กินพื้นที่ที่เหลือทั้งหมดและ reflow
@@ -287,7 +375,9 @@ func (ui *wizardUI) buildLocation() {
 	var edit *walk.LineEdit
 	_ = (Composite{
 		AssignTo: &ui.panel,
-		Layout:   VBox{Margins: Margins{Left: 12, Top: 20, Right: 12, Bottom: 8}, Spacing: 10},
+		// พื้นหลังจริงของ panel เอง — กันตัวอักษร panel เก่าทะลุเป็นเงาซ้อน (ดู buildWelcome)
+		Background: SystemColorBrush{Color: walk.SysColorBtnFace},
+		Layout:     VBox{Margins: Margins{Left: 12, Top: 20, Right: 12, Bottom: 8}, Spacing: 10},
 		Children: []Widget{
 			Label{Text: t.locationHeading, Font: Font{PointSize: 14, Bold: true}},
 			Label{Text: t.locationLabel},

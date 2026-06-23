@@ -9,6 +9,18 @@ export interface VulnerabilityCount {
   low: number;
 }
 
+// Live scan progress — mirrors backend ScanProgress. null on a machine that is
+// idle or has never scanned (no progress bar shown).
+export type ScanPhase = "counting" | "scanning" | "verifying" | "uploading" | "idle";
+
+export interface ScanProgress {
+  phase: ScanPhase | string;
+  done: number;
+  total: number;
+  current_path: string | null;
+  updated_at: string | null;
+}
+
 export interface MachineListItem {
   uuid: string;
   hostname: string;
@@ -19,12 +31,17 @@ export interface MachineListItem {
   os_version: string;
   agent_version: string;
   status: "online" | "stale" | "offline" | string;
+  // Backend URL the agent reports phoning home to; null until first heartbeat
+  // from an agent new enough to send it.
+  reported_server_url: string | null;
   last_seen_at: string | null;
   last_scan_at: string | null;
   tags: string[];
   software_count: number;
   vulnerability_count: VulnerabilityCount;
   risk_score: number;
+  // Live scan progress; null when the machine is idle / has never scanned.
+  scan_progress: ScanProgress | null;
 }
 
 export interface MachineDetail extends MachineListItem {
@@ -80,19 +97,48 @@ export interface ScanHistoryItem {
   trigger: string | null;
 }
 
+export interface MachineRef {
+  uuid: string;
+  name: string;
+}
+
 export interface CrossSoftwareItem {
   name: string;
   version: string;
   publisher: string | null;
   installed_count: number;
-  machines: string[];
+  machines: MachineRef[];
   signature_status: SignatureStatus;
+}
+
+export interface SoftwareStats {
+  unique_apps: number;
+  total_installs: number;
+  valid: number;
+  unsigned: number;
+  invalid: number;
 }
 
 export interface TopSoftwareItem {
   name: string;
   publisher: string | null;
   installed_count: number;
+}
+
+export type TrustLevel = "trusted" | "suspicious" | "risky";
+
+export interface RecentInstallItem {
+  machine_uuid: string;
+  machine_name: string;
+  name: string;
+  version: string;
+  event: "installed" | "updated" | string;
+  publisher: string | null;
+  detected_at: string; // when the agent first saw it
+  installed_at: string | null; // accurate install moment (best-effort)
+  install_date: string | null; // registry date-only fallback
+  signature_status: SignatureStatus;
+  trust: TrustLevel;
 }
 
 export interface ListResult<T> {
@@ -110,6 +156,8 @@ export interface SignatureListItem {
   machine_uuid: string;
   machine_hostname: string;
   status: string;
+  // Why verification failed (status="invalid"): reason code or raw HRESULT hex.
+  status_reason: string | null;
   signer: string | null;
   cert_valid_to: string | null;
 }
@@ -129,6 +177,8 @@ export interface SignatureDetail {
   machine_uuid: string;
   machine_hostname: string;
   status: string;
+  // Why verification failed (status="invalid"): reason code or raw HRESULT hex.
+  status_reason: string | null;
   signer: string | null;
   issuer: string | null;
   cert_thumbprint: string | null;

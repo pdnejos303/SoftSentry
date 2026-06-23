@@ -182,6 +182,23 @@ func ConfirmInstallGUI(ci ConsentInfo) (consented bool, shown bool) {
 	return false, false
 }
 
+// RunUninstallConfirm แสดงกล่องยืนยันถอนการติดตั้ง คืน proceed=true เมื่อผู้ใช้ยืนยัน,
+// shown=false เมื่อแสดง GUI ไม่ได้เลย (ผู้เรียก fallback ไป console) — เลียนแบบ ConfirmInstallGUI
+func RunUninstallConfirm(lang Lang) (proceed bool, shown bool) {
+	heading, body, _, _ := UninstallConfirmText(lang)
+	const win = "SoftSentry Agent"
+	// ชั้น 1: TaskDialog (Yes/No + โล่เตือน)
+	if btn, ok := taskDialog(win, heading, body, tdcbfYesButton|tdcbfNoButton, tdShieldIcon); ok {
+		return btn == idYes, true
+	}
+	// ชั้น 2: MessageBox (มีติดทุกเครื่อง)
+	if r := messageBox(heading+"\n\n"+body, win, mbYesNo|mbIconQuestion); r != 0 {
+		return r == idYes, true
+	}
+	// ชั้น 3: แสดง GUI ไม่ได้
+	return false, false
+}
+
 // ShowResultGUI แสดงผลลัพธ์การติดตั้ง (สำเร็จ/ล้มเหลว) แบบ GUI คืน shown=false
 // เมื่อแสดงไม่ได้ (ผู้เรียก fallback ไป console)
 func ShowResultGUI(success bool, heading, message string) (shown bool) {

@@ -47,7 +47,8 @@ type Scanner interface {
 	//
 	// (TH) รวบรวมซอฟต์แวร์ที่ติดตั้งพร้อมข้อมูลลายเซ็น ทำแบบ best-effort:
 	// รายการที่ล้มเหลวจะถูกข้ามไป ไม่ถือเป็น fatal
-	Scan(ctx context.Context) ([]Software, error)
+	//   - report: callback รับความคืบหน้า (nil = ไม่รายงาน)
+	Scan(ctx context.Context, report ProgressFunc) ([]Software, error)
 }
 
 // Run คือฟังก์ชันสาธารณะจุดเดียวที่ caller ควรใช้
@@ -60,11 +61,11 @@ type Scanner interface {
 //  1. ส่งต่อไปยัง Scanner ของแพลตฟอร์มนั้น (New)
 //  2. ลบรายการซ้ำที่มี (name, version, install_path) เหมือนกัน
 //  3. เรียงผลลัพธ์เพื่อให้ได้ output ที่แน่นอนทุกครั้งก่อนคืนค่า
-func Run(ctx context.Context) (Result, error) {
+func Run(ctx context.Context, report ProgressFunc) (Result, error) {
 	started := time.Now() // บันทึกเวลาเริ่มต้นการสแกน
 
 	// เรียก Scanner ที่เหมาะกับแพลตฟอร์มปัจจุบัน (เลือกโดย build tag)
-	sw, err := New().Scan(ctx)
+	sw, err := New().Scan(ctx, report)
 	if err != nil {
 		return Result{}, err // คืน error ถ้าการสแกนล้มเหลว (เช่น context ถูก cancel)
 	}

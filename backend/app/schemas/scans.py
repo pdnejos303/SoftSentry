@@ -13,6 +13,11 @@ SignatureStatus = Literal["valid", "expired", "invalid", "unsigned", "unknown"]
 
 class SignatureIn(BaseModel):
     status: SignatureStatus
+    # Why verification failed (only for status="invalid"): a reason code
+    # (tampered / untrusted_root / broken_chain / revoked / distrusted) or a raw
+    # HRESULT hex (e.g. "0x800B0004") the agent couldn't map. Optional for
+    # back-compat with older agents.
+    status_reason: str | None = Field(default=None, max_length=40)
     signer: str | None = Field(default=None, max_length=500)
     issuer: str | None = Field(default=None, max_length=500)
     cert_thumbprint: str | None = Field(default=None, max_length=64)
@@ -27,6 +32,9 @@ class SoftwareIn(BaseModel):
     version: str = Field(..., max_length=100)
     publisher: str | None = Field(default=None, max_length=255)
     install_date: date | None = None
+    # Accurate install timestamp (best-effort, e.g. install-dir creation time).
+    # Optional for back-compat: older agents send only install_date.
+    installed_at: datetime | None = None
     install_path: str | None = None
     install_size_kb: int | None = Field(default=None, ge=0)
     arch: str | None = Field(default=None, max_length=10)

@@ -1,4 +1,5 @@
 //go:build windows
+
 // build tag นี้บอกให้รวมไฟล์นี้เฉพาะเมื่อ build สำหรับ Windows เท่านั้น
 
 // Package scanner จัดการการตรวจสอบลายเซ็น Authenticode บน Windows
@@ -7,6 +8,7 @@ package scanner
 
 import (
 	"encoding/hex"  // ใช้แปลง SHA-1 thumbprint เป็น hex string
+	"fmt"           // ใช้ format HRESULT ที่ยังไม่ได้ map เป็น hex string
 	"path/filepath" // ใช้แปลง path เป็น absolute path
 	"runtime"       // ใช้ KeepAlive เพื่อป้องกัน GC เก็บ pointer ก่อนเวลา
 	"strings"       // ใช้ตัดแต่ง string และตรวจสอบนามสกุล .exe
@@ -21,7 +23,7 @@ import (
 // ทำให้ executable เดิมถูกตรวจสอบเพียงครั้งเดียว ไม่ว่าจะปรากฏกี่ครั้ง
 // (spec 1.4 performance note)
 type authenticodeVerifier struct {
-	mu    sync.Mutex          // mutex ป้องกัน race condition เมื่อ goroutine หลายตัวเข้าถึง cache
+	mu    sync.Mutex            // mutex ป้องกัน race condition เมื่อ goroutine หลายตัวเข้าถึง cache
 	cache map[string]*Signature // cache เก็บผลลัพธ์การตรวจสอบ โดยใช้ absolute path เป็น key
 }
 
@@ -35,23 +37,23 @@ func newAuthenticodeVerifier() *authenticodeVerifier {
 // Lazy-load DLL ที่ต้องการ — NewLazySystemDLL โหลดจาก System32
 // เพื่อป้องกัน DLL hijacking จากไฟล์ในโฟลเดอร์ working directory
 var (
-	modWintrust          = windows.NewLazySystemDLL("wintrust.dll")                          // DLL สำหรับตรวจสอบ Authenticode signature
-	procWinVerifyTrust   = modWintrust.NewProc("WinVerifyTrust")                             // ฟังก์ชันหลักในการตรวจสอบลายเซ็น Authenticode
-	modCrypt32           = windows.NewLazySystemDLL("crypt32.dll")                           // DLL สำหรับจัดการ certificate และ crypto
-	procCryptQueryObject = modCrypt32.NewProc("CryptQueryObject")                            // เปิด PKCS#7 store จากไฟล์
-	procCryptMsgGetParam = modCrypt32.NewProc("CryptMsgGetParam")                            // ดึง parameter จาก PKCS#7 message
-	procCertGetNameStr   = modCrypt32.NewProc("CertGetNameStringW")                          // แปลง subject/issuer ของ cert เป็น string
-	procCertCloseStore   = modCrypt32.NewProc("CertCloseStore")                              // คืนหน่วยความจำ HCERTSTORE
-	procCryptMsgClose    = modCrypt32.NewProc("CryptMsgClose")                               // คืนหน่วยความจำ HCRYPTMSG
-	procCertGetCtxProp   = modCrypt32.NewProc("CertGetCertificateContextProperty")           // ดึง property เช่น SHA-1 hash ของ cert
+	modWintrust          = windows.NewLazySystemDLL("wintrust.dll")                // DLL สำหรับตรวจสอบ Authenticode signature
+	procWinVerifyTrust   = modWintrust.NewProc("WinVerifyTrust")                   // ฟังก์ชันหลักในการตรวจสอบลายเซ็น Authenticode
+	modCrypt32           = windows.NewLazySystemDLL("crypt32.dll")                 // DLL สำหรับจัดการ certificate และ crypto
+	procCryptQueryObject = modCrypt32.NewProc("CryptQueryObject")                  // เปิด PKCS#7 store จากไฟล์
+	procCryptMsgGetParam = modCrypt32.NewProc("CryptMsgGetParam")                  // ดึง parameter จาก PKCS#7 message
+	procCertGetNameStr   = modCrypt32.NewProc("CertGetNameStringW")                // แปลง subject/issuer ของ cert เป็น string
+	procCertCloseStore   = modCrypt32.NewProc("CertCloseStore")                    // คืนหน่วยความจำ HCERTSTORE
+	procCryptMsgClose    = modCrypt32.NewProc("CryptMsgClose")                     // คืนหน่วยความจำ HCRYPTMSG
+	procCertGetCtxProp   = modCrypt32.NewProc("CertGetCertificateContextProperty") // ดึง property เช่น SHA-1 hash ของ cert
 )
 
 // actionGenericVerifyV2 คือ GUID ของ Authenticode policy มาตรฐาน
 // WINTRUST_ACTION_GENERIC_VERIFY_V2 — ใช้กับ WinVerifyTrust เสมอ
 var actionGenericVerifyV2 = windows.GUID{
-	Data1: 0xaac56b,                                         // ส่วนแรกของ GUID (32-bit)
-	Data2: 0xcd44,                                           // ส่วนที่สองของ GUID (16-bit)
-	Data3: 0x11d0,                                           // ส่วนที่สามของ GUID (16-bit)
+	Data1: 0xaac56b,                                                // ส่วนแรกของ GUID (32-bit)
+	Data2: 0xcd44,                                                  // ส่วนที่สองของ GUID (16-bit)
+	Data3: 0x11d0,                                                  // ส่วนที่สามของ GUID (16-bit)
 	Data4: [8]byte{0x8c, 0xc2, 0x00, 0xc0, 0x4f, 0xc2, 0x95, 0xee}, // ส่วนสุดท้ายของ GUID (8 bytes)
 }
 
@@ -73,6 +75,15 @@ const (
 	// HRESULTs ที่ WinVerifyTrust คืนค่ากลับมา (winerror.h / MSDN)
 	trustENoSignature = 0x800B0100 // TRUST_E_NOSIGNATURE — ไฟล์ไม่มีลายเซ็นฝังอยู่
 	trustECertExpired = 0x800B0101 // CERT_E_EXPIRED — ใบรับรองผู้ลงนามหมดอายุแล้ว
+
+	// HRESULTs ที่หมายถึง "มีลายเซ็นแต่ตรวจไม่ผ่าน" → map เป็น reason code (เพื่อบอกผู้ใช้ว่าเพราะอะไร)
+	trustEBadDigest        = 0x80096010 // TRUST_E_BAD_DIGEST — ไฟล์ถูกแก้ไขหลังลงนาม (hash ไม่ตรง)
+	trustESubjectNotTrust  = 0x800B0004 // TRUST_E_SUBJECT_NOT_TRUSTED — subject ไม่น่าเชื่อถือ
+	certEUntrustedRoot     = 0x800B0109 // CERT_E_UNTRUSTEDROOT — root CA ไม่อยู่ใน trust store
+	certEUntrustedTestRoot = 0x800B010D // CERT_E_UNTRUSTEDTESTROOT — เซ็นด้วย test root
+	certEChaining          = 0x800B010A // CERT_E_CHAINING — สร้าง chain ไม่ครบ
+	certERevoked           = 0x800B010C // CERT_E_REVOKED — ใบรับรองถูกเพิกถอน
+	trustEExplicitDistrust = 0x800B0111 // TRUST_E_EXPLICIT_DISTRUST — ถูกตั้งไม่เชื่อถือบนเครื่อง
 
 	// HRESULTs ที่หมายถึง "ตรวจสอบไม่ได้" (ไม่ใช่ลายเซ็นเสีย) → map เป็น unknown
 	errFileNotFound          = 0x80070002 // ERROR_FILE_NOT_FOUND — ไฟล์หาย (เช่น ถูก uninstall)
@@ -107,7 +118,7 @@ type wintrustData struct {
 	hWVTStateData       windows.Handle // opaque state — ต้องส่งกลับใน CLOSE call
 	pwszURLReference    *uint16        // ไม่ใช้ (nil)
 	dwProvFlags         uint32         // WTD_SAFER_FLAG — รัน Software Restriction Policy ด้วย
-	dwUIContext          uint32        // ไม่ใช้ (0)
+	dwUIContext         uint32         // ไม่ใช้ (0)
 	pSignatureSettings  uintptr        // WINTRUST_SIGNATURE_SETTINGS* — nil ใช้ค่า default
 }
 
@@ -169,7 +180,7 @@ func (v *authenticodeVerifier) run(path string) *Signature {
 	// สร้าง WINTRUST_FILE_INFO struct พร้อม path ของไฟล์
 	fileInfo := wintrustFileInfo{
 		cbStruct:      uint32(unsafe.Sizeof(wintrustFileInfo{})), // กำหนดขนาด struct (จำเป็น)
-		pcwszFilePath: wpath,                                      // UTF-16 path ของไฟล์
+		pcwszFilePath: wpath,                                     // UTF-16 path ของไฟล์
 	}
 
 	// สร้าง WINTRUST_DATA struct พร้อมการตั้งค่าทั้งหมด
@@ -208,6 +219,11 @@ func (v *authenticodeVerifier) run(path string) *Signature {
 	// สร้าง Signature พร้อมสถานะที่ได้
 	sig := &Signature{Status: status}
 
+	// เก็บเหตุผลเฉพาะเมื่อ "มีลายเซ็นแต่ตรวจไม่ผ่าน" เพื่อบอกผู้ใช้ว่าเพราะอะไร
+	if status == SigInvalid {
+		sig.StatusReason = invalidReason(uint32(ret))
+	}
+
 	// ดึงรายละเอียด certificate เฉพาะเมื่อไฟล์มีลายเซ็นให้อ่าน
 	// (unsigned = ไม่มี, unknown = อ่านไฟล์ไม่ได้อยู่แล้ว)
 	if status != SigUnsigned && status != SigUnknown {
@@ -242,8 +258,33 @@ func mapTrustResult(hr uint32) SignatureStatus {
 		cryptEFileError, trustEProviderUnknown, trustESubjectFormUnknown:
 		// ตรวจไม่ได้ (ไฟล์หาย/ล็อก/อ่าน PE ไม่ได้) — ไม่ใช่ลายเซ็นเสีย
 		return SigUnknown
-	default: // HRESULT อื่นๆ — ลายเซ็นไม่ถูกต้อง เช่น ไฟล์ถูกแก้ไข
+	default: // HRESULT อื่นๆ — มีลายเซ็นแต่ตรวจไม่ผ่าน (ดู invalidReason ว่าเพราะอะไร)
 		return SigInvalid
+	}
+}
+
+// invalidReason แปลง HRESULT ของ WinVerifyTrust (กรณี status=invalid) เป็น reason code
+// ที่ dashboard แปลเป็นภาษาได้ — HRESULT ที่ไม่รู้จักจะคืนเป็น hex ดิบ (เช่น "0x800B0004")
+// เพื่อให้ผู้ใช้ยังเห็นรหัสจริงและสืบค้นต่อได้
+// Parameter:
+//   - hr: HRESULT ที่ได้จาก WinVerifyTrust
+//
+// Return:
+//   - string: reason code หรือ HRESULT hex
+func invalidReason(hr uint32) string {
+	switch hr {
+	case trustEBadDigest:
+		return ReasonTampered
+	case certEUntrustedRoot, certEUntrustedTestRoot, trustESubjectNotTrust:
+		return ReasonUntrustedRoot
+	case certEChaining:
+		return ReasonBrokenChain
+	case certERevoked:
+		return ReasonRevoked
+	case trustEExplicitDistrust:
+		return ReasonDistrusted
+	default:
+		return fmt.Sprintf("0x%08X", hr) // รหัสจริงสำหรับกรณีที่ยังไม่ได้ map
 	}
 }
 
@@ -253,14 +294,14 @@ func mapTrustResult(hr uint32) SignatureStatus {
 // ใช้ walk ผ่าน embedded PKCS#7 signature เพื่อดึงชื่อ CN ของ leaf signer และ issuer
 // โดยไม่ต้องพึ่ง library crypto ขนาดใหญ่
 const (
-	certQueryObjectFile            = 1         // query จากไฟล์ ไม่ใช่ blob ใน memory
-	certQueryContentFlagPKCS7Embed = 0x400     // Authenticode ฝัง PKCS#7 SignedData ในไฟล์
-	certQueryFormatFlagBinary      = 2         // encoding แบบ DER binary
-	cmsgSignerCertInfoParam        = 7         // CMSG_SIGNER_CERT_INFO_PARAM — ดึง CERT_INFO ของ signer[0]
-	certNameSimpleDisplayType      = 4         // CERT_NAME_SIMPLE_DISPLAY_TYPE — ชื่อ CN แบบ friendly string
-	certNameIssuerFlag             = 1         // CERT_NAME_ISSUER_FLAG — คืน issuer แทน subject
-	x509AsnEncoding                = 0x1       // X509_ASN_ENCODING — encoding มาตรฐาน X.509
-	pkcs7AsnEncoding               = 0x10000   // PKCS_7_ASN_ENCODING — encoding PKCS#7
+	certQueryObjectFile            = 1          // query จากไฟล์ ไม่ใช่ blob ใน memory
+	certQueryContentFlagPKCS7Embed = 0x400      // Authenticode ฝัง PKCS#7 SignedData ในไฟล์
+	certQueryFormatFlagBinary      = 2          // encoding แบบ DER binary
+	cmsgSignerCertInfoParam        = 7          // CMSG_SIGNER_CERT_INFO_PARAM — ดึง CERT_INFO ของ signer[0]
+	certNameSimpleDisplayType      = 4          // CERT_NAME_SIMPLE_DISPLAY_TYPE — ชื่อ CN แบบ friendly string
+	certNameIssuerFlag             = 1          // CERT_NAME_ISSUER_FLAG — คืน issuer แทน subject
+	x509AsnEncoding                = 0x1        // X509_ASN_ENCODING — encoding มาตรฐาน X.509
+	pkcs7AsnEncoding               = 0x10000    // PKCS_7_ASN_ENCODING — encoding PKCS#7
 	certFindSubjectCert            = 0x000B0000 // CERT_FIND_SUBJECT_CERT — ค้นหา cert ด้วย CERT_INFO
 	certCloseStoreCheckFlag        = 0          // ปิด store โดยไม่ assert ว่าทุก context ถูก free แล้ว
 	certSHA1HashPropID             = 3          // CERT_SHA1_HASH_PROP_ID — property id ของ SHA-1 thumbprint
@@ -303,15 +344,15 @@ func extractCertDetails(path string) (out certDetails) {
 	// hStore คือ embedded certificate store, hMsg คือ PKCS#7 message
 	var hStore, hMsg uintptr
 	ok, _, _ := procCryptQueryObject.Call(
-		certQueryObjectFile,                          // query จากไฟล์
-		uintptr(unsafe.Pointer(wpath)),               // UTF-16 path ของไฟล์
-		certQueryContentFlagPKCS7Embed,               // ต้องการ embedded PKCS#7
-		certQueryFormatFlagBinary,                    // encoding แบบ DER binary
-		0,                                            // reserved = 0
-		0, 0, 0,                                      // output parameters ที่ไม่ต้องการ
-		uintptr(unsafe.Pointer(&hStore)),             // รับ HCERTSTORE กลับมา
-		uintptr(unsafe.Pointer(&hMsg)),               // รับ HCRYPTMSG กลับมา
-		0,                                            // output content type (ไม่ต้องการ)
+		certQueryObjectFile,            // query จากไฟล์
+		uintptr(unsafe.Pointer(wpath)), // UTF-16 path ของไฟล์
+		certQueryContentFlagPKCS7Embed, // ต้องการ embedded PKCS#7
+		certQueryFormatFlagBinary,      // encoding แบบ DER binary
+		0,                              // reserved = 0
+		0, 0, 0,                        // output parameters ที่ไม่ต้องการ
+		uintptr(unsafe.Pointer(&hStore)), // รับ HCERTSTORE กลับมา
+		uintptr(unsafe.Pointer(&hMsg)),   // รับ HCRYPTMSG กลับมา
+		0,                                // output content type (ไม่ต้องการ)
 	)
 	if ok == 0 {
 		return // CryptQueryObject ล้มเหลว — ไฟล์อาจไม่มี PKCS#7 signature

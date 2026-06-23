@@ -43,3 +43,11 @@ class BinaryInfoOut(BaseModel):
     version: str
     os: str
     arch: str
+    # sha256 ของ binary ที่เสิร์ฟอยู่ — เปลี่ยนทุกครั้งที่ build ใหม่ (ต่างจาก version
+    # ที่ถูก fix เป็น 0.1.0 เสมอ) ใช้เป็น "build fingerprint" ให้ admin ยืนยันบนหน้า
+    # deploy ได้ว่าตัวที่กำลังเสิร์ฟ/กำลังจะโหลด เป็นบิลด์ใหม่จริง ไม่ใช่ของเก่าค้าง
+    sha256: str
+    # build_stamp = UTC timestamp ของตอน build ซึ่งถูก "bake เข้า binary" ด้วย → installer
+    # wizard โชว์ค่าเดียวกันนี้บนหน้าแรก ผู้ใช้จึงเทียบ "ค่าบนหน้า deploy" กับ "ค่าบนตัวที่
+    # โหลดไปรัน" ได้ตรงๆ ตรงกัน = ตัวที่โหลด = build ล่าสุดแน่นอน ("" = manifest เก่า)
+    build_stamp: str = ""

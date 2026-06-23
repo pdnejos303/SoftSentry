@@ -6,6 +6,7 @@
   "nav": {
     "overview": "ภาพรวม",
     "machines": "เครื่อง",
+    "recentInstalls": "ติดตั้งใหม่ล่าสุด",
     "software": "ซอฟต์แวร์",
     "signatures": "ลายเซ็นดิจิทัล",
     "whitelist": "Whitelist",
@@ -20,7 +21,12 @@
     "users": "ผู้ใช้งาน",
     "auditLog": "บันทึกการตรวจสอบ",
     "language": "ภาษา",
-    "logout": "ออกจากระบบ"
+    "logout": "ออกจากระบบ",
+    "themeToggle": "สลับธีมสว่าง / มืด",
+    "sectionMonitor": "เฝ้าระวัง",
+    "sectionInventory": "คลังข้อมูล",
+    "sectionGovernance": "การกำกับดูแล",
+    "sectionSystem": "ระบบ"
   },
   "login": {
     "title": "เข้าสู่ระบบ",
@@ -124,11 +130,18 @@
       "stale": "ไม่อัปเดต",
       "offline": "ออฟไลน์"
     },
+    "scanProgress": {
+      "counting": "กำลังนับไฟล์",
+      "scanning": "กำลังสแกน",
+      "verifying": "กำลังตรวจลายเซ็น",
+      "uploading": "กำลังอัปโหลด"
+    },
     "col": {
       "hostname": "ชื่อเครื่อง",
       "owner": "เจ้าของ",
       "os": "ระบบปฏิบัติการ",
       "status": "สถานะ",
+      "server": "เซิร์ฟเวอร์",
       "software": "ซอฟต์แวร์",
       "lastSeen": "เห็นล่าสุด",
       "tags": "แท็ก",
@@ -160,6 +173,10 @@
     "triggerScan": "สั่งสแกน",
     "scanRequested": "ส่งคำสั่งสแกนแล้ว — agent จะสแกนใน heartbeat ครั้งถัดไป",
     "scanFailed": "สั่งสแกนไม่สำเร็จ",
+    "triggerUpdate": "สั่งอัปเดต agent",
+    "updateRequested": "ส่งคำสั่งอัปเดตแล้ว — agent จะดึง binary ล่าสุดใน heartbeat ครั้งถัดไป (~60 วินาที)",
+    "updateFailed": "สั่งอัปเดตไม่สำเร็จ",
+    "updateNoBinary": "ยังไม่มี binary ของ agent สำหรับ {os}/{arch} บน server",
     "searchSoftware": "ค้นหาซอฟต์แวร์...",
     "noSoftware": "ไม่พบซอฟต์แวร์",
     "noHistory": "ยังไม่มีประวัติการเปลี่ยนแปลง",
@@ -170,6 +187,9 @@
     "next": "ถัดไป",
     "goToPage": "ไปที่หน้า",
     "pageInfo": "หน้า {page} จาก {total}",
+    "scanProgress": {
+      "title": "กำลังสแกน"
+    },
     "tabs": {
       "overview": "ภาพรวม",
       "software": "ซอฟต์แวร์",
@@ -184,6 +204,7 @@
       "enrolled": "ลงทะเบียนเมื่อ",
       "lastSeen": "เห็นล่าสุด",
       "lastScan": "สแกนล่าสุด",
+      "server": "เซิร์ฟเวอร์",
       "riskScore": "คะแนนความเสี่ยง"
     },
     "sig": {
@@ -191,7 +212,7 @@
       "valid": "ลงนามถูกต้อง",
       "unsigned": "ไม่ได้ลงนาม",
       "expired": "หมดอายุ",
-      "invalid": "ไม่ถูกต้อง"
+      "invalid": "ตรวจสอบไม่ผ่าน"
     },
     "event": {
       "installed": "ติดตั้ง",
@@ -364,16 +385,74 @@
       "low": "ต่ำ"
     }
   },
+  "recentInstalls": {
+    "title": "ติดตั้งใหม่ล่าสุด",
+    "subtitle": "โปรแกรมที่เพิ่งติดตั้งหรืออัปเดตทั่วทั้งระบบ พร้อมระดับความน่าเชื่อถือ",
+    "empty": "ไม่มีการติดตั้งใหม่ในช่วงเวลาที่เลือก",
+    "approx": "(โดยประมาณ)",
+    "filter": {
+      "period": "ช่วงเวลา",
+      "lastDays": "{days} วันล่าสุด",
+      "custom": "กำหนดเอง",
+      "from": "ตั้งแต่",
+      "to": "ถึง"
+    },
+    "col": {
+      "app": "โปรแกรม",
+      "machine": "เครื่อง",
+      "event": "การเปลี่ยนแปลง",
+      "when": "เวลาติดตั้ง",
+      "age": "ติดตั้งมาแล้ว",
+      "signature": "ลายเซ็น",
+      "trust": "ความน่าเชื่อถือ"
+    },
+    "event": {
+      "installed": "ติดตั้งใหม่",
+      "updated": "อัปเดต"
+    },
+    "trust": {
+      "trusted": "ไว้ใจได้",
+      "suspicious": "น่าสงสัย",
+      "risky": "อันตราย"
+    },
+    "sig": {
+      "valid": "ถูกต้อง",
+      "unsigned": "ไม่มีลายเซ็น",
+      "expired": "หมดอายุ",
+      "invalid": "ตรวจสอบไม่ผ่าน",
+      "unknown": "ไม่ทราบ"
+    }
+  },
   "software": {
     "title": "ซอฟต์แวร์",
     "subtitle": "รายการซอฟต์แวร์รวมทุกเครื่องในระบบ",
-    "topTitle": "ซอฟต์แวร์ที่ติดตั้งมากที่สุด",
-    "searchPlaceholder": "ค้นหาซอฟต์แวร์หรือผู้พัฒนา...",
+    "searchPlaceholder": "ค้นหาซอฟต์แวร์...",
     "empty": "ไม่พบซอฟต์แวร์",
+    "clearFilters": "ล้างตัวกรอง",
+    "sigAll": "ทั้งหมด",
     "prev": "ก่อนหน้า",
     "next": "ถัดไป",
     "goToPage": "ไปที่หน้า",
     "pageInfo": "หน้า {page} จาก {total} · {count} รายการ",
+    "stat": {
+      "uniqueApps": "แอปไม่ซ้ำ",
+      "totalInstalls": "ติดตั้งทั้งหมด",
+      "unsigned": "ไม่ได้ลงนาม",
+      "invalid": "ตรวจสอบไม่ผ่าน"
+    },
+    "chart": {
+      "installedTitle": "ซอฟต์แวร์ที่ติดตั้งมากที่สุด",
+      "riskyTitle": "ซอฟต์แวร์ที่เชื่อถือไม่ได้และแพร่หลายที่สุด",
+      "installed": "ติดตั้งมากสุด",
+      "risky": "เชื่อถือไม่ได้",
+      "riskyEmpty": "ไม่มีซอฟต์แวร์ที่เชื่อถือไม่ได้ในระบบ"
+    },
+    "drill": {
+      "open": "ดูเครื่องที่ติดตั้ง",
+      "installedOn": "ติดตั้งบน {count} เครื่อง",
+      "view": "ดู",
+      "capped": "แสดง {shown} จาก {count} เครื่องแรก"
+    },
     "col": {
       "name": "ชื่อ",
       "version": "เวอร์ชัน",
@@ -385,7 +464,7 @@
       "valid": "ลงนามถูกต้อง",
       "unsigned": "ไม่ได้ลงนาม",
       "expired": "หมดอายุ",
-      "invalid": "ไม่ถูกต้อง"
+      "invalid": "ตรวจสอบไม่ผ่าน"
     }
   },
   "softwareDetail": {
@@ -435,9 +514,17 @@
     "status": {
       "valid": "ลงนามถูกต้อง",
       "expired": "หมดอายุ",
-      "invalid": "ไม่ถูกต้อง",
+      "invalid": "ตรวจสอบไม่ผ่าน",
       "unsigned": "ไม่ได้ลงนาม",
       "unknown": "ไม่ทราบ"
+    },
+    "reason": {
+      "tampered": "ไฟล์ถูกแก้ไขหลังลงนาม (ค่าแฮชไม่ตรง)",
+      "untrusted_root": "ออกโดย CA ที่ไม่อยู่ในรายการที่เชื่อถือ (หรือเป็น self-signed)",
+      "broken_chain": "สร้างห่วงโซ่ใบรับรองไม่ครบ",
+      "revoked": "ใบรับรองถูกเพิกถอน",
+      "distrusted": "ถูกตั้งให้ไม่เชื่อถือบนเครื่องนี้",
+      "unknownCode": "ตรวจสอบไม่ผ่าน (รหัส {code})"
     },
     "col": {
       "name": "ชื่อ",
@@ -448,6 +535,7 @@
     },
     "detail": {
       "title": "รายละเอียดใบรับรอง",
+      "reason": "เหตุผลที่ตรวจไม่ผ่าน",
       "issues": "ปัญหาที่พบ",
       "chain": "ห่วงโซ่ใบรับรอง",
       "noChain": "ไม่มีข้อมูลห่วงโซ่ใบรับรอง",

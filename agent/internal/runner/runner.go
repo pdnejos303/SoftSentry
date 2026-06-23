@@ -211,9 +211,10 @@ func (r *loop) serve(ctx context.Context, interval, dueIn time.Duration, initial
 		signalWork(work, workItem{scanTrigger: initialTrigger})
 	}
 
-	// สร้าง ticker สำหรับส่ง heartbeat ทุก interval
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
+	// timer สำหรับ heartbeat (ใช้ Timer ที่ reset เองได้ เพื่อเร่งเป็น 10s ระหว่างสแกน
+	// ตาม nextBeatDelay — Ticker ปรับ interval ระหว่างทางไม่ได้)
+	beatTimer := time.NewTimer(interval)
+	defer beatTimer.Stop()
 	// สร้าง timer สำหรับเรียก auto-scan ทุก scanInterval (เริ่มที่ dueIn)
 	scanTimer := time.NewTimer(dueIn)
 	defer scanTimer.Stop()
@@ -230,9 +231,10 @@ func (r *loop) serve(ctx context.Context, interval, dueIn time.Duration, initial
 		case <-restart:
 			// worker แจ้งว่า self-update เสร็จสิ้น → คืนค่า ErrRestartRequired ให้ service manager restart
 			return ErrRestartRequired
-		case <-ticker.C:
-			// ถึงรอบส่ง heartbeat ตาม interval ที่กำหนด
+		case <-beatTimer.C:
+			// ถึงรอบส่ง heartbeat — ส่งแล้ว reset timer ด้วย delay ถัดไป (เร่งถ้ากำลังสแกน)
 			r.beat(ctx, work)
+			beatTimer.Reset(r.nextBeatDelay(interval))
 		case <-scanTimer.C:
 			// ถึงรอบ auto-scan → ส่งงานให้ worker แล้วรีเซ็ต timer สำหรับรอบถัดไป
 			signalWork(work, workItem{scanTrigger: "auto"})
@@ -276,8 +278,8 @@ func signalWork(ch chan<- workItem, item workItem) {
 func (r *loop) beat(ctx context.Context, work chan<- workItem) {
 	// สร้าง context ที่มี timeout 10 วินาทีสำหรับ heartbeat call
 	beatCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	// ส่ง heartbeat พร้อมส่ง uptime เป็นวินาที
-	resp, err := r.client.Heartbeat(beatCtx, int64(time.Since(r.started).Seconds()))
+	// ส่ง heartbeat พร้อม uptime และ snapshot ความคืบหน้าการสแกน (nil ถ้า idle)
+	resp, err := r.client.Heartbeat(beatCtx, int64(time.Since(r.started).Seconds()), r.heartbeatProgress())
 	cancel() // ยกเลิก context เสมอเพื่อ release resource
 	if err != nil {
 		// heartbeat ล้มเหลว log ไว้แต่ไม่ crash เพราะเน็ตเวิร์กอาจชั่วคราว
@@ -358,6 +360,86 @@ type loop struct {
 	version          string            // เวอร์ชันที่ฝังอยู่ใน binary ณ ตอน build (จาก transport.Version)
 	scanInterval     time.Duration     // ความถี่ของ auto-scan (แปลงมาจาก config.ScanIntervalHours)
 	firstScanMinutes int               // งบเวลาสแกนรอบแรก (จาก config.FirstScanTimeoutMinutes)
+
+	progMu        sync.Mutex       // กัน progress snapshot ถูกอ่าน/เขียนชนกัน (worker เขียน, heartbeat อ่าน)
+	prog          scanner.Progress // ความคืบหน้าการสแกนล่าสุด (Phase="" / idle = ไม่ได้สแกน)
+	lastProgFlush time.Time        // เวลาที่เขียน status file ล่าสุด ใช้ throttle ~1s
+}
+
+// setProgress รับ snapshot จาก scanner (เรียกถี่มากระหว่างสแกน) เก็บไว้ในหน่วยความจำ
+// แล้วเขียนลง status file แบบ throttle (~1s) — ยกเว้น "เปลี่ยน phase" จะเขียนทันที
+// เพื่อให้ tray เห็นการเปลี่ยนขั้นตอนเร็ว status file เป็น best-effort (tray degrade ได้)
+func (r *loop) setProgress(p scanner.Progress) {
+	r.progMu.Lock()
+	phaseChanged := p.Phase != r.prog.Phase
+	r.prog = p
+	flush := phaseChanged || time.Since(r.lastProgFlush) >= time.Second
+	if flush {
+		r.lastProgFlush = time.Now()
+	}
+	r.progMu.Unlock()
+
+	if flush {
+		_ = storage.WriteProgress(p) // best-effort: เขียนไม่ได้ tray จะ degrade เป็น unknown
+	}
+}
+
+// setProgressPhase เปลี่ยนเฉพาะ phase โดยคง Done/Total เดิม (ใช้ตอนเข้า uploading)
+func (r *loop) setProgressPhase(ph scanner.Phase) {
+	r.progMu.Lock()
+	p := r.prog
+	r.progMu.Unlock()
+	p.Phase = ph
+	p.UpdatedAt = time.Now()
+	r.setProgress(p)
+}
+
+// markScanIdle รีเซ็ตสถานะกลับเป็น idle เมื่อสแกนจบ (สำเร็จหรือล้มเหลว) เพื่อให้
+// dashboard/tray เลิกแสดง progress bar
+func (r *loop) markScanIdle() {
+	idle := scanner.Progress{Phase: scanner.PhaseIdle, UpdatedAt: time.Now()}
+	r.progMu.Lock()
+	r.prog = idle
+	r.lastProgFlush = time.Now()
+	r.progMu.Unlock()
+	_ = storage.WriteProgress(idle)
+}
+
+// scanning คืน true ถ้ามีการสแกนกำลังดำเนินอยู่ (phase ไม่ใช่ idle/ว่าง)
+// ใช้ตัดสินใจเร่ง heartbeat ระหว่างสแกน
+func (r *loop) scanning() bool {
+	r.progMu.Lock()
+	defer r.progMu.Unlock()
+	return r.prog.Phase != "" && r.prog.Phase != scanner.PhaseIdle
+}
+
+// heartbeatProgress คืน snapshot สำหรับแนบไป heartbeat — nil ถ้าไม่ได้สแกนอยู่
+// (idle) เพื่อไม่ให้ backend เข้าใจผิดว่ากำลังสแกน
+func (r *loop) heartbeatProgress() *transport.ScanProgress {
+	r.progMu.Lock()
+	p := r.prog
+	r.progMu.Unlock()
+	if p.Phase == "" || p.Phase == scanner.PhaseIdle {
+		return nil
+	}
+	return &transport.ScanProgress{
+		Phase:       string(p.Phase),
+		Done:        p.Done,
+		Total:       p.Total,
+		CurrentPath: p.CurrentPath,
+		UpdatedAt:   p.UpdatedAt.UTC().Format(time.RFC3339),
+	}
+}
+
+// nextBeatDelay คืนช่วงเวลาถึง heartbeat ครั้งถัดไป: เร่งเป็น 10s ระหว่างสแกน
+// (เพื่อให้ dashboard เห็น progress ถี่ขึ้น) ปกติใช้ base (60s) ถ้า base เล็กกว่า
+// 10s อยู่แล้ว (เช่นใน test) ก็คงค่า base ไว้
+func (r *loop) nextBeatDelay(base time.Duration) time.Duration {
+	const fast = 10 * time.Second
+	if r.scanning() && base > fast {
+		return fast
+	}
+	return base
 }
 
 // runScan performs a scan and, on success, records the scan time so the
@@ -370,6 +452,9 @@ type loop struct {
 // บันทึก log แต่ไม่อัปเดต last_scan_at ดังนั้นการสแกนที่ล้มเหลวจะถูก retry ใน
 // โอกาสถัดไป แทนที่จะถูกเลื่อนออกไปเต็มรอบ
 func (r *loop) runScan(ctx context.Context, trigger string) {
+	// ไม่ว่าสแกนจะจบยังไง (สำเร็จ/ล้มเหลว/timeout) ให้รีเซ็ต progress กลับ idle
+	// เพื่อให้ dashboard/tray เลิกแสดง progress bar
+	defer r.markScanIdle()
 	// สแกนและอัปโหลด ถ้าล้มเหลวให้ log และ return โดยไม่บันทึก last_scan_at
 	if err := r.scanAndUpload(ctx, trigger); err != nil {
 		fmt.Fprintf(r.errw, "%s scan: %v\n", trigger, err)
@@ -392,8 +477,8 @@ func (r *loop) handleBeat(ctx context.Context) (restart bool) {
 
 	// สร้าง context ที่มี timeout 10 วินาทีสำหรับ heartbeat call
 	beatCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	// ส่ง heartbeat พร้อม uptime
-	resp, err := r.client.Heartbeat(beatCtx, int64(time.Since(r.started).Seconds()))
+	// ส่ง heartbeat พร้อม uptime และ progress snapshot (nil ถ้า idle)
+	resp, err := r.client.Heartbeat(beatCtx, int64(time.Since(r.started).Seconds()), r.heartbeatProgress())
 	cancel() // ยกเลิก context เสมอ
 	if err != nil {
 		// heartbeat ล้มเหลว: log ไว้และ return false (ไม่ต้อง restart)
@@ -417,15 +502,26 @@ func (r *loop) handleBeat(ctx context.Context) (restart bool) {
 // ที่เสนอแตกต่างจากที่กำลังรันอยู่ (ตาม spec 1.6) จะคืนค่า true ก็ต่อเมื่อไบนารี
 // ตัวใหม่อยู่ในตำแหน่งเรียบร้อยแล้วเท่านั้น
 func (r *loop) maybeUpdate(ctx context.Context, up *transport.AgentUpdate) bool {
-	// ถ้าไม่มีการเสนออัปเดต หรือ auto-update ปิดอยู่ ให้ข้ามไป
-	if up == nil || !r.autoUpdate {
+	// ไม่มีการเสนออัปเดต → ข้าม
+	if up == nil {
 		return false
 	}
-	// ถ้าเวอร์ชันที่เสนอว่าง หรือตรงกับเวอร์ชันที่รันอยู่ ให้ข้ามไป
-	if up.Version == "" || up.Version == r.version {
+	// forced = admin สั่งจาก dashboard: ข้าม guard "ควรอัปมั้ย" ทั้งหมด (auto-update
+	// ปิด / version เท่าเดิม / loop-breaker) แต่ยังตรวจ SHA-256 ใน updater.Apply เสมอ
+	if !up.Forced {
+		// auto-update ปิดอยู่ → ข้าม
+		if !r.autoUpdate {
+			return false
+		}
+		// เวอร์ชันที่เสนอว่าง หรือตรงกับที่รันอยู่ → ข้าม
+		if up.Version == "" || up.Version == r.version {
+			return false
+		}
+	} else if up.Version == "" {
+		// forced แต่ไม่มี version ให้ลง → ไม่มีอะไรให้ทำ
 		return false
 	}
-	// ถ้าไม่รู้ path ของตัวเอง ไม่สามารถแทนที่ binary ได้
+	// ถ้าไม่รู้ path ของตัวเอง ไม่สามารถแทนที่ binary ได้ (ทั้ง forced และปกติ)
 	if r.exePath == "" {
 		fmt.Fprintln(r.errw, "⚠ update offered but agent path is unknown; skipping")
 		return false
@@ -434,16 +530,23 @@ func (r *loop) maybeUpdate(ctx context.Context, up *transport.AgentUpdate) bool 
 	// โดยเปรียบเทียบ SHA-256 กับที่บันทึกไว้ครั้งล่าสุด
 	// ถ้าตรงกัน แปลว่า manifest version สูงกว่า version ที่ฝังใน binary จริงๆ
 	// การติดตั้งซ้ำจะทำให้เกิด restart-loop ไม่รู้จบ จึงต้องข้ามไป
-	if last, err := storage.LoadLastUpdate(); err != nil {
-		// อ่าน marker ล้มเหลว: log ไว้ แต่ยังดำเนินการ update ต่อ (conservative)
-		fmt.Fprintf(r.errw, "read last update marker: %v\n", err)
-	} else if up.SHA256 != "" && strings.EqualFold(up.SHA256, last) {
-		// SHA-256 ตรงกัน (case-insensitive) → ข้ามเพื่อป้องกัน restart-loop
-		fmt.Fprintf(r.errw,
-			"⚠ server keeps offering %s but this binary already is that download and still reports %s; "+
-				"skipping to avoid a restart loop (fix: manifest version must match the binary's built version)\n",
-			up.Version, r.version)
-		return false
+	// — ยกเว้น forced: admin จงใจสั่งลงซ้ำ (ซ่อม binary เสีย) backend เคลียร์ flag
+	//   ตอน offer แล้ว จึงยิงครั้งเดียว ไม่วน loop
+	if !up.Forced {
+		if last, err := storage.LoadLastUpdate(); err != nil {
+			// อ่าน marker ล้มเหลว: log ไว้ แต่ยังดำเนินการ update ต่อ (conservative)
+			fmt.Fprintf(r.errw, "read last update marker: %v\n", err)
+		} else if up.SHA256 != "" && strings.EqualFold(up.SHA256, last) {
+			// SHA-256 ตรงกัน (case-insensitive) → ข้ามเพื่อป้องกัน restart-loop
+			fmt.Fprintf(r.errw,
+				"⚠ server keeps offering %s but this binary already is that download and still reports %s; "+
+					"skipping to avoid a restart loop (fix: manifest version must match the binary's built version)\n",
+				up.Version, r.version)
+			return false
+		}
+	}
+	if up.Forced {
+		fmt.Fprintf(r.errw, "→ forced update requested by server: %s (running %s)\n", up.Version, r.version)
 	}
 	// แสดงข้อความว่ากำลัง download update
 	fmt.Fprintf(r.errw, "→ update available: %s (running %s); downloading ...\n", up.Version, r.version)
@@ -467,18 +570,22 @@ func (r *loop) maybeUpdate(ctx context.Context, up *transport.AgentUpdate) bool 
 	return true // คืนค่า true เพื่อให้ caller ทราบว่าต้อง restart process
 }
 
-// scanBudget เลือกงบเวลาของการสแกน: รอบ incremental (cache มีแล้ว) ใช้ 2 นาที,
-// รอบแรก (cache ว่าง) ใช้ firstScanMinutes (default 15 ถ้าไม่ได้ตั้ง) เพราะต้อง
-// verify ทุกไฟล์ ผลที่ verify แล้วถูก cache จึงไล่ให้ครบในรอบถัดๆ ไปได้แม้ timeout
-// (TH) เลือกงบเวลาสแกนตามว่าเป็นรอบแรกหรือ incremental
-func scanBudget(firstScan bool, firstScanMinutes int) time.Duration {
-	if !firstScan {
-		return 2 * time.Minute
+// scanBudget คืนเพดานเวลาของการสแกนหนึ่งรอบ ใช้ค่าเดียวกันทุกรอบ (ทั้งรอบแรก
+// และ incremental) เพราะต้นทุนหลักของการสแกนคือการเดิน filesystem + อ่าน PE
+// version ของไฟล์ทุกตัว ซึ่งเกิดขึ้นทุกรอบไม่ว่า signature cache จะ hit หรือไม่
+// การสแกนจะคืนค่าทันทีที่เสร็จ — budget เป็นเพียง "เพดานกันค้าง" ไม่ใช่เวลารอตายตัว
+//
+// เดิม incremental ถูก cap ไว้แค่ 2 นาที ทำให้สแกนที่กินเวลานานกว่านั้น (เช่นเดิน
+// AppData ของ user ทุกคน หรือเปิด deep mode สแกนทั้งเครื่อง) timeout ทุกรอบแล้ว
+// ไม่ส่งข้อมูลขึ้น backend เลย จึงเปลี่ยนมาใช้งบเดียวที่ตั้งได้จาก config
+// (firstScanMinutes; default 15 ถ้าไม่ได้ตั้ง)
+//
+// (TH) คืนงบเวลาสแกน ตั้งค่าได้ผ่าน config
+func scanBudget(scanMinutes int) time.Duration {
+	if scanMinutes <= 0 {
+		scanMinutes = 15
 	}
-	if firstScanMinutes <= 0 {
-		firstScanMinutes = 15
-	}
-	return time.Duration(firstScanMinutes) * time.Minute
+	return time.Duration(scanMinutes) * time.Minute
 }
 
 // scanAndUpload runs a local scan and POSTs it to the backend. On upload
@@ -489,20 +596,24 @@ func scanBudget(firstScan bool, firstScanMinutes int) time.Duration {
 // บันทึกลงคิว retry แทนที่จะหายไป (ตาม spec 1.7) ดังนั้นฟังก์ชันนี้จะคืนค่า
 // error ก็ต่อเมื่อการสแกนเองล้มเหลวเท่านั้น
 func (r *loop) scanAndUpload(ctx context.Context, trigger string) error {
-	// รอบแรก (cache ว่าง) ให้งบเวลามากกว่าปกติ เพราะต้อง verify ลายเซ็นทุกไฟล์;
-	// รอบถัดไป incremental ใช้ 2 นาทีพอ (verify เฉพาะไฟล์ที่เปลี่ยน)
-	budget := scanBudget(scanner.IsFirstScan(), r.firstScanMinutes)
+	// ทุกรอบใช้งบเวลาเดียวกัน (ตั้งได้จาก config) เพราะต้นทุนหลักคือการเดิน
+	// filesystem ซึ่งเกิดทุกรอบ ดู scanBudget สำหรับเหตุผลที่เลิกแยก first/incremental
+	budget := scanBudget(r.firstScanMinutes)
 	scanCtx, cancel := context.WithTimeout(ctx, budget)
 	defer cancel()
 
 	// แสดงข้อความว่ากำลังสแกน
 	fmt.Fprintln(r.errw, "Scanning ...")
-	// รันการสแกน software inventory
-	res, err := scanner.Run(scanCtx)
+	// รันการสแกน software inventory พร้อมรายงานความคืบหน้าผ่าน setProgress
+	// (เก็บ snapshot + เขียน status file ให้ tray + ส่งต่อให้ heartbeat)
+	res, err := scanner.Run(scanCtx, r.setProgress)
 	if err != nil {
 		// การสแกนล้มเหลว: คืนค่า error เพื่อให้ runScan ไม่อัปเดต last_scan_at
 		return fmt.Errorf("scan: %w", err)
 	}
+
+	// เข้าสู่ phase uploading — คง Done/Total เดิมไว้เพื่อให้ progress bar อยู่ที่ ~100%
+	r.setProgressPhase(scanner.PhaseUploading)
 
 	// แปลงผลสแกนเป็น payload สำหรับส่ง
 	req := toScanRequest(res, trigger)

@@ -28,6 +28,10 @@ class BinaryEntry:
     arch: str
     filename: str
     sha256: str
+    # build_stamp = UTC timestamp ของตอน build (เช่น "20260623T052800Z") เปลี่ยนทุก
+    # build, ใช้เป็น "ลายนิ้วมือความสด" ที่หน้า deploy โชว์เทียบกับหน้าแรกของ installer
+    # ที่ผู้ใช้โหลดไปรัน (manifest เก่าที่ไม่มี field นี้ → "" เพื่อ back-compat)
+    build_stamp: str = ""
 
 
 def _version_tuple(v: str) -> tuple[int, ...]:
@@ -70,6 +74,7 @@ def _load_entries(binary_dir: str) -> list[BinaryEntry]:
                     arch=str(raw["arch"]),
                     filename=str(raw["filename"]),
                     sha256=str(raw["sha256"]),
+                    build_stamp=str(raw.get("build_stamp", "")),
                 )
             )
         except (KeyError, TypeError):

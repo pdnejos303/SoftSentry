@@ -14,5 +14,8 @@ func ShowConsoleWindow() {}
 // ConfirmInstallGUI คืน shown=false เสมอนอก Windows → ผู้เรียกใช้ console prompt
 func ConfirmInstallGUI(_ ConsentInfo) (consented bool, shown bool) { return false, false }
 
+// RunUninstallConfirm นอก Windows คืน shown=false → ผู้เรียกใช้ console prompt แทน
+func RunUninstallConfirm(_ Lang) (proceed bool, shown bool) { return false, false }
+
 // ShowResultGUI คืน false เสมอนอก Windows → ผู้เรียกแสดงผลผ่าน console
 func ShowResultGUI(_ bool, _ string, _ string) bool { return false }

@@ -143,6 +143,7 @@ def _to_item(machine: Machine, now: datetime, software_count: int) -> dict[str, 
         "os_version": machine.os_version,
         "arch": machine.arch,
         "agent_version": machine.agent_version,
+        "reported_server_url": machine.reported_server_url,
         "status": compute_status(machine.last_seen_at, now),
         "last_seen_at": machine.last_seen_at,
         "last_scan_at": machine.last_scan_at,
@@ -150,6 +151,24 @@ def _to_item(machine: Machine, now: datetime, software_count: int) -> dict[str, 
         "tags": machine.tags,
         "software_count": software_count,
         "risk_score": machine.risk_score,
+        "scan_progress": _scan_progress(machine),
+    }
+
+
+def _scan_progress(machine: Machine) -> dict[str, object] | None:
+    """Build the scan-progress payload, or None when the machine is idle.
+
+    Only an actively-scanning machine (phase set and not "idle") shows a bar.
+    """
+    phase = machine.scan_phase
+    if not phase or phase == "idle":
+        return None
+    return {
+        "phase": phase,
+        "done": machine.scan_done or 0,
+        "total": machine.scan_total or 0,
+        "current_path": machine.scan_current_path,
+        "updated_at": machine.scan_progress_at,
     }
 
 
@@ -181,3 +200,16 @@ async def request_scan(session: AsyncSession, machine: Machine) -> None:
         cfg = AgentConfig(machine_id=machine.id)
         session.add(cfg)
     cfg.manual_scan_requested = True
+
+
+async def request_update(session: AsyncSession, machine: Machine) -> None:
+    """Flag a forced agent update for the next heartbeat (mirror of request_scan).
+
+    The backend clears this flag the moment it offers the forced update, so the
+    offer fires once per admin click and cannot loop.
+    """
+    cfg = await session.get(AgentConfig, machine.id)
+    if cfg is None:
+        cfg = AgentConfig(machine_id=machine.id)
+        session.add(cfg)
+    cfg.force_update_requested = True

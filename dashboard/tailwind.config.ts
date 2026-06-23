@@ -1,5 +1,10 @@
 import type { Config } from "tailwindcss";
 
+// Colors are authored as OKLCH with raw L/C/H channels stored in CSS variables
+// (see globals.css). The `<alpha-value>` placeholder lets Tailwind opacity
+// modifiers like `bg-primary/10` keep working with the modern color space.
+const oklch = (variable: string) => `oklch(var(${variable}) / <alpha-value>)`;
+
 const config: Config = {
   darkMode: ["class"],
   content: [
@@ -29,36 +34,69 @@ const config: Config = {
           "Georgia",
           "serif",
         ],
+        // Reserved for genuine machine data (hashes, IDs, versions, thumbprints).
+        mono: [
+          "ui-monospace",
+          "Cascadia Code",
+          "JetBrains Mono",
+          "SFMono-Regular",
+          "Menlo",
+          "Consolas",
+          "monospace",
+        ],
       },
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        border: oklch("--border"),
+        input: oklch("--input"),
+        ring: oklch("--ring"),
+        background: oklch("--background"),
+        foreground: oklch("--foreground"),
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: oklch("--primary"),
+          foreground: oklch("--primary-foreground"),
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: oklch("--secondary"),
+          foreground: oklch("--secondary-foreground"),
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: oklch("--destructive"),
+          foreground: oklch("--destructive-foreground"),
+        },
+        // Risk semantics — reserved for status meaning, not decoration.
+        success: {
+          DEFAULT: oklch("--success"),
+          foreground: oklch("--success-foreground"),
+        },
+        warning: {
+          DEFAULT: oklch("--warning"),
+          foreground: oklch("--warning-foreground"),
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: oklch("--muted"),
+          foreground: oklch("--muted-foreground"),
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: oklch("--accent"),
+          foreground: oklch("--accent-foreground"),
         },
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: oklch("--card"),
+          foreground: oklch("--card-foreground"),
+        },
+        popover: {
+          DEFAULT: oklch("--popover"),
+          foreground: oklch("--popover-foreground"),
+        },
+        // Navigation shell — its own quiet surface, distinct from the canvas.
+        sidebar: {
+          DEFAULT: oklch("--sidebar"),
+          foreground: oklch("--sidebar-foreground"),
+          muted: oklch("--sidebar-muted"),
+          border: oklch("--sidebar-border"),
+          accent: oklch("--sidebar-accent"),
+          active: oklch("--sidebar-active"),
+          "active-bg": oklch("--sidebar-active-bg"),
         },
       },
       borderRadius: {

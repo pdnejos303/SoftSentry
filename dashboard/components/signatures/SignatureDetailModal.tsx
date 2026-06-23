@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useSignatureDetail } from "@/lib/signature";
+import { useSignatureDetail, signatureReasonLabel } from "@/lib/signature";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,11 @@ export function SignatureDetailModal({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useTranslations("signatures.detail");
+  const tReason = useTranslations("signatures.reason");
   const { data, isLoading } = useSignatureDetail(softwareUuid);
+
+  const reasonText =
+    data?.status === "invalid" ? signatureReasonLabel(data.status_reason, tReason) : null;
 
   return (
     <Dialog open={Boolean(softwareUuid)} onOpenChange={onOpenChange}>
@@ -44,11 +48,20 @@ export function SignatureDetailModal({
         ) : (
           <div className="space-y-5">
             <div className="flex items-center gap-3">
-              <SignatureBadge status={data.status} />
+              <SignatureBadge status={data.status} reason={data.status_reason} />
               <span className="truncate text-sm text-muted-foreground">
                 {data.signer ?? "—"}
               </span>
             </div>
+
+            {reasonText && (
+              <section>
+                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("reason")}
+                </h3>
+                <p className="text-sm font-medium text-red-700">{reasonText}</p>
+              </section>
+            )}
 
             {data.issues.length > 0 && (
               <section>

@@ -65,10 +65,10 @@ type wizText struct {
 	setupSuffix string // ต่อท้ายชื่อแอปบน title bar เช่น "ตัวติดตั้ง"
 
 	// ปุ่มนำทางท้ายหน้าต่าง
-	back    string
-	next    string
-	install string
-	cancel  string
+	back     string
+	next     string
+	install  string
+	cancel   string
 	closeBtn string
 
 	languageLabel string // ป้ายกำกับกล่องเลือกภาษา
@@ -294,4 +294,68 @@ var consentContents = map[Lang]consentContent{
 		},
 		uninstallHint: "「アプリと機能」からいつでもアンインストールできます。または: softsentry-agent uninstall",
 	},
+}
+
+// uninstallText เก็บข้อความหน้าจอถอนการติดตั้งของ "หนึ่งภาษา"
+type uninstallText struct {
+	confirmHeading string
+	confirmBody    string
+	yes            string
+	no             string
+	successHeading string
+	successMsg     string
+}
+
+// uninstallTexts ครบทั้ง 3 ภาษา (เพิ่มภาษา = เพิ่ม entry ที่นี่)
+var uninstallTexts = map[Lang]uninstallText{
+	LangTH: {
+		confirmHeading: "ถอนการติดตั้ง SoftSentry Agent?",
+		confirmBody: "การถอนการติดตั้งจะหยุดบริการเบื้องหลัง และลบ SoftSentry Agent " +
+			"ออกจากเครื่องนี้ทั้งหมด (โปรแกรม, การตั้งค่า และข้อมูลที่เก็บไว้)\n" +
+			"เครื่องนี้จะหยุดรายงานไปยังเซิร์ฟเวอร์",
+		yes:            "ถอนการติดตั้ง",
+		no:             "ยกเลิก",
+		successHeading: "ถอนการติดตั้งสำเร็จ",
+		successMsg:     "SoftSentry Agent ถูกถอนออกจากเครื่องนี้แล้ว",
+	},
+	LangEN: {
+		confirmHeading: "Uninstall SoftSentry Agent?",
+		confirmBody: "Uninstalling stops the background service and removes SoftSentry " +
+			"Agent from this computer entirely (program, settings, and stored data).\n" +
+			"This machine will stop reporting to the server.",
+		yes:            "Uninstall",
+		no:             "Cancel",
+		successHeading: "Uninstall complete",
+		successMsg:     "SoftSentry Agent has been removed from this computer.",
+	},
+	LangJA: {
+		confirmHeading: "SoftSentry Agent をアンインストールしますか？",
+		confirmBody: "アンインストールするとバックグラウンドサービスが停止し、SoftSentry " +
+			"Agent がこのコンピューターから完全に削除されます（プログラム・設定・保存データ）。\n" +
+			"このマシンはサーバーへの報告を停止します。",
+		yes:            "アンインストール",
+		no:             "キャンセル",
+		successHeading: "アンインストールが完了しました",
+		successMsg:     "SoftSentry Agent はこのコンピューターから削除されました。",
+	},
+}
+
+// uninstallTextFor คืนข้อความถอนการติดตั้งของภาษาที่ขอ (fallback ไทย)
+func uninstallTextFor(l Lang) uninstallText {
+	if t, ok := uninstallTexts[l]; ok {
+		return t
+	}
+	return uninstallTexts[LangTH]
+}
+
+// UninstallConfirmText เปิดข้อความหน้ายืนยันถอนให้แพ็กเกจ cmd ใช้
+func UninstallConfirmText(lang Lang) (heading, body, yes, no string) {
+	t := uninstallTextFor(lang)
+	return t.confirmHeading, t.confirmBody, t.yes, t.no
+}
+
+// UninstallResultText เปิดข้อความหน้าผลสำเร็จของการถอน
+func UninstallResultText(lang Lang) (successHeading, successMsg string) {
+	t := uninstallTextFor(lang)
+	return t.successHeading, t.successMsg
 }

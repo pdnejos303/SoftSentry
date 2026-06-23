@@ -2,46 +2,104 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * SoftSentry design tokens — "Color is signal, not decoration."
+ *
+ * The canvas is a cool, near-neutral surface tinted toward the iris-indigo
+ * brand hue (~274°). Saturated color is reserved for RISK semantics
+ * (success/warning/critical) so the eye learns to read color as meaning.
+ * The iris signature is used sparingly and flat — never as a glow or gradient.
+ *
+ * Values are authored in OKLCH for perceptual uniformity. Channels are stored
+ * raw (L C H) so Tailwind can inject `<alpha-value>` for opacity modifiers
+ * (e.g. `bg-primary/10`). See tailwind.config.ts.
+ */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    color-scheme: light;
+
+    /* Surfaces — soft cool off-white, never pure #fff */
+    --background: 0.984 0.004 274;
+    --foreground: 0.23 0.022 274;
+    --card: 0.998 0.002 274;
+    --card-foreground: 0.23 0.022 274;
+    --popover: 0.998 0.002 274;
+    --popover-foreground: 0.23 0.022 274;
+
+    /* Iris-indigo signature — the product's voice, not a status */
+    --primary: 0.515 0.17 274;
+    --primary-foreground: 0.985 0.004 274;
+
+    --secondary: 0.955 0.008 274;
+    --secondary-foreground: 0.3 0.022 274;
+    --muted: 0.962 0.006 274;
+    --muted-foreground: 0.515 0.022 272;
+    --accent: 0.95 0.014 274;
+    --accent-foreground: 0.3 0.03 274;
+
+    /* Risk semantics — the only colors that "raise their voice" */
+    --destructive: 0.555 0.205 25;
+    --destructive-foreground: 0.985 0.004 25;
+    --success: 0.58 0.14 152;
+    --success-foreground: 0.985 0.012 152;
+    --warning: 0.715 0.15 76;
+    --warning-foreground: 0.27 0.045 76;
+
+    /* Lines + focus */
+    --border: 0.915 0.008 274;
+    --input: 0.915 0.008 274;
+    --ring: 0.515 0.17 274;
     --radius: 0.5rem;
+
+    /* Navigation shell — a quiet panel distinct from the work canvas */
+    --sidebar: 0.966 0.006 274;
+    --sidebar-foreground: 0.3 0.022 274;
+    --sidebar-muted: 0.5 0.02 272;
+    --sidebar-border: 0.915 0.008 274;
+    --sidebar-accent: 0.93 0.016 274;
+    --sidebar-active: 0.5 0.18 274;
+    --sidebar-active-bg: 0.925 0.04 274;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    color-scheme: dark;
+
+    /* Deep blue-charcoal — a real SOC night surface, not pure black + neon */
+    --background: 0.176 0.018 274;
+    --foreground: 0.93 0.01 274;
+    --card: 0.206 0.02 274;
+    --card-foreground: 0.93 0.01 274;
+    --popover: 0.206 0.02 274;
+    --popover-foreground: 0.93 0.01 274;
+
+    --primary: 0.7 0.155 276;
+    --primary-foreground: 0.17 0.02 274;
+
+    --secondary: 0.27 0.02 274;
+    --secondary-foreground: 0.93 0.01 274;
+    --muted: 0.26 0.018 274;
+    --muted-foreground: 0.68 0.02 272;
+    --accent: 0.3 0.03 276;
+    --accent-foreground: 0.95 0.01 276;
+
+    --destructive: 0.62 0.19 25;
+    --destructive-foreground: 0.985 0.012 25;
+    --success: 0.72 0.15 152;
+    --success-foreground: 0.18 0.03 152;
+    --warning: 0.8 0.145 80;
+    --warning-foreground: 0.22 0.045 80;
+
+    --border: 0.3 0.018 274;
+    --input: 0.3 0.018 274;
+    --ring: 0.7 0.155 276;
+
+    --sidebar: 0.15 0.02 274;
+    --sidebar-foreground: 0.93 0.01 274;
+    --sidebar-muted: 0.64 0.02 272;
+    --sidebar-border: 0.27 0.018 274;
+    --sidebar-accent: 0.26 0.03 276;
+    --sidebar-active: 0.78 0.14 278;
+    --sidebar-active-bg: 0.3 0.055 278;
   }
 }
 
@@ -51,6 +109,43 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv01", "ss01";
+  }
+
+  /* Iris-tinted text selection — a subtle brand fingerprint */
+  ::selection {
+    background-color: oklch(var(--primary) / 0.22);
+  }
+
+  /* Thin, cool scrollbars suited to long-dwell monitoring */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: oklch(var(--border)) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: oklch(var(--border));
+    border: 3px solid transparent;
+    background-clip: content-box;
+    border-radius: 9999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: oklch(var(--muted-foreground) / 0.5);
+  }
+}
+
+@layer utilities {
+  /* Machine data (hashes, IDs, versions, thumbprints) reads as exact + aligned */
+  .data-figures {
+    font-family: theme("fontFamily.mono");
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
   }
 }
 

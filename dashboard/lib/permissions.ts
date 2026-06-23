@@ -4,7 +4,9 @@
 //
 // Roles:
 //   dev    — superuser, sees and does everything
-//   admin  — Overview + Machines + Deploy only, full actions within that scope
+//   admin  — Overview + Machines + Recent installs + Software + Signatures +
+//            Vulnerabilities + Deploy (no Licenses / Policy / Alerts / Reports /
+//            Users / Audit Log)
 //   viewer — broad read-only (everything except Deploy / Users / Audit Log)
 
 export type Role = "dev" | "admin" | "viewer";
@@ -22,9 +24,10 @@ export const ROUTE_ACCESS: { prefix: string; roles: Role[] }[] = [
   { prefix: "/settings/profile", roles: ALL },
   { prefix: "/deploy", roles: ["dev", "admin"] },
   { prefix: "/machines", roles: ALL },
-  { prefix: "/software", roles: ["dev", "viewer"] },
-  { prefix: "/signatures", roles: ["dev", "viewer"] },
-  { prefix: "/vulnerabilities", roles: ["dev", "viewer"] },
+  { prefix: "/recent-installs", roles: ["dev", "admin", "viewer"] },
+  { prefix: "/software", roles: ["dev", "admin", "viewer"] },
+  { prefix: "/signatures", roles: ["dev", "admin", "viewer"] },
+  { prefix: "/vulnerabilities", roles: ["dev", "admin", "viewer"] },
   { prefix: "/licenses", roles: [] },
   { prefix: "/policy", roles: ["dev", "viewer"] },
   { prefix: "/alerts", roles: ["dev", "viewer"] },

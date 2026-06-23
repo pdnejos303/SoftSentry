@@ -24,6 +24,16 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop() // ปล่อย resource ที่ใช้ฟัง signal เมื่อ main กลับ
 
+	// If invoked as the Add/Remove Programs "Uninstall" action (--uninstall),
+	// run the GUI uninstall flow instead of the CLI.
+	// (TH) ถ้าถูกเรียกด้วย --uninstall (จาก Settings → Apps) ให้รัน flow ถอนแบบ GUI
+	if handled, err := maybeSelfUninstall(ctx); handled {
+		if err != nil {
+			os.Exit(1)
+		}
+		return
+	}
+
 	// If this is a downloaded SoftSentry-Setup.exe (double-clicked, with an
 	// embedded config trailer), install ourselves instead of running the CLI.
 	//

@@ -10,6 +10,7 @@ import { machineLabel } from "@/lib/machine";
 import type { MachineListItem } from "@/lib/types";
 import { DeleteMachineDialog } from "@/components/machines/DeleteMachineDialog";
 import { RenameMachineDialog } from "@/components/machines/RenameMachineDialog";
+import { ScanProgressBar } from "@/components/machines/ScanProgressBar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -58,7 +59,7 @@ export default function MachinesPage() {
   const { data, isLoading, isError } = useMachines(filters);
 
   const statuses = ["", "online", "stale", "offline"];
-  const cols = isAdmin ? 8 : 7;
+  const cols = isAdmin ? 9 : 8;
 
   return (
     <div className="space-y-6">
@@ -111,6 +112,7 @@ export default function MachinesPage() {
               <TableHead>{t("col.owner")}</TableHead>
               <TableHead>{t("col.os")}</TableHead>
               <TableHead>{t("col.status")}</TableHead>
+              <TableHead>{t("col.server")}</TableHead>
               <TableHead className="text-right">{t("col.software")}</TableHead>
               <TableHead>{t("col.lastSeen")}</TableHead>
               <TableHead>{t("col.tags")}</TableHead>
@@ -159,6 +161,14 @@ export default function MachinesPage() {
                 </TableCell>
                 <TableCell>
                   <Badge variant={statusVariant(m.status)}>{t(`status.${m.status}`)}</Badge>
+                  {m.scan_progress && (
+                    <div className="mt-2">
+                      <ScanProgressBar progress={m.scan_progress} compact />
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell className="max-w-[200px] truncate font-mono text-xs text-muted-foreground">
+                  {m.reported_server_url ?? "—"}
                 </TableCell>
                 <TableCell className="text-right tabular-nums">{m.software_count}</TableCell>
                 <TableCell className="text-muted-foreground">

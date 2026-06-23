@@ -55,6 +55,9 @@ async def _upsert_signature(
         session.add(sig)
 
     sig.status = sig_in.status
+    # Only invalid signatures carry a reason; clear it otherwise so a fixed
+    # signature (invalid → valid) doesn't keep a stale reason on re-scan.
+    sig.status_reason = sig_in.status_reason if sig_in.status == "invalid" else None
     sig.signer = _norm(sig_in.signer)
     sig.issuer = _norm(sig_in.issuer)
     sig.cert_thumbprint = sig_in.cert_thumbprint
@@ -145,6 +148,7 @@ async def process_scan(
 
         record.publisher = _norm(sw.publisher)
         record.install_date = sw.install_date
+        record.install_datetime = sw.installed_at
         record.install_path = sw.install_path
         record.install_size_kb = sw.install_size_kb
         record.arch = sw.arch

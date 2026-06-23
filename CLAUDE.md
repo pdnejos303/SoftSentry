@@ -2,13 +2,29 @@
 
 > ไฟล์นี้ Claude Code โหลดอัตโนมัติทุก session — เก็บเฉพาะ context สำคัญที่ต้องรู้ก่อนแตะโค้ด
 
+---
+
+## 🧭 ทิศทางปัจจุบัน — อ่านก่อนวางแผน/เขียนงานใหม่ (สำคัญสุด)
+
+**โปรเจคเปลี่ยนทิศ: SoftSentry = Endpoint Security Posture Monitoring** (ไม่ใช่ "Software Asset Management" แล้ว)
+
+➡️ **ไฟล์หลักอันเดียวที่ต้องอ่านก่อน:** [`docs/security-posture/00-START-HERE.md`](docs/security-posture/00-START-HERE.md)
+จากนั้น `docs/security-posture/roadmap.md` (แผน Phase 6–9)
+
+**กฎ:**
+- 🟢 ทิศทาง/แผนใหม่ → ยึด `docs/security-posture/` เท่านั้น
+- 🔴 แผนเก่าทั้งหมดย้ายไป `docs/OLD-do-not-use/` แล้ว (00–12, `modules/`, `LEARN-*`) + `ROADMAP.md` (root) = **แผนเดิม SAM** — ใช้เข้าใจโค้ดเดิมได้ **แต่ห้ามเอาไปอิงเป็นทิศทางใหม่เด็ดขาด**
+- ➕ **Additive only** — ห้ามลบโค้ด/module เดิม (ลายเซ็น/license/CVE ยังอยู่ครบ แค่ลดบทบาท)
+
+---
+
 ## Project ที่กำลังทำ
 
-**SoftSentry** — Software Asset Management + Security tool สำหรับองค์กร
+**SoftSentry** — Endpoint Security Posture Monitoring สำหรับองค์กร
 
-ติดตั้ง agent บนเครื่อง endpoint (Windows/Mac) → agent สแกน software inventory + digital signature → ส่งกลับ backend → backend match กับ CVE database (NVD/OSV), จัดการ license, แจ้งเตือน → IT admin ดู dashboard
+agent บนเครื่อง endpoint (Windows/Mac) สแกน software inventory + **provenance (มาจากไหน/ใครลง)** + signature + CVE + device posture → ส่ง backend → ตัดสิน **"ปลอดภัยไหม"** + แจ้งเตือน → IT admin ดู dashboard
 
-**สถานะ:** Greenfield. ยังไม่มี code. ทุก doc ใน `docs/` เป็น spec ที่ใช้ตอน implement
+**สถานะ:** Module 1–9 (SAM เดิม) code-complete แล้ว · ตอนนี้กำลังต่อ Phase 6–9 ทิศ security posture — ดู `docs/security-posture/`
 
 ---
 
@@ -24,7 +40,7 @@
 | Observability | **Prometheus + Grafana** | metrics จากทั้ง agent + backend |
 | i18n | **next-intl** (frontend) | รองรับ ไทย/EN |
 
-อ่านรายละเอียดเหตุผลการเลือกที่ [`docs/01-tech-stack.md`](docs/01-tech-stack.md)
+(stack ยังเหมือนเดิม — เหตุผลการเลือกฉบับเดิมอยู่ที่ `docs/OLD-do-not-use/01-tech-stack.md`; i18n ตอนนี้รองรับ ไทย/EN/JA)
 
 ---
 
@@ -67,7 +83,7 @@ SoftSentry/
 
 ## หลักการที่ต้องยึด (Non-negotiable)
 
-1. **อ่าน spec ก่อนเขียน code** — ทุก module มี spec อยู่ใน `docs/modules/0X-*.md` พร้อม acceptance criteria
+1. **อ่าน spec ก่อนเขียน code** — ทิศทางใหม่อยู่ใน `docs/security-posture/` · spec ของ module เดิม (1–9) อยู่ใน `docs/OLD-do-not-use/modules/`
 2. **TDD เมื่อเป็นไปได้** — เขียน test ก่อน implementation โดยเฉพาะ business logic (vulnerability matching, license calculation)
 3. **Agent ต้องเป็น single binary** — ห้าม depend on runtime/interpreter ที่ผู้ใช้ต้องลงเพิ่ม
 4. **Multi-platform from day 1** — code agent ต้องรองรับทั้ง Windows และ macOS ตั้งแต่แรก
@@ -78,25 +94,24 @@ SoftSentry/
 
 ## ลำดับการ implement
 
-ดู [`ROADMAP.md`](ROADMAP.md) — แบ่งเป็น 5 phase ตั้งแต่ infra → agent → core modules → security modules → polish
+ทิศทางปัจจุบัน: ดู [`docs/security-posture/roadmap.md`](docs/security-posture/roadmap.md) (Phase 6–9) · roadmap เก่า (Phase 1–5, เสร็จแล้ว) อยู่ที่ `ROADMAP.md` (root, มีป้ายเก่า)
 
 **ห้าม implement หลาย module พร้อมกัน** จนกว่า phase ก่อนหน้าเสร็จและ test ผ่าน
 
 ---
 
-## เอกสารที่ต้องอ่านก่อนแตะแต่ละ layer
+## เอกสารที่ต้องอ่าน
 
-| ก่อนเขียน... | อ่าน |
-|--------------|------|
-| Agent code | `docs/modules/01-agent.md`, `docs/05-agent-protocol.md`, `docs/06-security.md` |
-| Backend API | `docs/04-api-contracts.md`, `docs/03-data-model.md`, `docs/06-security.md` |
-| Dashboard | `docs/modules/07-dashboard.md`, `docs/09-coding-conventions.md` |
-| Module ใดๆ | `docs/modules/0X-*.md` ของ module นั้นๆ |
-| Test | `docs/10-testing-strategy.md` |
+| งาน | อ่าน |
+|-----|------|
+| ทิศทาง/แผนใหม่ (ทุกงาน) | `docs/security-posture/00-START-HERE.md` → `roadmap.md` → spec ของ phase นั้น |
+| เข้าใจโค้ดเดิม (Module 1–9) | `docs/OLD-do-not-use/modules/0X-*.md` |
+| convention / testing เดิม | `docs/OLD-do-not-use/09-coding-conventions.md`, `10-testing-strategy.md` |
+| วิธีรันระบบ | `docs/RUN.md`, `docs/dev-setup.md` |
 
 ---
 
-## Convention สรุปสั้นๆ (รายละเอียดใน docs/09)
+## Convention สรุปสั้นๆ (รายละเอียดเดิมใน `docs/OLD-do-not-use/09-coding-conventions.md`)
 
 - **Go**: `gofmt`, `golangci-lint`, errors wrap ด้วย `fmt.Errorf("...: %w", err)`, ไม่ใช้ panic ใน production path
 - **Python**: `ruff` + `black`, type hints บังคับ, `async def` สำหรับ I/O ทุกตัว, Pydantic v2 models
@@ -104,7 +119,7 @@ SoftSentry/
 
 ---
 
-## Build/Test Commands (จะถูก setup ภายหลัง)
+## Build/Test Commands
 
 ```bash
 # Agent
@@ -128,5 +143,24 @@ docker compose up -d
 ## เมื่อไม่แน่ใจ
 
 - spec ไม่ชัด → **ถามผู้ใช้** ก่อนเดา. อย่า invent feature
-- conflict ระหว่าง modules → อ่าน `docs/02-architecture.md` ตัดสิน
+- conflict ระหว่าง modules → อ่าน `docs/OLD-do-not-use/02-architecture.md` ตัดสิน
 - security decision → default ไปทางปลอดภัยกว่า, ถามถ้าจะ trade-off
+
+---
+
+## Design Context
+
+> Source of truth สำหรับงาน frontend/ดีไซน์ทั้งหมด — รายละเอียดเต็มอยู่ที่ [`.impeccable.md`](.impeccable.md) (root). อ่านส่วนนี้ก่อนแตะ UI ทุกครั้ง
+
+**Users:** Corporate IT admins / SOC staff เฝ้า endpoint security posture ทั้ง fleet (Win/macOS) — นั่งจ้องนาน ๆ บนจอใหญ่ (บางทีเป็นจอ NOC) งานข้อมูลแน่น: machines, software, signatures, CVE, licenses, policy, alerts, audit. การตัดสินใจมีผล ("เครื่องนี้ปลอดภัยไหม") → UI ห้ามสร้างดราม่า/ความกำกวมเอง
+
+**Brand personality:** Precise · Dependable · Quiet — เครื่องมือ security ที่ไว้ใจได้ตอนตีสอง พูดด้วยข้อเท็จจริง ไม่ตะโกน ความมั่นใจมาจากความชัดเจน+ความนิ่ง ไม่ใช่การตกแต่ง เป้าหมายอารมณ์ = **calm authority**
+
+**Aesthetic — "Color is signal, not decoration":**
+- พื้น (canvas) = neutral เย็น ๆ tint เข้าหา iris hue (ไม่ใช่เทาด้าน ๆ, ไม่ใช้ดำ/ขาวล้วน)
+- **สี saturated สงวนไว้ให้ risk semantics เป็นหลัก:** 🟢 safe/verified=green · 🟡 warning=amber · 🔴 critical=red · ⚪ unknown=neutral grey
+- **Signature accent = cool desaturated iris-indigo** (ตั้งใจให้ต่างจาก shadcn 221° blue และไม่ชนสีความเสี่ยง) ใช้แบบ flat + ประหยัด: active nav, focus ring, primary action, link, selection — **ห้าม glow/gradient**
+- **Theme:** light + dark first-class ทั้งคู่ · dark = blue-charcoal เข้ม (ไม่ใช่ดำล้วน + neon) · light = cool off-white (ไม่ใช่ #fff)
+- **Anti-refs (ห้ามออกมาเป็น):** stock shadcn blue-on-slate · "AI slop" (cyan-on-dark, purple→blue gradient, neon glow, glassmorphism, gradient text บนตัวเลข, card grid ไอคอนซ้ำ ๆ, ยัดทุกอย่างใน card) · consumer/playful SaaS · bounce/elastic motion · mono ใช้มั่ว (mono เฉพาะ machine data จริง: hash/ID/version/thumbprint)
+
+**5 Principles:** ① Color = risk signal (canvas นิ่ง สงวน saturation ให้ความหมาย) · ② Density with rhythm (แน่นได้แต่มี spacing rhythm + hierarchy) · ③ อ่านออกจากไกล + แม่นยำตอนซูม · ④ Restraint over flourish (motion = state change เท่านั้น, ease-out, ห้าม bounce) · ⑤ Tri-lingual (TH/EN/JA) + dual-theme ตั้งแต่ต้น

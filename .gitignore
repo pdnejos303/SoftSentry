@@ -1,6 +1,8 @@
 # ── Secrets / env ──────────────────────────────────────────────
 .env
 .env.local
+# one-off local repair scripts (มัก hardcode enrollment token ไว้)
+agent/fix-localhost-deepscan.ps1
 .env.*.local
 !.env.example
 

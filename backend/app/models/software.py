@@ -36,6 +36,10 @@ class SoftwareRecord(Base, UuidMixin, TimestampMixin):
     version: Mapped[str] = mapped_column(String(100), nullable=False)
     publisher: Mapped[str | None] = mapped_column(String(255))
     install_date: Mapped[date | None] = mapped_column(Date)
+    # Accurate install moment (best-effort) reported by the agent — e.g. the
+    # install-dir/main-exe creation time. install_date keeps the registry's
+    # date-only value for back-compat; this carries the time component when known.
+    install_datetime: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     install_path: Mapped[str | None] = mapped_column(Text)
     install_size_kb: Mapped[int | None] = mapped_column(BigInteger)
     arch: Mapped[str | None] = mapped_column(String(10))

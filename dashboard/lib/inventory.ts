@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import type {
   CrossSoftwareItem,
+  ListResult,
   MachineDetail,
   MachineListItem,
   MachineSoftwareItem,

@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { severityColor } from "@/lib/vulnerability";
+import { tint } from "@/lib/chart";
 import { cn } from "@/lib/utils";
 
 const KNOWN = ["critical", "high", "medium", "low"];
@@ -27,7 +28,7 @@ export function SeverityBadge({
         "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold",
         className,
       )}
-      style={{ color, borderColor: color, backgroundColor: `${color}1a` }}
+      style={{ color, borderColor: tint(color, 35), backgroundColor: tint(color, 12) }}
     >
       {label}
       {cvss != null && <span className="tabular-nums opacity-80">{cvss.toFixed(1)}</span>}

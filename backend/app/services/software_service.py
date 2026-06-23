@@ -252,6 +252,7 @@ async def _active_rows(
             Machine.hostname,
             Machine.display_name,
             SignatureRecord.status,
+            SoftwareRecord.install_path,
         )
         .join(Machine, Machine.id == SoftwareRecord.machine_id)
         .outerjoin(SignatureRecord, SignatureRecord.id == SoftwareRecord.signature_id)
@@ -306,14 +307,19 @@ async def cross_software(
     rows = await _active_rows(session, q=q, publisher=publisher, signature_status=signature_status)
 
     grouped: dict[tuple[str, str], dict[str, object]] = {}
-    for name, version, pub, machine_uuid, hostname, display_name, sig_status in rows:
+    for name, version, pub, machine_uuid, hostname, display_name, sig_status, install_path in rows:
         key = (name, version)
         g = grouped.setdefault(
             key,
             {"name": name, "version": version, "publisher": pub, "machines": {}, "sig": None},
         )
-        # uuid → readable name (display name wins, else hostname) for the drill-down.
-        g["machines"][machine_uuid] = display_name or hostname  # type: ignore[index]
+        # uuid → readable label + install path for the drill-down. Display name
+        # wins over hostname; the path lets an admin copy where the app lives on
+        # that machine. A machine with the same app at >1 path keeps the last.
+        g["machines"][machine_uuid] = {  # type: ignore[index]
+            "name": display_name or hostname,
+            "install_path": install_path,
+        }
         if pub and not g["publisher"]:
             g["publisher"] = pub
         if sig_status and not g["sig"]:
@@ -331,8 +337,8 @@ async def cross_software(
             "publisher": g["publisher"],
             "installed_count": len(g["machines"]),  # type: ignore[arg-type]
             "machines": [
-                {"uuid": uuid, "name": name}
-                for uuid, name in list(g["machines"].items())[:_MACHINES_CAP]  # type: ignore[union-attr]
+                {"uuid": uuid, "name": m["name"], "install_path": m["install_path"]}
+                for uuid, m in list(g["machines"].items())[:_MACHINES_CAP]  # type: ignore[union-attr]
             ],
             "signature_status": g["sig"],
         }

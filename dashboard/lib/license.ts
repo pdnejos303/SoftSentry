@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
+import { licenseFill } from "./chart";
 import type {
   ComplianceSummary,
   LicenseDetail,
@@ -146,15 +147,8 @@ export function licenseStatusVariant(
 }
 
 // Donut/legend colors for the compliance widget breakdown.
-const STATUS_COLORS: Record<string, string> = {
-  compliant: "hsl(142 71% 45%)", // green
-  over_used: "hsl(0 72% 51%)", // red
-  expiring_soon: "hsl(38 92% 50%)", // amber
-  expired: "hsl(215 16% 47%)", // slate
-};
-
 export function statusColor(key: string): string {
-  return STATUS_COLORS[key] ?? "hsl(215 14% 71%)";
+  return licenseFill(key);
 }
 
 export interface ComplianceSlice {

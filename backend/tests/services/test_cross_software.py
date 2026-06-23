@@ -125,6 +125,21 @@ async def test_cross_software_machines_carry_readable_names(session):
 
 
 @pytest.mark.asyncio
+async def test_cross_software_machines_carry_install_path(session):
+    """The drill-down ref exposes each machine's install path so an admin can
+    copy where the app lives to go remove it."""
+    m = await _make_machine(session, "PC-D")
+    await scan_service.process_scan(
+        session=session,
+        machine=m,
+        payload=_scan(_sw("Foo", "1.0", install_path=r"C:\\Tools\\foo.exe")),
+    )
+    items, _ = await software_service.cross_software(session)
+    foo = next(i for i in items if i["name"] == "Foo")
+    assert foo["machines"][0]["install_path"] == r"C:\\Tools\\foo.exe"
+
+
+@pytest.mark.asyncio
 async def test_cross_software_sort_by_name(session):
     await _seed_fleet(session)
     asc, _ = await software_service.cross_software(session, sort="name")

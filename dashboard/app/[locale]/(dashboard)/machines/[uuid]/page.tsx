@@ -18,6 +18,7 @@ import { ReportGenerateButton } from "@/components/reports/ReportGenerateButton"
 import { VulnGroupTable } from "@/components/vulnerabilities/VulnGroupTable";
 import { CVEDetailModal } from "@/components/vulnerabilities/CVEDetailModal";
 import { DismissDialog } from "@/components/vulnerabilities/DismissDialog";
+import { CopyPathButton } from "@/components/software/CopyPathButton";
 import {
   licenseVariant,
   signatureVariant,
@@ -248,6 +249,7 @@ function OverviewTab({ machine }: { machine: ReturnType<typeof useMachine>["data
 
 function SoftwareTab({ uuid }: { uuid: string }) {
   const t = useTranslations("machineDetail");
+  const tPath = useTranslations("copyPath");
   const [q, setQ] = useState("");
   const [sig, setSig] = useState("");
   const { data, isLoading } = useMachineSoftware(uuid, {
@@ -289,19 +291,22 @@ function SoftwareTab({ uuid }: { uuid: string }) {
               <TableHead>{t("col.signature")}</TableHead>
               <TableHead>{t("col.license")}</TableHead>
               <TableHead>{t("col.source")}</TableHead>
+              <TableHead className="w-10">
+                <span className="sr-only">{tPath("tooltip")}</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && (
               <TableRow>
-                <TableCell colSpan={6}>
+                <TableCell colSpan={7}>
                   <Skeleton className="h-6 w-full" />
                 </TableCell>
               </TableRow>
             )}
             {data?.items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="py-6 text-center text-muted-foreground">
                   {t("noSoftware")}
                 </TableCell>
               </TableRow>
@@ -330,6 +335,9 @@ function SoftwareTab({ uuid }: { uuid: string }) {
                   )}
                 </TableCell>
                 <TableCell className="text-muted-foreground">{s.source}</TableCell>
+                <TableCell className="text-right">
+                  <CopyPathButton path={s.install_path} />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

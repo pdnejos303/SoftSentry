@@ -3,6 +3,11 @@
     "name": "SoftSentry",
     "tagline": "เครื่องมือจัดการ Software Asset + ความปลอดภัยขององค์กร"
   },
+  "copyPath": {
+    "tooltip": "คัดลอก path",
+    "copied": "คัดลอก path แล้ว",
+    "failed": "คัดลอก path ไม่สำเร็จ"
+  },
   "nav": {
     "overview": "ภาพรวม",
     "machines": "เครื่อง",
@@ -110,6 +115,11 @@
       "cve_high": "CVE สูง",
       "cve_medium": "CVE กลาง",
       "cve_low": "CVE ต่ำ"
+    },
+    "sections": {
+      "posture": "สถานะความปลอดภัย",
+      "trends": "แนวโน้ม",
+      "watchlist": "รายการเฝ้าระวัง"
     }
   },
   "machines": {
@@ -463,6 +473,7 @@
     "title": "ลายเซ็นดิจิทัล",
     "subtitle": "สถานะลายเซ็นดิจิทัลของซอฟต์แวร์ทั่วทั้งระบบ",
     "statsTitle": "การกระจายของสถานะลายเซ็น",
+    "total": "ไฟล์",
     "searchPlaceholder": "ค้นหาซอฟต์แวร์...",
     "clearFilter": "ทั้งหมด",
     "empty": "ไม่พบซอฟต์แวร์",

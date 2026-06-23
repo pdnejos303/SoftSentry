@@ -3,6 +3,11 @@
     "name": "SoftSentry",
     "tagline": "組織のためのソフトウェア資産管理＋セキュリティ"
   },
+  "copyPath": {
+    "tooltip": "パスをコピー",
+    "copied": "パスをコピーしました",
+    "failed": "パスをコピーできませんでした"
+  },
   "nav": {
     "overview": "概要",
     "machines": "マシン",
@@ -107,6 +112,11 @@
       "cve_high": "CVE 高",
       "cve_medium": "CVE 中",
       "cve_low": "CVE 低"
+    },
+    "sections": {
+      "posture": "セキュリティ態勢",
+      "trends": "推移",
+      "watchlist": "ウォッチリスト"
     }
   },
   "machines": {
@@ -460,6 +470,7 @@
     "title": "署名",
     "subtitle": "フリート全体のソフトウェアのデジタル署名ステータス",
     "statsTitle": "署名の分布",
+    "total": "ファイル",
     "searchPlaceholder": "ソフトウェアを検索...",
     "clearFilter": "すべて",
     "empty": "ソフトウェアが見つかりません",

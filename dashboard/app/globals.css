@@ -45,6 +45,19 @@
     --warning: 0.715 0.15 76;
     --warning-foreground: 0.27 0.045 76;
 
+    /*
+     * Data-viz ramp — a single severity scale every chart shares (see lib/chart.ts).
+     * Hue walks red → orange → amber → cool-quiet for low; neutral is colourless.
+     * Grid/axis stay faint so the data, not the frame, carries the ink.
+     */
+    --chart-critical: 0.55 0.21 25;
+    --chart-high: 0.63 0.18 48;
+    --chart-medium: 0.72 0.155 76;
+    --chart-low: 0.6 0.06 248;
+    --chart-neutral: 0.7 0.022 274;
+    --chart-grid: 0.915 0.006 274;
+    --chart-axis: 0.55 0.02 272;
+
     /* Lines + focus */
     --border: 0.915 0.008 274;
     --input: 0.915 0.008 274;
@@ -88,6 +101,15 @@
     --success-foreground: 0.18 0.03 152;
     --warning: 0.8 0.145 80;
     --warning-foreground: 0.22 0.045 80;
+
+    /* Data-viz ramp, lifted for legibility on the dark SOC surface. */
+    --chart-critical: 0.66 0.2 25;
+    --chart-high: 0.73 0.17 50;
+    --chart-medium: 0.81 0.15 80;
+    --chart-low: 0.68 0.07 246;
+    --chart-neutral: 0.62 0.022 274;
+    --chart-grid: 0.3 0.018 274;
+    --chart-axis: 0.66 0.02 272;
 
     --border: 0.3 0.018 274;
     --input: 0.3 0.018 274;

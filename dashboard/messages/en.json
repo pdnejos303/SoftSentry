@@ -3,6 +3,11 @@
     "name": "SoftSentry",
     "tagline": "Software Asset Management + Security for your organization"
   },
+  "copyPath": {
+    "tooltip": "Copy path",
+    "copied": "Path copied",
+    "failed": "Couldn't copy path"
+  },
   "nav": {
     "overview": "Overview",
     "machines": "Machines",
@@ -110,6 +115,11 @@
       "cve_high": "CVE High",
       "cve_medium": "CVE Medium",
       "cve_low": "CVE Low"
+    },
+    "sections": {
+      "posture": "Security posture",
+      "trends": "Trends",
+      "watchlist": "Watchlist"
     }
   },
   "machines": {
@@ -463,6 +473,7 @@
     "title": "Signatures",
     "subtitle": "Digital signature status of software across the fleet",
     "statsTitle": "Signature distribution",
+    "total": "Files",
     "searchPlaceholder": "Search software...",
     "clearFilter": "All",
     "empty": "No software found",

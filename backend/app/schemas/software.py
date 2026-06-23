@@ -102,6 +102,7 @@ class MachineRef(BaseModel):
 
     uuid: uuid_lib.UUID
     name: str
+    install_path: str | None = None
 
 
 class CrossSoftwareItem(BaseModel):

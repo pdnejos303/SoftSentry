@@ -29,6 +29,14 @@ import {
   useSoftwareStats,
   useTopSoftware,
 } from "@/lib/inventory";
+import {
+  axisProps,
+  chart,
+  cursorFill,
+  tooltipLabelStyle,
+  tooltipStyle,
+  trackFill,
+} from "@/lib/chart";
 import { Link } from "@/i18n/routing";
 import type { CrossSoftwareItem, SignatureStatus } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +53,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ExportButton } from "@/components/reports/ExportButton";
+import { CopyPathButton } from "@/components/software/CopyPathButton";
 import {
   Table,
   TableBody,
@@ -282,14 +291,47 @@ function SoftwareInventory() {
               {chartRisk ? t("chart.riskyEmpty") : t("empty")}
             </p>
           ) : (
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart data={chartData} layout="vertical" margin={{ left: 20, right: 24 }}>
-                <XAxis type="number" allowDecimals={false} />
-                <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 12 }} />
-                <Tooltip cursor={{ fill: "hsl(var(--muted))" }} />
-                <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+            <ResponsiveContainer width="100%" height={Math.max(220, chartData.length * 34)}>
+              <BarChart
+                data={chartData}
+                layout="vertical"
+                margin={{ top: 4, left: 20, right: 36, bottom: 4 }}
+                barCategoryGap={10}
+              >
+                <XAxis type="number" allowDecimals={false} hide />
+                <YAxis type="category" dataKey="name" width={160} interval={0} {...axisProps} />
+                <Tooltip
+                  cursor={cursorFill}
+                  content={({ active, payload }) => {
+                    const row = active ? payload?.[0]?.payload : undefined;
+                    if (!row) return null;
+                    return (
+                      <div style={tooltipStyle}>
+                        <div style={tooltipLabelStyle}>{row.name}</div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span
+                            className="h-2.5 w-2.5 rounded-full"
+                            style={{ background: chartRisk ? chart.critical : chart.brand }}
+                          />
+                          <span className="text-muted-foreground">
+                            {chartRisk ? t("chart.risky") : t("chart.installed")}
+                          </span>
+                          <span className="ml-auto tabular-nums font-semibold">{row.count}</span>
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
+                <Bar
+                  dataKey="count"
+                  radius={[0, 5, 5, 0]}
+                  maxBarSize={22}
+                  background={{ fill: trackFill, radius: 5 }}
+                  activeBar={{ fillOpacity: 0.85 }}
+                  animationDuration={650}
+                >
                   {chartData.map((_, i) => (
-                    <Cell key={i} fill={chartRisk ? "hsl(0 72% 51%)" : "hsl(221 83% 53%)"} />
+                    <Cell key={i} fill={chartRisk ? chart.critical : chart.brand} />
                   ))}
                 </Bar>
               </BarChart>
@@ -464,15 +506,21 @@ function SoftwareInventory() {
               </DialogHeader>
               <ul className="max-h-72 space-y-1 overflow-y-auto">
                 {drill.machines.map((m) => (
-                  <li key={m.uuid}>
-                    <Link
-                      href={`/machines/${m.uuid}`}
-                      onClick={() => setDrill(null)}
-                      className="flex items-center justify-between rounded px-2 py-1.5 text-sm hover:bg-muted"
-                    >
-                      <span className="font-medium">{m.name}</span>
-                      <span className="text-primary">{t("drill.view")}</span>
-                    </Link>
+                  <li
+                    key={m.uuid}
+                    className="flex items-center justify-between gap-2 rounded px-2 py-1.5 text-sm hover:bg-muted"
+                  >
+                    <span className="truncate font-medium">{m.name}</span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <CopyPathButton path={m.install_path} />
+                      <Link
+                        href={`/machines/${m.uuid}`}
+                        onClick={() => setDrill(null)}
+                        className="text-primary"
+                      >
+                        {t("drill.view")}
+                      </Link>
+                    </div>
                   </li>
                 ))}
               </ul>

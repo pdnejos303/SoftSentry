@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Pause, Play, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 export interface RefreshControlProps {
@@ -15,7 +16,14 @@ export function RefreshControl({ paused, onToggle, onRefreshNow }: RefreshContro
   const t = useTranslations("dashboard");
   return (
     <div className="flex items-center gap-2">
-      <span className="hidden text-xs text-muted-foreground sm:inline">
+      <span className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:inline-flex">
+        <span
+          className={cn(
+            "h-1.5 w-1.5 rounded-full",
+            paused ? "bg-muted-foreground/40" : "animate-pulse bg-primary",
+          )}
+          aria-hidden
+        />
         {paused ? t("pollPaused") : t("pollLive")}
       </span>
       <Button variant="outline" size="sm" onClick={onRefreshNow}>

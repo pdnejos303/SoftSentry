@@ -1,15 +1,14 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { useQueryClient } from "@tanstack/react-query";
-import { Monitor, Package, ShieldAlert, Wifi } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { useRouter } from "@/i18n/routing";
 import { useAuth } from "@/lib/auth";
 import { useOverview } from "@/lib/dashboard";
 import { useAlerts } from "@/lib/policy";
-import { KpiCard } from "@/components/dashboard/KpiCard";
-import { RefreshControl } from "@/components/dashboard/RefreshControl";
+import { StatStrip, type Stat } from "@/components/dashboard/StatStrip";
 import { VulnTrendChart } from "@/components/dashboard/VulnTrendChart";
 import { RiskyMachinesBar } from "@/components/dashboard/RiskyMachinesBar";
 import { VulnSummaryWidget } from "@/components/vulnerabilities/VulnSummaryWidget";
@@ -29,10 +28,9 @@ export default function OverviewPage() {
   const router = useRouter();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin" || user?.role === "dev";
-  const qc = useQueryClient();
 
-  const [paused, setPaused] = useState(false);
-  const pollMs = paused ? undefined : POLL_MS;
+  // Auto-refresh stays always-on; the manual refresh/pause controls were removed.
+  const pollMs = POLL_MS;
 
   const [alertsPage, setAlertsPage] = useState(1);
 
@@ -42,92 +40,90 @@ export default function OverviewPage() {
     { refetchInterval: pollMs },
   );
 
-  function refreshNow() {
-    void qc.invalidateQueries({ queryKey: ["dashboard-overview"] });
-    void qc.invalidateQueries({ queryKey: ["dashboard-risk-scores"] });
-    void qc.invalidateQueries({ queryKey: ["dashboard-vuln-trend"] });
-    void qc.invalidateQueries({ queryKey: ["alerts"] });
-    void qc.invalidateQueries({ queryKey: ["vuln-summary"] });
-    void qc.invalidateQueries({ queryKey: ["signature-stats"] });
-    void qc.invalidateQueries({ queryKey: ["compliance-summary"] });
-  }
-
   const total = overview?.machines_total ?? 0;
   const online = overview?.agents_online ?? 0;
   const offline = Math.max(0, total - online);
   const offlineWarn = total > 0 && offline / total > OFFLINE_WARN_RATIO;
   const allOffline = total > 0 && online === 0;
 
-  const vulnSummary = overview
-    ? `${overview.vuln_critical}C / ${overview.vuln_high}H / ${overview.vuln_medium}M`
-    : "—";
+  const vulnSummary: ReactNode = overview ? (
+    <span>
+      {overview.vuln_critical}
+      <span className="text-base font-normal text-muted-foreground">C</span>{" "}
+      {overview.vuln_high}
+      <span className="text-base font-normal text-muted-foreground">H</span>{" "}
+      {overview.vuln_medium}
+      <span className="text-base font-normal text-muted-foreground">M</span>
+    </span>
+  ) : (
+    "—"
+  );
+
+  const stats: Stat[] = [
+    {
+      key: "machines",
+      label: t("kpi.machines"),
+      value: total,
+      href: "/machines",
+    },
+    {
+      key: "agents",
+      label: t("kpi.agentsOnline"),
+      value: `${online} / ${total}`,
+      sub: offline > 0 ? t("kpi.offlineCount", { count: offline }) : undefined,
+      tone: offlineWarn ? "warning" : "default",
+      href: "/machines",
+    },
+    {
+      key: "software",
+      label: t("kpi.software"),
+      value: overview?.software_unique ?? 0,
+      href: "/software",
+    },
+    {
+      key: "vulns",
+      label: t("kpi.vulnerabilities"),
+      value: vulnSummary,
+      tone: overview && overview.vuln_critical > 0 ? "danger" : "default",
+      href: "/vulnerabilities",
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <RefreshControl
-          paused={paused}
-          onToggle={() => setPaused((p) => !p)}
-          onRefreshNow={refreshNow}
-        />
+    <div className="space-y-8">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       {allOffline ? (
-        <div className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-400">
+        <div className="flex items-center gap-2.5 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+          <ShieldAlert className="h-4 w-4 shrink-0" />
           {t("allOffline")}
         </div>
       ) : null}
 
-      {/* KPI row */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          label={t("kpi.machines")}
-          value={total}
-          icon={<Monitor className="h-5 w-5" />}
-          href="/machines"
-          isLoading={isLoading}
-        />
-        <KpiCard
-          label={t("kpi.agentsOnline")}
-          value={`${online} / ${total}`}
-          sub={offline > 0 ? t("kpi.offlineCount", { count: offline }) : undefined}
-          tone={offlineWarn ? "warning" : "default"}
-          icon={<Wifi className="h-5 w-5" />}
-          href="/machines"
-          isLoading={isLoading}
-        />
-        <KpiCard
-          label={t("kpi.software")}
-          value={overview?.software_unique ?? 0}
-          icon={<Package className="h-5 w-5" />}
-          href="/software"
-          isLoading={isLoading}
-        />
-        <KpiCard
-          label={t("kpi.vulnerabilities")}
-          value={vulnSummary}
-          tone={overview && overview.vuln_critical > 0 ? "danger" : "default"}
-          icon={<ShieldAlert className="h-5 w-5" />}
-          href="/vulnerabilities"
-          isLoading={isLoading}
-        />
-      </div>
+      {/* Fleet readout — one instrument panel, colour only where risk is real. */}
+      <StatStrip stats={stats} isLoading={isLoading} />
 
-      {/* Charts row: severity donut, signature donut, license gauge */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <VulnSummaryWidget onSelect={() => router.push("/vulnerabilities")} />
-        <SignatureStatsWidget onSelect={() => router.push("/signatures")} />
-        <ComplianceSummaryWidget onSelect={() => router.push("/licenses")} />
-      </div>
+      <section className="space-y-4">
+        <SectionLabel>{t("sections.posture")}</SectionLabel>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <VulnSummaryWidget onSelect={() => router.push("/vulnerabilities")} />
+          <SignatureStatsWidget onSelect={() => router.push("/signatures")} />
+          <ComplianceSummaryWidget onSelect={() => router.push("/licenses")} />
+        </div>
+      </section>
 
-      <VulnTrendChart refetchInterval={pollMs} />
+      <section className="space-y-4">
+        <SectionLabel>{t("sections.trends")}</SectionLabel>
+        <VulnTrendChart refetchInterval={pollMs} />
+      </section>
 
-      {/* Bottom row: risky machines + live alert feed */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      {/* Watchlist: risky machines + live alert feed */}
+      <section className="space-y-4">
+        <SectionLabel>{t("sections.watchlist")}</SectionLabel>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <RiskyMachinesBar refetchInterval={pollMs} />
         <Card>
           <CardHeader>
@@ -166,7 +162,19 @@ export default function OverviewPage() {
             )}
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-center gap-3">
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        {children}
+      </h2>
+      <span className="h-px flex-1 bg-border" aria-hidden />
     </div>
   );
 }

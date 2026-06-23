@@ -16,6 +16,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unsafe"
 
 	"github.com/lxn/walk"
 	. "github.com/lxn/walk/declarative"
@@ -47,6 +48,27 @@ func lockFixedSize(hwnd win.HWND) {
 func redrawFull(hwnd win.HWND) {
 	win.RedrawWindow(hwnd, nil, 0,
 		win.RDW_ERASE|win.RDW_INVALIDATE|win.RDW_ALLCHILDREN|win.RDW_UPDATENOW)
+}
+
+// forceEraseBg ลบพิกเซลของ client area ทิ้งด้วย GDI ตรงๆ (ไม่พึ่ง WM_ERASEBKGND ของ
+// walk ที่คืน NullBrush แล้วไม่ยอมลบ = ต้นเหตุเงาซ้อนที่แก้ด้วย Background ไม่หาย) —
+// เรียกตอน content "ว่าง" (หลัง dispose panel เก่า ก่อนสร้างใหม่) เพื่อทาทับด้วยสีพื้น
+// dialog มาตรฐาน ลบตัวอักษร panel เก่าหายเกลี้ยงแน่นอน ไม่ว่า walk จะ erase ให้หรือไม่
+func forceEraseBg(hwnd win.HWND) {
+	hdc := win.GetDC(hwnd)
+	if hdc == 0 {
+		return
+	}
+	defer win.ReleaseDC(hwnd, hdc)
+	var rc win.RECT
+	win.GetClientRect(hwnd, &rc)
+	// FillRect(hdc, *RECT, hBrush) — เรียกผ่าน proc ที่ประกาศเอง (lxn/win ไม่ bind ให้)
+	// ใช้ solid brush สีพื้น dialog (COLOR_BTNFACE) ทาทับทั้ง client area ลบเงาเก่าเกลี้ยง
+	procFillRect.Call(
+		uintptr(hdc),
+		uintptr(unsafe.Pointer(&rc)),
+		uintptr(win.GetSysColorBrush(win.COLOR_BTNFACE)),
+	)
 }
 
 // procGetUserDefaultUILanguage ใช้ตรวจภาษา UI ของ Windows เพื่อตั้งภาษาเริ่มต้น
@@ -90,6 +112,7 @@ type wizardUI struct {
 	lang       Lang
 	installDir string
 	agreed     bool // ติ๊ก checkbox ยินยอมในหน้า consent แล้วหรือยัง
+	rebuilding bool // กัน showStep ทำงานซ้อน (re-entrant) ระหว่างสร้าง panel — ดู showStep
 
 	result WizardResult
 }
@@ -250,13 +273,27 @@ func (ui *wizardUI) updateNav() {
 
 // showStep สร้างเนื้อหาของ step ที่ระบุใหม่ในภาษาปัจจุบัน — dispose panel เดิมก่อน
 // แล้วสร้าง panel ใหม่ลงใน content (SetSuspended เพื่อ relayout ครั้งเดียวตอนจบ)
+//
+// กัน re-entrant: การ build panel (Create/SetSuspended/redraw) มีการ pump message ของ
+// Win32 ระหว่างทาง ทำให้ event เช่น CurrentIndexChanged ของ combo เลือกภาษา "ยิงซ้ำ"
+// แล้วเรียก showStep ซ้อนเข้ามากลางคัน → panel ที่สร้างค้างกลายเป็น child ที่ "หลุดการ
+// ติดตาม" (ui.panel ชี้ไปตัวใหม่ ตัวเก่าไม่ถูก dispose) สะสมเป็นพาเนลซ้อนเรียงลงมา
+// (อาการนี้โผล่เฉพาะบางเครื่อง/DPI/timing — บน native build อาจไม่เห็น) flag rebuilding
+// ตัด re-entry ทิ้ง ส่วน clearContent ด้านล่างเก็บกวาด child ที่เคยหลุดให้หมดทุกครั้ง
 func (ui *wizardUI) showStep(i int) {
+	if ui.rebuilding {
+		return
+	}
+	ui.rebuilding = true
+	defer func() { ui.rebuilding = false }()
+
 	ui.step = i
 	ui.content.SetSuspended(true)
-	if ui.panel != nil {
-		ui.panel.Dispose()
-		ui.panel = nil
-	}
+	ui.clearContent()
+	// content ว่างแล้ว (ไม่มี child) → ลบพิกเซลเงาเก่าด้วย GDI ตรงๆ ทันที ก่อนสร้าง panel
+	// ใหม่ เป็นการรับประกันว่าเงาหายจริงโดยไม่พึ่งกลไก erase ของ walk (ที่พิสูจน์แล้วว่า
+	// ไม่ยอมลบแม้ตั้ง Background ครบ) — fix รอบสุดท้ายที่ลงไปถึงระดับ GDI
+	forceEraseBg(ui.content.Handle())
 	switch i {
 	case 0:
 		ui.buildWelcome()
@@ -271,6 +308,24 @@ func (ui *wizardUI) showStep(i int) {
 	// header/separator/footer ไม่งั้นเงาข้อความเก่าที่ header ยังค้าง
 	redrawFull(ui.mw.Handle())
 	ui.updateNav()
+}
+
+// clearContent ทำลาย child "ทุกตัว" ของ content (ไม่ใช่แค่ ui.panel ตัวที่ติดตามอยู่)
+// — กันพาเนลเก่าที่ "หลุดการติดตาม" จาก re-entrant showStep ค้างเป็น live HWND แล้ว
+// render ซ้อนกัน (ต้นเหตุอาการ "เปลี่ยนภาษาแล้วเพิ่มตัวใหม่ไม่ลบตัวเก่า"). ต้อง snapshot
+// reference ลูกทั้งหมดก่อนวน Dispose เพราะ walk แก้ children list ระหว่าง Dispose (ผ่าน
+// SetParent) ทำให้ index เลื่อนถ้าวนอ่านสดๆ. Dispose แต่ละตัว = DestroyWindow + ถอดออกจาก
+// layout ของ content ครบ (child พวกนี้ parent ถูกต้องเสมอ จึงเข้าเงื่อนไขถอดใน Dispose)
+func (ui *wizardUI) clearContent() {
+	kids := ui.content.Children()
+	stale := make([]walk.Widget, kids.Len())
+	for i := range stale {
+		stale[i] = kids.At(i)
+	}
+	for _, w := range stale {
+		w.Dispose()
+	}
+	ui.panel = nil
 }
 
 // onBack/onNext/onCancel คือ handler ของปุ่มนำทาง
@@ -308,12 +363,13 @@ func (ui *wizardUI) buildWelcome() {
 		Layout:     VBox{Margins: Margins{Left: 12, Top: 20, Right: 12, Bottom: 8}, Spacing: 14},
 		Children: []Widget{
 			// ───────────────────────────────────────────────────────────────────
-			// ⚠️ MARKER ชั่วคราว: ถ้าเห็นคำว่า "FIX" สีแดงตัวใหญ่นี้บนหน้าแรก = ตัวที่
-			// โหลด/รัน ถูก build ใหม่จาก source ล่าสุดผ่าน compose จริง (ไม่ใช่ของเก่าค้าง)
-			// ถ้าไม่เห็น = ยังเป็นตัวเก่า agent-builder ไม่ได้ rebuild → ลบทิ้งหลังยืนยันแล้ว
+			// ⚠️ MARKER ชั่วคราว (build-stamp ที่อ่านออก): บอก "การแก้ครั้งล่าสุด" ที่อยู่ใน
+			// binary ตัวนี้ — ถ้าเห็นข้อความนี้บนหน้าแรก = ตัวที่รันถูก build ใหม่จาก source
+			// ล่าสุดจริง (ไม่ใช่ของเก่าค้าง). เปลี่ยนข้อความทุกครั้งที่แก้บั๊กใหม่ เพื่อยืนยันว่า
+			// agent-builder rebuild แล้ว — ลบทั้ง Label นี้ทิ้งได้เมื่อไม่ต้องใช้ตรวจ build อีก
 			Label{
-				Text:      "FIX",
-				Font:      Font{PointSize: 28, Bold: true},
+				Text:      "แก้แล้ว: เปลี่ยนภาษาไม่เพิ่มพาเนลซ้อน (ลบตัวเก่าครบ)",
+				Font:      Font{PointSize: 13, Bold: true},
 				TextColor: walk.RGB(0xD0, 0x21, 0x21),
 			},
 			Label{Text: t.welcomeHeading, Font: Font{PointSize: 17, Bold: true}},

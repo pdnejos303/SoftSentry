@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./api";
+import { signatureFill } from "./chart";
 import type {
   Paginated,
   SignatureDetail,
@@ -83,17 +84,8 @@ export function signatureReasonLabel(
     : t("unknownCode", { code: reason });
 }
 
-const COLORS: Record<string, string> = {
-  valid: "hsl(142 71% 45%)", // green
-  expired: "hsl(38 92% 50%)", // amber
-  invalid: "hsl(0 72% 51%)", // red
-  unsigned: "hsl(215 16% 47%)", // slate
-};
-
-const MUTED = "hsl(215 14% 71%)";
-
 export function signatureColor(status: string): string {
-  return COLORS[status] ?? MUTED;
+  return signatureFill(status);
 }
 
 export interface StatsSlice extends SignatureStatsItem {

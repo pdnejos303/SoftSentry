@@ -32,6 +32,9 @@ var (
 	procShowWindow       = moduser32.NewProc("ShowWindow")
 	procMessageBoxW      = moduser32.NewProc("MessageBoxW")
 	procTaskDialog       = modcomctl32.NewProc("TaskDialog")
+	// FillRect ไม่ถูก bind ใน lxn/win — ประกาศเองเพื่อใช้ลบเงาซ้อนด้วย GDI ตรงๆ
+	// (ดู forceEraseBg ใน wizard_windows.go)
+	procFillRect = moduser32.NewProc("FillRect")
 )
 
 // ค่าคงที่ Win32 ที่ใช้ — ตั้งชื่อให้ตรงกับ SDK เพื่อตรวจสอบง่าย

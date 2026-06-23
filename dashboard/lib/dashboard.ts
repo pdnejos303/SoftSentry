@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "./api";
+import { riskBucketFill, TREND } from "./chart";
 import type {
   Overview,
   RiskBreakdown,
@@ -79,15 +80,8 @@ export function riskColor(score: number): "green" | "yellow" | "orange" | "red" 
   return "red";
 }
 
-const RISK_FILL: Record<string, string> = {
-  green: "hsl(142 71% 45%)",
-  yellow: "hsl(48 96% 53%)",
-  orange: "hsl(25 95% 53%)",
-  red: "hsl(0 72% 51%)",
-};
-
 export function riskFill(color: string): string {
-  return RISK_FILL[color] ?? "hsl(48 96% 53%)";
+  return riskBucketFill(color);
 }
 
 // Display: drop a trailing ".0" but keep the ".5" that a low-severity CVE adds.
@@ -127,10 +121,6 @@ export function breakdownRows(b: {
   }));
 }
 
-// Severity → line/area color for the vuln trend chart (spec: red/orange/yellow/gray).
-export const TREND_COLORS: Record<"critical" | "high" | "medium" | "low", string> = {
-  critical: "hsl(0 72% 51%)",
-  high: "hsl(25 95% 53%)",
-  medium: "hsl(48 96% 53%)",
-  low: "hsl(215 16% 47%)",
-};
+// Severity → line/area color for the vuln trend chart. Sourced from the shared
+// data-viz ramp (lib/chart.ts) so trend, donut, bars and badges all agree.
+export const TREND_COLORS = TREND;

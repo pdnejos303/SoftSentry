@@ -100,6 +100,7 @@ export interface ScanHistoryItem {
 export interface MachineRef {
   uuid: string;
   name: string;
+  install_path: string | null;
 }
 
 export interface CrossSoftwareItem {

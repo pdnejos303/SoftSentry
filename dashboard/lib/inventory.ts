@@ -10,10 +10,13 @@ import type {
   MachineSoftwareItem,
   MachineUpdateInput,
   Paginated,
+  RecentInstallItem,
   ScanHistoryItem,
   SignatureStatus,
   SoftwareHistoryItem,
+  SoftwareStats,
   TopSoftwareItem,
+  TrustLevel,
 } from "./types";
 
 // ── machines ────────────────────────────────────────────────────────────────
@@ -107,6 +110,18 @@ export function useTriggerScan(uuid: string) {
   });
 }
 
+// Admin: force the agent to pull the latest binary on its next heartbeat. The
+// backend returns 409 when no binary exists for the machine's platform, which
+// the caller surfaces as a distinct warning toast.
+export function useTriggerUpdate(uuid: string) {
+  return useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post(`/machines/${uuid}/trigger-update`);
+      return data;
+    },
+  });
+}
+
 // Admin: rename / set owner / edit tags. PATCH is partial, so we send only the
 // fields the dialog changed; the response is the fresh detail we seed the cache with.
 export function useUpdateMachine() {
@@ -144,6 +159,7 @@ export function useSoftware(params: {
   q?: string;
   publisher?: string;
   signature_status?: string;
+  sort?: string;
   page?: number;
   page_size?: number;
 }) {
@@ -156,19 +172,69 @@ export function useSoftware(params: {
   });
 }
 
-export function useTopSoftware(limit = 10) {
+// Fleet posture summary for the inventory header strip. Honours the same search
+// so the numbers track what the table is showing.
+export function useSoftwareStats(params: { q?: string; publisher?: string } = {}) {
   return useQuery({
-    queryKey: ["top-software", limit],
+    queryKey: ["software-stats", params],
+    queryFn: async () => {
+      const { data } = await api.get<SoftwareStats>("/software/stats", { params });
+      return data;
+    },
+  });
+}
+
+// `risk` flips the ranking from most-installed to most-spread *untrusted* apps
+// (unsigned / no signature / invalid) — the security-posture view of the chart.
+export function useTopSoftware(limit = 10, risk = false) {
+  return useQuery({
+    queryKey: ["top-software", limit, risk],
     queryFn: async () => {
       const { data } = await api.get<TopSoftwareItem[]>("/software/top", {
-        params: { limit },
+        params: { limit, ...(risk ? { risk: true } : {}) },
       });
       return data;
     },
   });
 }
 
+// ── recently-installed feed (security posture) ────────────────────────────────
+
+// Poll periodically so a freshly-installed app shows up soon after the next scan.
+const RECENT_POLL_MS = 30_000;
+
+export function useRecentInstalls(
+  params: {
+    days?: number;
+    from_date?: string; // YYYY-MM-DD — overrides `days` when set
+    to_date?: string; // YYYY-MM-DD
+    limit?: number;
+  } = {},
+) {
+  return useQuery({
+    queryKey: ["recent-installs", params],
+    queryFn: async () => {
+      const { data } = await api.get<ListResult<RecentInstallItem>>("/software/recent-installs", {
+        params,
+      });
+      return data;
+    },
+    refetchInterval: RECENT_POLL_MS,
+  });
+}
+
 // ── presentation helpers ──────────────────────────────────────────────────────
+
+export function trustVariant(trust: TrustLevel): "success" | "warning" | "danger" {
+  switch (trust) {
+    case "trusted":
+      return "success";
+    case "risky":
+      return "danger";
+    default:
+      return "warning"; // suspicious
+  }
+}
 
 export function statusVariant(status: string): "success" | "warning" | "muted" {
   if (status === "online") return "success";

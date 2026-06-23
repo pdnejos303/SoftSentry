@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"golang.org/x/sys/windows/registry"
@@ -91,10 +92,48 @@ func parseEntry(root registry.Key, subkey, arch string) (Software, bool) {
 		Source:      "registry",
 	}
 
+	// เวลาติดตั้งจริง (best-effort): registry InstallDate ให้แค่ "วันที่" (บางตัว
+	// ไม่มีเลย) — เติมเวลาที่แท้จริงจากเวลา "สร้าง" ของโฟลเดอร์ติดตั้ง/main exe
+	// ซึ่งตรงกับตอนที่ installer วางไฟล์ลงเครื่อง. ถ้าหาไม่ได้ปล่อยว่าง (backend
+	// fallback ไปใช้ install_date)
+	sw.InstalledAt = resolveInstalledAt(k, sw.InstallPath)
+
 	if sz, _, err := k.GetIntegerValue("EstimatedSize"); err == nil {
 		sw.InstallSizeKB = int64(sz)
 	}
 	return sw, true
+}
+
+// resolveInstalledAt คืนเวลาติดตั้งจริงเป็น RFC3339 (UTC) แบบ best-effort:
+// ลองเวลาสร้างของ InstallLocation (โฟลเดอร์ติดตั้ง) ก่อน แล้วค่อย main exe ที่
+// resolve ได้ — โฟลเดอร์มักสะท้อนเวลา extract ของ installer ได้แม่นกว่า. คืน ""
+// ถ้าทั้งสองอ่านไม่ได้ (เช่น path หาย/แอป store)
+func resolveInstalledAt(k registry.Key, exePath string) string {
+	loc := strings.TrimSpace(regString(k, "InstallLocation"))
+	for _, p := range []string{loc, exePath} {
+		if p == "" {
+			continue
+		}
+		if t, ok := fileCreationTime(p); ok {
+			return t.UTC().Format(time.RFC3339)
+		}
+	}
+	return ""
+}
+
+// fileCreationTime อ่านเวลา "สร้าง" ของไฟล์/โฟลเดอร์บน Windows ผ่าน
+// Win32FileAttributeData (os.Stat ปกติให้แค่ ModTime). คืน false ถ้า stat ไม่ได้
+// หรือ field ไม่ใช่ชนิดที่คาด (กันพังข้ามแพลตฟอร์ม/ระบบไฟล์แปลก)
+func fileCreationTime(path string) (time.Time, bool) {
+	info, err := os.Stat(path)
+	if err != nil {
+		return time.Time{}, false
+	}
+	attr, ok := info.Sys().(*syscall.Win32FileAttributeData)
+	if !ok {
+		return time.Time{}, false
+	}
+	return time.Unix(0, attr.CreationTime.Nanoseconds()), true
 }
 
 // regString อ่านค่า string จาก registry (รองรับ REG_EXPAND_SZ)

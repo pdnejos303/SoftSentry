@@ -57,6 +57,32 @@ export function useSignatureStats() {
 
 export const SIGNATURE_STATUSES = ["valid", "expired", "invalid", "unsigned"] as const;
 
+// Reason codes the agent maps for status="invalid" (mirrors agent scanner
+// Reason* consts). Anything else is a raw HRESULT hex shown verbatim.
+export const KNOWN_SIGNATURE_REASONS = [
+  "tampered",
+  "untrusted_root",
+  "broken_chain",
+  "revoked",
+  "distrusted",
+] as const;
+
+/**
+ * Localize an invalid-signature reason. Known codes resolve to a translated
+ * sentence; an unmapped value (raw HRESULT hex, or "other") falls back to the
+ * `unknownCode` message so the user still sees the real code. `t` must be a
+ * translator scoped to `signatures.reason`. Returns null when there's no reason.
+ */
+export function signatureReasonLabel(
+  reason: string | null | undefined,
+  t: (key: string, values?: Record<string, string>) => string,
+): string | null {
+  if (!reason) return null;
+  return (KNOWN_SIGNATURE_REASONS as readonly string[]).includes(reason)
+    ? t(reason)
+    : t("unknownCode", { code: reason });
+}
+
 const COLORS: Record<string, string> = {
   valid: "hsl(142 71% 45%)", // green
   expired: "hsl(38 92% 50%)", // amber

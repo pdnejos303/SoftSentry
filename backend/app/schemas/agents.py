@@ -66,6 +66,10 @@ class AgentUpdateAvailable(BaseModel):
     version: str
     download_url: str
     sha256: str
+    # True when an admin forced this update via "Update agent now": the agent must
+    # apply it even if auto-update is off, the version matches, or it already
+    # installed this SHA. Absent/false on the normal version-compare path.
+    forced: bool = False
 
 
 class ScanProgressIn(BaseModel):

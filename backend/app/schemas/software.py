@@ -53,6 +53,28 @@ class SoftwareHistoryList(BaseModel):
     total: int
 
 
+# ── Recently-installed feed + trust (security posture) ──────────────────────
+
+
+class RecentInstallItem(BaseModel):
+    machine_uuid: uuid_lib.UUID
+    machine_name: str
+    name: str
+    version: str
+    event: str  # installed | updated
+    publisher: str | None = None
+    detected_at: datetime  # when the agent first saw it
+    installed_at: datetime | None = None  # accurate install moment (best-effort)
+    install_date: date | None = None  # registry date-only fallback
+    signature_status: str | None = None  # valid|expired|invalid|unsigned|None
+    trust: str  # trusted | suspicious | risky
+
+
+class RecentInstallList(BaseModel):
+    items: list[RecentInstallItem]
+    total: int
+
+
 # ── A3: scans ───────────────────────────────────────────────────────────────
 
 
@@ -74,12 +96,20 @@ class ScanHistoryList(BaseModel):
 # ── A4: cross-machine software ──────────────────────────────────────────────
 
 
+class MachineRef(BaseModel):
+    """A machine an app is installed on, with a readable label for the
+    cross-machine drill-down (no extra round-trip to resolve uuids)."""
+
+    uuid: uuid_lib.UUID
+    name: str
+
+
 class CrossSoftwareItem(BaseModel):
     name: str
     version: str
     publisher: str | None = None
     installed_count: int
-    machines: list[uuid_lib.UUID] = Field(default_factory=list)  # capped at 10
+    machines: list[MachineRef] = Field(default_factory=list)  # capped at 10
     signature_status: str | None = None
 
 
@@ -89,6 +119,16 @@ class CrossSoftwareList(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+
+class SoftwareStats(BaseModel):
+    """Fleet-wide posture summary for the inventory header strip."""
+
+    unique_apps: int
+    total_installs: int
+    valid: int
+    unsigned: int
+    invalid: int
 
 
 class TopSoftwareItem(BaseModel):

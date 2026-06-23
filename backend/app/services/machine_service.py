@@ -200,3 +200,16 @@ async def request_scan(session: AsyncSession, machine: Machine) -> None:
         cfg = AgentConfig(machine_id=machine.id)
         session.add(cfg)
     cfg.manual_scan_requested = True
+
+
+async def request_update(session: AsyncSession, machine: Machine) -> None:
+    """Flag a forced agent update for the next heartbeat (mirror of request_scan).
+
+    The backend clears this flag the moment it offers the forced update, so the
+    offer fires once per admin click and cannot loop.
+    """
+    cfg = await session.get(AgentConfig, machine.id)
+    if cfg is None:
+        cfg = AgentConfig(machine_id=machine.id)
+        session.add(cfg)
+    cfg.force_update_requested = True

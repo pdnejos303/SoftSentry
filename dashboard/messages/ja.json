@@ -6,6 +6,7 @@
   "nav": {
     "overview": "概要",
     "machines": "マシン",
+    "recentInstalls": "最近のインストール",
     "software": "ソフトウェア",
     "signatures": "署名",
     "whitelist": "ホワイトリスト",
@@ -20,7 +21,12 @@
     "users": "ユーザー",
     "auditLog": "監査ログ",
     "language": "言語",
-    "logout": "サインアウト"
+    "logout": "サインアウト",
+    "themeToggle": "ライト / ダークテーマを切り替え",
+    "sectionMonitor": "モニター",
+    "sectionInventory": "インベントリ",
+    "sectionGovernance": "ガバナンス",
+    "sectionSystem": "システム"
   },
   "login": {
     "title": "サインイン",
@@ -161,6 +167,10 @@
     "triggerScan": "スキャンを実行",
     "scanRequested": "スキャンを要求しました — エージェントは次のハートビート時にスキャンします",
     "scanFailed": "スキャンを要求できませんでした",
+    "triggerUpdate": "エージェントを今すぐ更新",
+    "updateRequested": "更新を要求しました — エージェントは次のハートビート時に最新バイナリを取得します（約60秒）",
+    "updateFailed": "更新を要求できませんでした",
+    "updateNoBinary": "サーバーに {os}/{arch} 用のエージェントバイナリがありません",
     "searchSoftware": "ソフトウェアを検索...",
     "noSoftware": "ソフトウェアが見つかりません",
     "noHistory": "履歴イベントはまだありません",
@@ -191,7 +201,7 @@
       "valid": "有効",
       "unsigned": "未署名",
       "expired": "期限切れ",
-      "invalid": "無効"
+      "invalid": "検証失敗"
     },
     "event": {
       "installed": "インストール済み",
@@ -364,15 +374,74 @@
       "low": "低"
     }
   },
+  "recentInstalls": {
+    "title": "最近のインストール",
+    "subtitle": "フリート全体で新たに追加・更新されたアプリと、その信頼度",
+    "empty": "選択期間内に新規インストールはありません",
+    "approx": "（概算）",
+    "filter": {
+      "period": "期間",
+      "lastDays": "過去{days}日間",
+      "custom": "期間を指定",
+      "from": "開始日",
+      "to": "終了日"
+    },
+    "col": {
+      "app": "アプリ",
+      "machine": "マシン",
+      "event": "変更",
+      "when": "インストール日時",
+      "age": "経過期間",
+      "signature": "署名",
+      "trust": "信頼度"
+    },
+    "event": {
+      "installed": "インストール",
+      "updated": "更新"
+    },
+    "trust": {
+      "trusted": "信頼できる",
+      "suspicious": "要確認",
+      "risky": "危険"
+    },
+    "sig": {
+      "valid": "有効",
+      "unsigned": "署名なし",
+      "expired": "期限切れ",
+      "invalid": "検証失敗",
+      "unknown": "不明"
+    }
+  },
   "software": {
     "title": "ソフトウェア",
     "subtitle": "フリート全体を横断したソフトウェアインベントリ",
-    "topTitle": "最もインストールされているソフトウェア",
-    "searchPlaceholder": "ソフトウェアまたは発行元を検索...",
+    "searchPlaceholder": "ソフトウェアを検索...",
     "empty": "ソフトウェアが見つかりません",
+    "clearFilters": "フィルターをクリア",
+    "sigAll": "すべて",
     "prev": "前へ",
     "next": "次へ",
-    "pageInfo": "{total} ページ中 {page} ページ · {count} 件",
+    "rangeInfo": "{total} 件中 {from}–{to}",
+    "rowsPerPage": "行数",
+    "stat": {
+      "uniqueApps": "ユニークアプリ",
+      "totalInstalls": "総インストール数",
+      "unsigned": "未署名",
+      "invalid": "検証失敗"
+    },
+    "chart": {
+      "installedTitle": "最もインストールされているソフトウェア",
+      "riskyTitle": "最も広く分布する信頼できないソフトウェア",
+      "installed": "インストール数順",
+      "risky": "信頼できない",
+      "riskyEmpty": "フリートに信頼できないソフトウェアはありません"
+    },
+    "drill": {
+      "open": "対象マシンを表示",
+      "installedOn": "{count} 台のマシンにインストール",
+      "view": "表示",
+      "capped": "{count} 台中 {shown} 台を表示"
+    },
     "col": {
       "name": "名前",
       "version": "バージョン",
@@ -384,7 +453,7 @@
       "valid": "有効",
       "unsigned": "未署名",
       "expired": "期限切れ",
-      "invalid": "無効"
+      "invalid": "検証失敗"
     }
   },
   "signatures": {
@@ -400,9 +469,17 @@
     "status": {
       "valid": "有効",
       "expired": "期限切れ",
-      "invalid": "無効",
+      "invalid": "検証失敗",
       "unsigned": "未署名",
       "unknown": "不明"
+    },
+    "reason": {
+      "tampered": "署名後にファイルが改変されています（ハッシュ不一致）",
+      "untrusted_root": "信頼されていない CA が発行（または自己署名）",
+      "broken_chain": "証明書チェーンを構築できません",
+      "revoked": "証明書が失効しています",
+      "distrusted": "このマシンで明示的に拒否されています",
+      "unknownCode": "検証に失敗しました（コード {code}）"
     },
     "col": {
       "name": "名前",
@@ -413,6 +490,7 @@
     },
     "detail": {
       "title": "証明書の詳細",
+      "reason": "検証失敗の理由",
       "issues": "問題",
       "chain": "証明書チェーン",
       "noChain": "チェーン情報がありません",

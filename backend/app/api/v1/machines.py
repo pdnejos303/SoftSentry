@@ -8,6 +8,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.core.config import settings
 from app.core.deps import CurrentUser, DBSession, require_role
 from app.models.machine import Machine
 from app.schemas.dashboard import RiskBreakdown
@@ -16,6 +17,7 @@ from app.schemas.machines import (
     MachineList,
     MachineUpdate,
     TriggerScanResponse,
+    TriggerUpdateResponse,
 )
 from app.schemas.software import (
     MachineSoftwareList,
@@ -23,7 +25,13 @@ from app.schemas.software import (
     SoftwareHistoryList,
 )
 from app.schemas.vulnerability import VulnerabilityItem, VulnerabilityList
-from app.services import machine_service, risk_service, software_service, vulnerability_service
+from app.services import (
+    binary_service,
+    machine_service,
+    risk_service,
+    software_service,
+    vulnerability_service,
+)
 
 router = APIRouter()
 
@@ -132,6 +140,30 @@ async def trigger_scan(
     await machine_service.request_scan(session, machine)
     await session.commit()
     return TriggerScanResponse(manual_scan_requested=True)
+
+
+@router.post(
+    "/{machine_uuid}/trigger-update",
+    response_model=TriggerUpdateResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Admin: force the agent to pull the latest binary on its next heartbeat",
+    dependencies=[Depends(require_role("dev", "admin"))],
+)
+async def trigger_update(
+    machine_uuid: uuid_lib.UUID,
+    session: DBSession,
+) -> TriggerUpdateResponse:
+    machine = await _get_or_404(session, machine_uuid)
+    # Fail fast if there is nothing to push: without a manifest binary for this
+    # machine's platform the forced flag would just be a no-op the admin can't see.
+    if binary_service.latest_for(settings.agent_binary_dir, machine.os, machine.arch) is None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"No agent binary available for {machine.os}/{machine.arch}",
+        )
+    await machine_service.request_update(session, machine)
+    await session.commit()
+    return TriggerUpdateResponse(force_update_requested=True)
 
 
 @router.get(

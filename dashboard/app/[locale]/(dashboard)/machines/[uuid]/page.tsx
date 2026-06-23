@@ -27,6 +27,7 @@ import {
   useMachineScans,
   useMachineSoftware,
   useTriggerScan,
+  useTriggerUpdate,
 } from "@/lib/inventory";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Pencil, RefreshCw, Trash2 } from "lucide-react";
+import { DownloadCloud, Pencil, RefreshCw, Trash2 } from "lucide-react";
 
 export default function MachineDetailPage() {
   const params = useParams<{ uuid: string }>();
@@ -54,6 +55,7 @@ export default function MachineDetailPage() {
   const isAdmin = user?.role === "admin" || user?.role === "dev";
   const { data: machine, isLoading } = useMachine(uuid);
   const trigger = useTriggerScan(uuid);
+  const triggerUpdate = useTriggerUpdate(uuid);
   const queryClient = useQueryClient();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -69,6 +71,25 @@ export default function MachineDetailPage() {
       void queryClient.invalidateQueries({ queryKey: ["machine", uuid] });
     } catch {
       toast.error(t("scanFailed"));
+    }
+  }
+
+  async function onTriggerUpdate() {
+    try {
+      await triggerUpdate.mutateAsync();
+      toast.success(t("updateRequested"));
+    } catch (err) {
+      // 409 = no binary on the server for this machine's OS/arch — a distinct,
+      // actionable case, so we warn specifically rather than a generic failure.
+      const status =
+        typeof err === "object" && err && "response" in err
+          ? (err as { response?: { status?: number } }).response?.status
+          : undefined;
+      if (status === 409) {
+        toast.warning(t("updateNoBinary", { os: machine?.os ?? "", arch: machine?.arch ?? "" }));
+      } else {
+        toast.error(t("updateFailed"));
+      }
     }
   }
 
@@ -94,6 +115,16 @@ export default function MachineDetailPage() {
             <RefreshCw className="mr-2 h-4 w-4" />
             {t("triggerScan")}
           </Button>
+          {isAdmin && (
+            <Button
+              variant="outline"
+              onClick={onTriggerUpdate}
+              disabled={triggerUpdate.isPending}
+            >
+              <DownloadCloud className="mr-2 h-4 w-4" />
+              {t("triggerUpdate")}
+            </Button>
+          )}
           {isAdmin && (
             <Button variant="outline" onClick={() => setRenameOpen(true)}>
               <Pencil className="mr-2 h-4 w-4" />

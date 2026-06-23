@@ -502,15 +502,26 @@ func (r *loop) handleBeat(ctx context.Context) (restart bool) {
 // ที่เสนอแตกต่างจากที่กำลังรันอยู่ (ตาม spec 1.6) จะคืนค่า true ก็ต่อเมื่อไบนารี
 // ตัวใหม่อยู่ในตำแหน่งเรียบร้อยแล้วเท่านั้น
 func (r *loop) maybeUpdate(ctx context.Context, up *transport.AgentUpdate) bool {
-	// ถ้าไม่มีการเสนออัปเดต หรือ auto-update ปิดอยู่ ให้ข้ามไป
-	if up == nil || !r.autoUpdate {
+	// ไม่มีการเสนออัปเดต → ข้าม
+	if up == nil {
 		return false
 	}
-	// ถ้าเวอร์ชันที่เสนอว่าง หรือตรงกับเวอร์ชันที่รันอยู่ ให้ข้ามไป
-	if up.Version == "" || up.Version == r.version {
+	// forced = admin สั่งจาก dashboard: ข้าม guard "ควรอัปมั้ย" ทั้งหมด (auto-update
+	// ปิด / version เท่าเดิม / loop-breaker) แต่ยังตรวจ SHA-256 ใน updater.Apply เสมอ
+	if !up.Forced {
+		// auto-update ปิดอยู่ → ข้าม
+		if !r.autoUpdate {
+			return false
+		}
+		// เวอร์ชันที่เสนอว่าง หรือตรงกับที่รันอยู่ → ข้าม
+		if up.Version == "" || up.Version == r.version {
+			return false
+		}
+	} else if up.Version == "" {
+		// forced แต่ไม่มี version ให้ลง → ไม่มีอะไรให้ทำ
 		return false
 	}
-	// ถ้าไม่รู้ path ของตัวเอง ไม่สามารถแทนที่ binary ได้
+	// ถ้าไม่รู้ path ของตัวเอง ไม่สามารถแทนที่ binary ได้ (ทั้ง forced และปกติ)
 	if r.exePath == "" {
 		fmt.Fprintln(r.errw, "⚠ update offered but agent path is unknown; skipping")
 		return false
@@ -519,16 +530,23 @@ func (r *loop) maybeUpdate(ctx context.Context, up *transport.AgentUpdate) bool 
 	// โดยเปรียบเทียบ SHA-256 กับที่บันทึกไว้ครั้งล่าสุด
 	// ถ้าตรงกัน แปลว่า manifest version สูงกว่า version ที่ฝังใน binary จริงๆ
 	// การติดตั้งซ้ำจะทำให้เกิด restart-loop ไม่รู้จบ จึงต้องข้ามไป
-	if last, err := storage.LoadLastUpdate(); err != nil {
-		// อ่าน marker ล้มเหลว: log ไว้ แต่ยังดำเนินการ update ต่อ (conservative)
-		fmt.Fprintf(r.errw, "read last update marker: %v\n", err)
-	} else if up.SHA256 != "" && strings.EqualFold(up.SHA256, last) {
-		// SHA-256 ตรงกัน (case-insensitive) → ข้ามเพื่อป้องกัน restart-loop
-		fmt.Fprintf(r.errw,
-			"⚠ server keeps offering %s but this binary already is that download and still reports %s; "+
-				"skipping to avoid a restart loop (fix: manifest version must match the binary's built version)\n",
-			up.Version, r.version)
-		return false
+	// — ยกเว้น forced: admin จงใจสั่งลงซ้ำ (ซ่อม binary เสีย) backend เคลียร์ flag
+	//   ตอน offer แล้ว จึงยิงครั้งเดียว ไม่วน loop
+	if !up.Forced {
+		if last, err := storage.LoadLastUpdate(); err != nil {
+			// อ่าน marker ล้มเหลว: log ไว้ แต่ยังดำเนินการ update ต่อ (conservative)
+			fmt.Fprintf(r.errw, "read last update marker: %v\n", err)
+		} else if up.SHA256 != "" && strings.EqualFold(up.SHA256, last) {
+			// SHA-256 ตรงกัน (case-insensitive) → ข้ามเพื่อป้องกัน restart-loop
+			fmt.Fprintf(r.errw,
+				"⚠ server keeps offering %s but this binary already is that download and still reports %s; "+
+					"skipping to avoid a restart loop (fix: manifest version must match the binary's built version)\n",
+				up.Version, r.version)
+			return false
+		}
+	}
+	if up.Forced {
+		fmt.Fprintf(r.errw, "→ forced update requested by server: %s (running %s)\n", up.Version, r.version)
 	}
 	// แสดงข้อความว่ากำลัง download update
 	fmt.Fprintf(r.errw, "→ update available: %s (running %s); downloading ...\n", up.Version, r.version)

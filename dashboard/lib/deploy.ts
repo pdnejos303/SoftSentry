@@ -73,6 +73,11 @@ export interface BinaryInfo {
   version: string;
   os: string;
   arch: string;
+  /** sha256 ของ binary ที่เสิร์ฟ — build fingerprint ที่เปลี่ยนทุก build (version คงที่) */
+  sha256: string;
+  /** build stamp (UTC timestamp) ที่ bake เข้า binary — โชว์ค่าเดียวกันบนหน้าแรกของ
+   *  installer ที่โหลดไปรัน ใช้เทียบว่า "ตัวที่รัน = build ล่าสุด" ("" = manifest เก่า) */
+  build_stamp: string;
 }
 
 export function useBinaryInfo(os = "windows", arch = "amd64") {

@@ -145,3 +145,22 @@ docker compose up -d
 - spec ไม่ชัด → **ถามผู้ใช้** ก่อนเดา. อย่า invent feature
 - conflict ระหว่าง modules → อ่าน `docs/OLD-do-not-use/02-architecture.md` ตัดสิน
 - security decision → default ไปทางปลอดภัยกว่า, ถามถ้าจะ trade-off
+
+---
+
+## Design Context
+
+> Source of truth สำหรับงาน frontend/ดีไซน์ทั้งหมด — รายละเอียดเต็มอยู่ที่ [`.impeccable.md`](.impeccable.md) (root). อ่านส่วนนี้ก่อนแตะ UI ทุกครั้ง
+
+**Users:** Corporate IT admins / SOC staff เฝ้า endpoint security posture ทั้ง fleet (Win/macOS) — นั่งจ้องนาน ๆ บนจอใหญ่ (บางทีเป็นจอ NOC) งานข้อมูลแน่น: machines, software, signatures, CVE, licenses, policy, alerts, audit. การตัดสินใจมีผล ("เครื่องนี้ปลอดภัยไหม") → UI ห้ามสร้างดราม่า/ความกำกวมเอง
+
+**Brand personality:** Precise · Dependable · Quiet — เครื่องมือ security ที่ไว้ใจได้ตอนตีสอง พูดด้วยข้อเท็จจริง ไม่ตะโกน ความมั่นใจมาจากความชัดเจน+ความนิ่ง ไม่ใช่การตกแต่ง เป้าหมายอารมณ์ = **calm authority**
+
+**Aesthetic — "Color is signal, not decoration":**
+- พื้น (canvas) = neutral เย็น ๆ tint เข้าหา iris hue (ไม่ใช่เทาด้าน ๆ, ไม่ใช้ดำ/ขาวล้วน)
+- **สี saturated สงวนไว้ให้ risk semantics เป็นหลัก:** 🟢 safe/verified=green · 🟡 warning=amber · 🔴 critical=red · ⚪ unknown=neutral grey
+- **Signature accent = cool desaturated iris-indigo** (ตั้งใจให้ต่างจาก shadcn 221° blue และไม่ชนสีความเสี่ยง) ใช้แบบ flat + ประหยัด: active nav, focus ring, primary action, link, selection — **ห้าม glow/gradient**
+- **Theme:** light + dark first-class ทั้งคู่ · dark = blue-charcoal เข้ม (ไม่ใช่ดำล้วน + neon) · light = cool off-white (ไม่ใช่ #fff)
+- **Anti-refs (ห้ามออกมาเป็น):** stock shadcn blue-on-slate · "AI slop" (cyan-on-dark, purple→blue gradient, neon glow, glassmorphism, gradient text บนตัวเลข, card grid ไอคอนซ้ำ ๆ, ยัดทุกอย่างใน card) · consumer/playful SaaS · bounce/elastic motion · mono ใช้มั่ว (mono เฉพาะ machine data จริง: hash/ID/version/thumbprint)
+
+**5 Principles:** ① Color = risk signal (canvas นิ่ง สงวน saturation ให้ความหมาย) · ② Density with rhythm (แน่นได้แต่มี spacing rhythm + hierarchy) · ③ อ่านออกจากไกล + แม่นยำตอนซูม · ④ Restraint over flourish (motion = state change เท่านั้น, ease-out, ห้าม bounce) · ⑤ Tri-lingual (TH/EN/JA) + dual-theme ตั้งแต่ต้น

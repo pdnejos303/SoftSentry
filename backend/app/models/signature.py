@@ -24,6 +24,9 @@ class SignatureRecord(Base, UuidMixin):
         nullable=False,
     )
     status: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
+    # Why verification failed (status == "invalid"): reason code or raw HRESULT
+    # hex. NULL for valid/unsigned/expired/unknown and for pre-feature rows.
+    status_reason: Mapped[str | None] = mapped_column(String(40))
     signer: Mapped[str | None] = mapped_column(String(500))
     issuer: Mapped[str | None] = mapped_column(String(500))
     cert_thumbprint: Mapped[str | None] = mapped_column(String(64))

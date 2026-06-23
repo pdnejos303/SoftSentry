@@ -126,6 +126,7 @@ export default function SignaturesPage() {
                 <TableCell>
                   <SignatureBadge
                     status={s.status}
+                    reason={s.status_reason}
                     signer={s.signer}
                     certValidTo={s.cert_valid_to}
                     onClick={() => setOpenUuid(s.software_uuid)}

@@ -21,7 +21,7 @@ from app.api.v1 import (
     users,
     vulnerabilities,
 )
-from app.core.deps import DEV, DEV_VIEWER, require_role
+from app.core.deps import ALL_ROLES, DEV, DEV_VIEWER, require_role
 
 
 def _gate(*roles: str) -> list:
@@ -53,7 +53,7 @@ api_router.include_router(deploy.router, prefix="/deploy", tags=["deploy"])
 # Machines are visible to every role; mutations are gated per-endpoint (dev+admin).
 api_router.include_router(machines.router, prefix="/machines", tags=["machines"])
 api_router.include_router(
-    software.router, prefix="/software", tags=["software"], dependencies=_gate(*DEV_VIEWER)
+    software.router, prefix="/software", tags=["software"], dependencies=_gate(*ALL_ROLES)
 )
 api_router.include_router(
     policy.whitelist_router, prefix="/whitelist", tags=["policy"], dependencies=_gate(*DEV_VIEWER)
@@ -68,7 +68,7 @@ api_router.include_router(
     alerts.router, prefix="/alerts", tags=["alerts"], dependencies=_gate(*DEV_VIEWER)
 )
 api_router.include_router(
-    signatures.router, prefix="/signatures", tags=["signatures"], dependencies=_gate(*DEV_VIEWER)
+    signatures.router, prefix="/signatures", tags=["signatures"], dependencies=_gate(*ALL_ROLES)
 )
 # Dashboard sub-routers feed the Overview, which every role (incl. admin) sees —
 # so they stay open to all authenticated users.
@@ -77,10 +77,10 @@ api_router.include_router(
     vulnerabilities.router,
     prefix="/vulnerabilities",
     tags=["vulnerabilities"],
-    dependencies=_gate(*DEV_VIEWER),
+    dependencies=_gate(*ALL_ROLES),
 )
 api_router.include_router(
-    vulnerabilities.cve_router, prefix="/cve", tags=["vulnerabilities"], dependencies=_gate(*DEV_VIEWER)
+    vulnerabilities.cve_router, prefix="/cve", tags=["vulnerabilities"], dependencies=_gate(*ALL_ROLES)
 )
 api_router.include_router(vulnerabilities.dashboard_router, prefix="/dashboard", tags=["dashboard"])
 api_router.include_router(

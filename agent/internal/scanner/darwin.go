@@ -167,8 +167,29 @@ func codesignVerify(appPath string) *Signature {
 		return &Signature{Status: SigUnsigned} // แอปไม่มีลายเซ็น
 	}
 
-	// กรณีอื่นๆ ถือว่าลายเซ็นไม่ถูกต้อง เช่น ถูกแก้ไขหลังลงนาม
-	return &Signature{Status: SigInvalid}
+	// กรณีอื่นๆ ถือว่ามีลายเซ็นแต่ตรวจไม่ผ่าน — best-effort เดาเหตุผลจาก output ของ codesign
+	return &Signature{Status: SigInvalid, StatusReason: codesignReason(string(combined))}
+}
+
+// codesignReason เดา reason code จากข้อความ codesign (best-effort)
+// ข้อความที่ codesign คืนไม่คงรูปแบบเป๊ะ จึงจับเฉพาะ pattern ที่ชัดเจน
+// ที่เหลือคืน "other" ให้ dashboard แสดงเป็น "ตรวจสอบไม่ผ่าน" ทั่วไป
+// Parameter:
+//   - out: รวม stdout+stderr ของ codesign --verify
+//
+// Return:
+//   - string: reason code
+func codesignReason(out string) string {
+	l := strings.ToLower(out)
+	switch {
+	case strings.Contains(l, "resource") || strings.Contains(l, "modified") ||
+		strings.Contains(l, "main executable failed") || strings.Contains(l, "sealed"):
+		return ReasonTampered // ไฟล์/ทรัพยากรถูกแก้ไขหลังลงนาม
+	case strings.Contains(l, "not trusted") || strings.Contains(l, "no certificate"):
+		return ReasonUntrustedRoot
+	default:
+		return "other"
+	}
 }
 
 // codesignAuthority ดึงชื่อ leaf signing authority จากผลลัพธ์ codesign -dvvv

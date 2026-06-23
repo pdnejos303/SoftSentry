@@ -97,19 +97,48 @@ export interface ScanHistoryItem {
   trigger: string | null;
 }
 
+export interface MachineRef {
+  uuid: string;
+  name: string;
+}
+
 export interface CrossSoftwareItem {
   name: string;
   version: string;
   publisher: string | null;
   installed_count: number;
-  machines: string[];
+  machines: MachineRef[];
   signature_status: SignatureStatus;
+}
+
+export interface SoftwareStats {
+  unique_apps: number;
+  total_installs: number;
+  valid: number;
+  unsigned: number;
+  invalid: number;
 }
 
 export interface TopSoftwareItem {
   name: string;
   publisher: string | null;
   installed_count: number;
+}
+
+export type TrustLevel = "trusted" | "suspicious" | "risky";
+
+export interface RecentInstallItem {
+  machine_uuid: string;
+  machine_name: string;
+  name: string;
+  version: string;
+  event: "installed" | "updated" | string;
+  publisher: string | null;
+  detected_at: string; // when the agent first saw it
+  installed_at: string | null; // accurate install moment (best-effort)
+  install_date: string | null; // registry date-only fallback
+  signature_status: SignatureStatus;
+  trust: TrustLevel;
 }
 
 export interface ListResult<T> {
@@ -127,6 +156,8 @@ export interface SignatureListItem {
   machine_uuid: string;
   machine_hostname: string;
   status: string;
+  // Why verification failed (status="invalid"): reason code or raw HRESULT hex.
+  status_reason: string | null;
   signer: string | null;
   cert_valid_to: string | null;
 }
@@ -146,6 +177,8 @@ export interface SignatureDetail {
   machine_uuid: string;
   machine_hostname: string;
   status: string;
+  // Why verification failed (status="invalid"): reason code or raw HRESULT hex.
+  status_reason: string | null;
   signer: string | null;
   issuer: string | null;
   cert_thumbprint: string | null;

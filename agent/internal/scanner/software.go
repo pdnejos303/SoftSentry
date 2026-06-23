@@ -15,9 +15,20 @@ type SignatureStatus string
 const (
 	SigValid    SignatureStatus = "valid"    // ลายเซ็นถูกต้องและยังไม่หมดอายุ
 	SigExpired  SignatureStatus = "expired"  // ลายเซ็นหมดอายุแล้ว (cert NotAfter ผ่านไปแล้ว)
-	SigInvalid  SignatureStatus = "invalid"  // ลายเซ็นไม่ถูกต้อง เช่น ไฟล์ถูกแก้ไขหลังลงนาม
+	SigInvalid  SignatureStatus = "invalid"  // มีลายเซ็นแต่ตรวจสอบไม่ผ่าน (ดู StatusReason ว่าเพราะอะไร)
 	SigUnsigned SignatureStatus = "unsigned" // ไฟล์ไม่มีลายเซ็นดิจิทัล
 	SigUnknown  SignatureStatus = "unknown"  // ตรวจสอบไม่ได้ เช่น ไฟล์หาย/ถูกล็อก/อ่าน PE ไม่ได้ (spec 3.1 edge case 1)
+)
+
+// reason code ของ status=invalid — อธิบายว่า "ตรวจไม่ผ่านเพราะอะไร"
+// ค่าเหล่านี้ต้องตรงกับ key ใน dashboard messages (signatures.reason.*)
+// HRESULT ที่ไม่รู้จักจะเก็บเป็น hex ดิบ (เช่น "0x800B0004") แทน code
+const (
+	ReasonTampered      = "tampered"       // TRUST_E_BAD_DIGEST — ไฟล์ถูกแก้ไขหลังลงนาม (hash ไม่ตรง)
+	ReasonUntrustedRoot = "untrusted_root" // CERT_E_UNTRUSTEDROOT — root CA ไม่อยู่ใน trust store / self-signed
+	ReasonBrokenChain   = "broken_chain"   // CERT_E_CHAINING — สร้าง certificate chain ไม่ครบ
+	ReasonRevoked       = "revoked"        // CERT_E_REVOKED — ใบรับรองถูกเพิกถอน
+	ReasonDistrusted    = "distrusted"     // TRUST_E_EXPLICIT_DISTRUST — ถูกตั้งไม่เชื่อถือบนเครื่องนี้
 )
 
 // CertNode คือ certificate หนึ่งใบใน chain (leaf → intermediate → root)
@@ -31,28 +42,30 @@ type CertNode struct {
 
 // Signature เก็บผลลัพธ์การตรวจสอบลายเซ็น Authenticode (Windows) หรือ codesign (macOS)
 type Signature struct {
-	Status     SignatureStatus `json:"status"`                       // สถานะลายเซ็น: valid/expired/invalid/unsigned/unknown
-	Signer     string          `json:"signer,omitempty"`             // ชื่อผู้ลงนาม (leaf certificate CN)
-	Issuer     string          `json:"issuer,omitempty"`             // ชื่อ CA ที่ออกใบรับรอง (issuer CN)
-	Thumbprint string          `json:"cert_thumbprint,omitempty"`    // fingerprint ของ leaf cert (hex SHA-1 ตัวพิมพ์ใหญ่)
-	ValidFrom  string          `json:"cert_valid_from,omitempty"`    // วันที่ leaf cert เริ่มมีผล (YYYY-MM-DD)
-	ValidTo    string          `json:"cert_valid_to,omitempty"`      // วันที่ leaf cert หมดอายุ (YYYY-MM-DD)
-	Algorithm  string          `json:"signature_algorithm,omitempty"` // อัลกอริทึมที่ใช้เซ็น เช่น sha256RSA
-	Chain      []CertNode      `json:"chain,omitempty"`              // certificate chain (leaf เป็นตัวแรก)
+	Status       SignatureStatus `json:"status"`                        // สถานะลายเซ็น: valid/expired/invalid/unsigned/unknown
+	StatusReason string          `json:"status_reason,omitempty"`       // เหตุผลที่ตรวจไม่ผ่าน (เฉพาะ status=invalid): reason code หรือ HRESULT hex
+	Signer       string          `json:"signer,omitempty"`              // ชื่อผู้ลงนาม (leaf certificate CN)
+	Issuer       string          `json:"issuer,omitempty"`              // ชื่อ CA ที่ออกใบรับรอง (issuer CN)
+	Thumbprint   string          `json:"cert_thumbprint,omitempty"`     // fingerprint ของ leaf cert (hex SHA-1 ตัวพิมพ์ใหญ่)
+	ValidFrom    string          `json:"cert_valid_from,omitempty"`     // วันที่ leaf cert เริ่มมีผล (YYYY-MM-DD)
+	ValidTo      string          `json:"cert_valid_to,omitempty"`       // วันที่ leaf cert หมดอายุ (YYYY-MM-DD)
+	Algorithm    string          `json:"signature_algorithm,omitempty"` // อัลกอริทึมที่ใช้เซ็น เช่น sha256RSA
+	Chain        []CertNode      `json:"chain,omitempty"`               // certificate chain (leaf เป็นตัวแรก)
 }
 
 // Software คือข้อมูลแอปพลิเคชันที่ติดตั้งอยู่บนเครื่อง ตามที่ agent ตรวจพบ
 // ถูกส่งไปยัง backend ในรูปแบบ JSON
 type Software struct {
-	Name          string     `json:"name"`                        // ชื่อซอฟต์แวร์ที่แสดงในระบบ
-	Version       string     `json:"version"`                     // เวอร์ชันของซอฟต์แวร์
-	Publisher     string     `json:"publisher,omitempty"`         // ผู้พัฒนาหรือผู้เผยแพร่ซอฟต์แวร์
-	InstallDate   string     `json:"install_date,omitempty"`      // วันที่ติดตั้งในรูปแบบ YYYY-MM-DD
-	InstallPath   string     `json:"install_path,omitempty"`      // path ของไฟล์ executable หลัก
-	InstallSizeKB int64      `json:"install_size_kb,omitempty"`   // ขนาดการติดตั้งเป็น kilobytes
-	Arch          string     `json:"arch,omitempty"`              // สถาปัตยกรรม: x64 หรือ x86
-	Source        string     `json:"source"`                      // แหล่งที่มาของข้อมูล: registry, filesystem, appstore, หรือ plist
-	Signature     *Signature `json:"signature,omitempty"`         // ผลการตรวจสอบลายเซ็นดิจิทัล (nil ถ้ายังไม่ตรวจ)
+	Name          string     `json:"name"`                      // ชื่อซอฟต์แวร์ที่แสดงในระบบ
+	Version       string     `json:"version"`                   // เวอร์ชันของซอฟต์แวร์
+	Publisher     string     `json:"publisher,omitempty"`       // ผู้พัฒนาหรือผู้เผยแพร่ซอฟต์แวร์
+	InstallDate   string     `json:"install_date,omitempty"`    // วันที่ติดตั้งในรูปแบบ YYYY-MM-DD (จาก registry, อาจไม่มีเวลา)
+	InstalledAt   string     `json:"installed_at,omitempty"`    // เวลาติดตั้งจริง (best-effort) RFC3339 — จากเวลาสร้างโฟลเดอร์/exe
+	InstallPath   string     `json:"install_path,omitempty"`    // path ของไฟล์ executable หลัก
+	InstallSizeKB int64      `json:"install_size_kb,omitempty"` // ขนาดการติดตั้งเป็น kilobytes
+	Arch          string     `json:"arch,omitempty"`            // สถาปัตยกรรม: x64 หรือ x86
+	Source        string     `json:"source"`                    // แหล่งที่มาของข้อมูล: registry, filesystem, appstore, หรือ plist
+	Signature     *Signature `json:"signature,omitempty"`       // ผลการตรวจสอบลายเซ็นดิจิทัล (nil ถ้ายังไม่ตรวจ)
 }
 
 // dedupe ลบรายการซ้ำที่มี (name, version, install_path) เหมือนกันออก

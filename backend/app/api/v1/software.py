@@ -5,6 +5,7 @@ Aggregate inventory view, top-N widget, and two-machine comparison.
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -14,11 +15,41 @@ from app.schemas.software import (
     CompareRequest,
     CompareResponse,
     CrossSoftwareList,
+    RecentInstallList,
+    SoftwareStats,
     TopSoftwareItem,
 )
 from app.services import machine_service, software_service
 
 router = APIRouter()
+
+
+@router.get(
+    "/recent-installs",
+    response_model=RecentInstallList,
+    summary="Recently installed/updated apps fleet-wide, with trust verdict",
+)
+async def recent_installs(
+    session: DBSession,
+    _: CurrentUser,
+    days: Annotated[int | None, Query(ge=1, le=365)] = 30,
+    from_date: Annotated[
+        date | None, Query(description="Inclusive start of an explicit calendar range (UTC)")
+    ] = None,
+    to_date: Annotated[
+        date | None, Query(description="Inclusive end of an explicit calendar range (UTC)")
+    ] = None,
+    limit: Annotated[int, Query(ge=1, le=500)] = 100,
+) -> RecentInstallList:
+    if from_date is not None and to_date is not None and from_date > to_date:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "from_date must not be after to_date")
+    items = await software_service.recent_installs(
+        session, days=days, from_date=from_date, to_date=to_date, limit=limit
+    )
+    return RecentInstallList(items=items, total=len(items))
+
+
+_SORTS = {"installs", "-installs", "name", "-name"}
 
 
 @router.get("", response_model=CrossSoftwareList, summary="Cross-machine software list")
@@ -28,6 +59,7 @@ async def list_software(
     q: str | None = None,
     publisher: str | None = None,
     signature_status: Annotated[str | None, Query(alias="signature_status")] = None,
+    sort: Annotated[str, Query(pattern="^-?(installs|name)$")] = "installs",
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=200)] = 50,
 ) -> CrossSoftwareList:
@@ -36,6 +68,7 @@ async def list_software(
         q=q,
         publisher=publisher,
         signature_status=signature_status,
+        sort=sort if sort in _SORTS else "installs",
         page=page,
         page_size=page_size,
     )
@@ -45,13 +78,25 @@ async def list_software(
     )
 
 
+@router.get("/stats", response_model=SoftwareStats, summary="Fleet software posture summary")
+async def software_stats(
+    session: DBSession,
+    _: CurrentUser,
+    q: str | None = None,
+    publisher: str | None = None,
+) -> SoftwareStats:
+    stats = await software_service.software_stats(session, q=q, publisher=publisher)
+    return SoftwareStats(**stats)
+
+
 @router.get("/top", response_model=list[TopSoftwareItem], summary="Top-N most-installed software")
 async def top_software(
     session: DBSession,
     _: CurrentUser,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
+    risk: Annotated[bool, Query(description="Rank untrustworthy-by-signature apps instead")] = False,
 ) -> list[TopSoftwareItem]:
-    items = await software_service.top_software(session, limit=limit)
+    items = await software_service.top_software(session, limit=limit, risk=risk)
     return [TopSoftwareItem(**i) for i in items]
 
 

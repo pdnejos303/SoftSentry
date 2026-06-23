@@ -16,6 +16,7 @@ class SignatureListItem(BaseModel):
     machine_uuid: uuid_lib.UUID
     machine_hostname: str
     status: str
+    status_reason: str | None = None
     signer: str | None = None
     cert_valid_to: date | None = None
 
@@ -35,6 +36,7 @@ class SignatureDetail(BaseModel):
     machine_uuid: uuid_lib.UUID
     machine_hostname: str
     status: str
+    status_reason: str | None = None
     signer: str | None = None
     issuer: str | None = None
     cert_thumbprint: str | None = None

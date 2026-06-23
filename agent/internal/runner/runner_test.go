@@ -4,8 +4,10 @@
 package runner
 
 import (
+	"bytes"   // ใช้ bytes.Buffer ดักจับ log output เพื่อยืนยันว่า forced ข้าม guard ได้
 	"context" // ใช้ context.Background() สำหรับ call ที่ไม่ต้องการ timeout ใน test
 	"io"      // ใช้ io.Discard เพื่อทิ้ง output ทั้งหมดใน test loop
+	"strings" // ใช้ strings.Contains ตรวจ log line
 	"testing" // ใช้ t.Fatal, t.Error และ t.Setenv สำหรับ test infrastructure
 	"time"    // ใช้เทียบงบเวลาสแกน (scanBudget)
 
@@ -94,6 +96,50 @@ func TestMaybeUpdateSkipsSameVersion(t *testing.T) {
 	// ต้องไม่ apply update เพราะ version เดิมอยู่แล้ว
 	if r.maybeUpdate(context.Background(), up) {
 		t.Error("maybeUpdate should not update to the version already running")
+	}
+}
+
+// TestMaybeUpdateForcedBypassesGuards ทดสอบว่าเมื่อ admin สั่ง "Update agent now"
+// (Forced=true) maybeUpdate ต้องข้าม guard ทั้งสามที่ปกติจะหยุดมัน:
+// auto-update ปิด, version เท่าเดิม, และ loop-breaker (SHA ซ้ำ) — แล้วเดินหน้าไป
+// ดาวน์โหลดจริง. เนื่องจาก test client ชี้ไป address ที่ไม่มีจริง การดาวน์โหลดจะ
+// ล้มเหลว maybeUpdate จึงคืน false แต่ "log forced" ที่ถูกพิมพ์ออกมาเป็นหลักฐานว่า
+// มันผ่าน guard มาถึงขั้นดาวน์โหลด (ถ้าโดน guard บล็อกจะ return ก่อนพิมพ์ log นี้)
+func TestMaybeUpdateForcedBypassesGuards(t *testing.T) {
+	useTempConfigDir(t)
+	// seed loop-breaker marker ด้วย SHA เดียวกับ offer → ปกติจะถูกข้าม
+	if err := storage.SaveLastUpdate("deadbeef"); err != nil {
+		t.Fatalf("seed last update: %v", err)
+	}
+	var logs bytes.Buffer
+	r := newTestLoop()
+	r.errw = &logs       // ดักจับ log
+	r.autoUpdate = false // guard 1: auto-update ปิด (ปกติหยุดทันที)
+	// guard 2: version เท่าเดิม (r.version = "0.1.0"); guard 3: SHA ตรง marker
+	up := &transport.AgentUpdate{Version: "0.1.0", SHA256: "deadbeef", DownloadURL: "/x", Forced: true}
+
+	r.maybeUpdate(context.Background(), up) // คืน false เพราะ network ตาย แต่ต้องผ่าน guard มาก่อน
+
+	if !strings.Contains(logs.String(), "forced update requested") {
+		t.Fatalf("forced update was blocked by a guard before download; logs=%q", logs.String())
+	}
+}
+
+// TestMaybeUpdateNonForcedStillRespectsGuards ยืนยันว่า path ปกติ (Forced=false)
+// ยังถูก guard บล็อกเหมือนเดิม ไม่หลุดไปดาวน์โหลด เมื่อ auto-update ปิด
+func TestMaybeUpdateNonForcedStillRespectsGuards(t *testing.T) {
+	useTempConfigDir(t)
+	var logs bytes.Buffer
+	r := newTestLoop()
+	r.errw = &logs
+	r.autoUpdate = false
+	up := &transport.AgentUpdate{Version: "2.0.0", SHA256: "abc", DownloadURL: "/x"} // Forced=false
+
+	if r.maybeUpdate(context.Background(), up) {
+		t.Error("non-forced update should not apply when auto-update is disabled")
+	}
+	if strings.Contains(logs.String(), "forced update requested") {
+		t.Error("non-forced update should never log a forced request")
 	}
 }
 

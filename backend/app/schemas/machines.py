@@ -76,3 +76,7 @@ class MachineUpdate(BaseModel):
 
 class TriggerScanResponse(BaseModel):
     manual_scan_requested: bool = True
+
+
+class TriggerUpdateResponse(BaseModel):
+    force_update_requested: bool = True

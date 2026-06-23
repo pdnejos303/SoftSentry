@@ -83,7 +83,9 @@ export default function DeployPage() {
         token = res.token;
         setQuickToken(token);
       }
-      const url = installerUrl(token, server);
+      // ต่อ cache-buster ให้ URL ไม่ซ้ำเดิม — กัน browser คืน installer เก่าจาก cache
+      // (backend ก็ส่ง Cache-Control: no-store แล้ว แต่ entry เก่าที่ค้างต้อง miss ก่อน)
+      const url = `${installerUrl(token, server)}&t=${Date.now()}`;
       const a = document.createElement("a");
       a.href = url;
       a.download = "SoftSentry-Setup.exe";
@@ -156,8 +158,15 @@ export default function DeployPage() {
               </div>
             </div>
             {binary && (
+              // version ถูก fix เป็น v0.1.0 เสมอ จึงบอกความสดไม่ได้ — แสดง "build stamp"
+              // (UTC timestamp ของตอน build, เปลี่ยนทุก build) ซึ่ง bake อยู่ใน binary และ
+              // โชว์ค่าเดียวกันเป๊ะบน "หน้าแรกของ installer ที่โหลดไปรัน" → admin เทียบสอง
+              // ค่านี้ได้ตรงๆ: ตรงกัน = ตัวที่รัน = บิลด์ล่าสุดนี้จริง ไม่ใช่ของเก่าค้าง
+              // (sha256 7 ตัวแรกแสดงเป็น fingerprint สำรองที่ตรงกับ manifest/volume)
               <Badge variant="secondary" className="shrink-0 font-mono">
                 v{binary.version} · {binary.os}
+                {binary.build_stamp ? ` · build ${binary.build_stamp}` : ""}
+                {binary.sha256 ? ` (${binary.sha256.slice(0, 7)})` : ""}
               </Badge>
             )}
           </div>

@@ -207,6 +207,7 @@ async def list_signatures(
             "machine_uuid": m_uuid,
             "machine_hostname": hostname,
             "status": sig.status,
+            "status_reason": sig.status_reason,
             "signer": sig.signer,
             "cert_valid_to": sig.cert_valid_to,
         }
@@ -216,11 +217,14 @@ async def list_signatures(
 
 
 def _detail_issues(sig: SignatureRecord, today: date) -> list[str]:
-    """Human-readable problems for the detail drawer (spec 3.2)."""
+    """Supplementary human-readable problems for the detail drawer (spec 3.2).
+
+    The primary "why it failed" for invalid signatures now travels in
+    ``status_reason`` (localized client-side), so this only carries extra context
+    the reason code doesn't capture (expiry math, self-signed heuristic).
+    """
     issues: list[str] = []
-    if sig.status == "invalid":
-        issues.append("Signature is invalid (untrusted or tampered)")
-    elif sig.status == "expired":
+    if sig.status == "expired":
         issues.append(_expired_detail(sig.cert_valid_to, today))
     elif sig.status == "unsigned":
         issues.append("Software is not digitally signed")
@@ -252,6 +256,7 @@ async def signature_detail(
         "machine_uuid": m_uuid,
         "machine_hostname": hostname,
         "status": sig.status,
+        "status_reason": sig.status_reason,
         "signer": sig.signer,
         "issuer": sig.issuer,
         "cert_thumbprint": sig.cert_thumbprint,

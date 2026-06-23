@@ -20,6 +20,11 @@ class AgentConfig(Base):
     scan_interval_hours: Mapped[int] = mapped_column(Integer, nullable=False, default=6)
     auto_update_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     manual_scan_requested: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # One-shot admin "Update agent now" flag. Set by the trigger-update endpoint,
+    # cleared by the backend the moment it offers the forced update on a heartbeat
+    # (clear-on-offer → the forced offer fires at most once per click, so it can
+    # never cause a restart loop the way a sticky flag could).
+    force_update_requested: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),

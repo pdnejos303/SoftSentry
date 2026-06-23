@@ -119,15 +119,23 @@ async def heartbeat(
     _apply_scan_progress(agent, payload.scan_progress if payload else None)
 
     cfg = await session.get(AgentConfig, agent.id)
+
+    # Forced update wins: an admin pressed "Update agent now". Offer the latest
+    # binary regardless of version/auto-update, then clear the flag in this same
+    # committed transaction so it fires exactly once (no restart loop).
+    update_offer: AgentUpdateAvailable | None = None
+    if cfg and cfg.force_update_requested:
+        update_offer = _forced_update(agent.os, agent.arch)
+        cfg.force_update_requested = False
+    elif (cfg.auto_update_enabled if cfg else True):
+        update_offer = _offer_update(agent.os, agent.arch, agent.agent_version)
+
     await session.commit()
 
-    auto_update = cfg.auto_update_enabled if cfg else True
     return HeartbeatResponse(
         config_changed=False,
         manual_scan_requested=bool(cfg and cfg.manual_scan_requested),
-        agent_update_available=_offer_update(agent.os, agent.arch, agent.agent_version)
-        if auto_update
-        else None,
+        agent_update_available=update_offer,
     )
 
 
@@ -160,6 +168,25 @@ def _offer_update(os: str, arch: str, current_version: str) -> AgentUpdateAvaila
         version=latest.version,
         download_url=binary_service.download_url(latest.version, os, arch),
         sha256=latest.sha256,
+    )
+
+
+def _forced_update(os: str, arch: str) -> AgentUpdateAvailable | None:
+    """Return the latest binary as a *forced* offer (admin "Update agent now").
+
+    Ignores version comparison and auto-update entirely — the agent will apply it
+    even if it matches the running version (reinstall/repair). Still None when no
+    binary exists for this platform, but the trigger-update endpoint already
+    rejects that case with 409 so it is a defensive guard here.
+    """
+    latest = binary_service.latest_for(settings.agent_binary_dir, os, arch)
+    if latest is None:
+        return None
+    return AgentUpdateAvailable(
+        version=latest.version,
+        download_url=binary_service.download_url(latest.version, os, arch),
+        sha256=latest.sha256,
+        forced=True,
     )
 
 

@@ -9,13 +9,14 @@ the fleet scale we target. Revisit with SQL-side grouping if it gets large.
 from __future__ import annotations
 
 import fnmatch
-from datetime import date
+from datetime import UTC, date, datetime, time, timedelta
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import ColumnElement, func, select
+from sqlalchemy import ColumnElement, and_, case, func, select
 
 from app.models.license import License
 from app.models.machine import Machine
+from app.models.policy import BlacklistEntry
 from app.models.scan import Scan
 from app.models.signature import SignatureRecord
 from app.models.software import SoftwareHistory, SoftwareRecord
@@ -240,7 +241,7 @@ async def _active_rows(
     if publisher:
         conditions.append(SoftwareRecord.publisher.ilike(f"%{publisher}%"))
     if signature_status:
-        conditions.append(SignatureRecord.status == signature_status)
+        conditions.append(_sig_condition(signature_status))
 
     stmt = (
         select(
@@ -248,6 +249,8 @@ async def _active_rows(
             SoftwareRecord.version,
             SoftwareRecord.publisher,
             Machine.uuid,
+            Machine.hostname,
+            Machine.display_name,
             SignatureRecord.status,
         )
         .join(Machine, Machine.id == SoftwareRecord.machine_id)
@@ -257,34 +260,67 @@ async def _active_rows(
     return (await session.execute(stmt)).all()
 
 
+def _sig_condition(signature_status: str) -> ColumnElement[bool]:
+    """Translate a UI signature filter to a SQL predicate. ``unsigned`` folds in
+    rows that have no signature record at all (NULL status), so "show me
+    everything unsigned" really means everything we couldn't trust by signature.
+    """
+    if signature_status == "unsigned":
+        return (SignatureRecord.status == "unsigned") | (SignatureRecord.status.is_(None))
+    return SignatureRecord.status == signature_status
+
+
+# Sort keys accepted by the cross-machine list. Default mirrors the original
+# behaviour: most-installed first, then name/version for a stable order.
+_SORT_KEYS: dict[str, Any] = {
+    "installs": lambda g: (-len(g["machines"]), g["name"], g["version"]),
+    "-installs": lambda g: (len(g["machines"]), g["name"], g["version"]),
+    "name": lambda g: (g["name"].lower(), g["version"]),
+    "-name": lambda g: _ReverseStr(g["name"].lower()),
+}
+
+
+class _ReverseStr:
+    """Wrap a string so a plain ``sorted`` produces descending order — avoids a
+    second pass and keeps the sort stable for ties (handled by Python's sort)."""
+
+    __slots__ = ("s",)
+
+    def __init__(self, s: str) -> None:
+        self.s = s
+
+    def __lt__(self, other: "_ReverseStr") -> bool:
+        return self.s > other.s
+
+
 async def cross_software(
     session: AsyncSession,
     *,
     q: str | None = None,
     publisher: str | None = None,
     signature_status: str | None = None,
+    sort: str = "installs",
     page: int = 1,
     page_size: int = 50,
 ) -> tuple[list[dict[str, object]], int]:
     rows = await _active_rows(session, q=q, publisher=publisher, signature_status=signature_status)
 
     grouped: dict[tuple[str, str], dict[str, object]] = {}
-    for name, version, pub, machine_uuid, sig_status in rows:
+    for name, version, pub, machine_uuid, hostname, display_name, sig_status in rows:
         key = (name, version)
         g = grouped.setdefault(
             key,
-            {"name": name, "version": version, "publisher": pub, "machines": set(), "sig": None},
+            {"name": name, "version": version, "publisher": pub, "machines": {}, "sig": None},
         )
-        g["machines"].add(machine_uuid)  # type: ignore[attr-defined]
+        # uuid → readable name (display name wins, else hostname) for the drill-down.
+        g["machines"][machine_uuid] = display_name or hostname  # type: ignore[index]
         if pub and not g["publisher"]:
             g["publisher"] = pub
         if sig_status and not g["sig"]:
             g["sig"] = sig_status
 
-    ordered = sorted(
-        grouped.values(),
-        key=lambda g: (-len(g["machines"]), g["name"], g["version"]),  # type: ignore[arg-type]
-    )
+    key_fn = _SORT_KEYS.get(sort, _SORT_KEYS["installs"])
+    ordered = sorted(grouped.values(), key=key_fn)  # type: ignore[arg-type]
     total = len(ordered)
     page_slice = ordered[(page - 1) * page_size : (page - 1) * page_size + page_size]
 
@@ -294,7 +330,10 @@ async def cross_software(
             "version": g["version"],
             "publisher": g["publisher"],
             "installed_count": len(g["machines"]),  # type: ignore[arg-type]
-            "machines": list(g["machines"])[:_MACHINES_CAP],  # type: ignore[call-overload]
+            "machines": [
+                {"uuid": uuid, "name": name}
+                for uuid, name in list(g["machines"].items())[:_MACHINES_CAP]  # type: ignore[union-attr]
+            ],
             "signature_status": g["sig"],
         }
         for g in page_slice
@@ -302,16 +341,83 @@ async def cross_software(
     return items, total
 
 
-async def top_software(session: AsyncSession, *, limit: int = 10) -> list[dict[str, object]]:
+async def software_stats(
+    session: AsyncSession,
+    *,
+    q: str | None = None,
+    publisher: str | None = None,
+) -> dict[str, int]:
+    """Fleet-wide posture summary for the inventory header strip. Counts are over
+    active install instances (one app on one machine = one install), honouring
+    the name/publisher search so the strip tracks what the table shows.
+
+    - ``unsigned`` folds in installs with no signature at all (NULL), matching
+      the ``unsigned`` filter — that's the number an admin actually cares about.
+    """
+    conditions: list[ColumnElement[bool]] = [
+        SoftwareRecord.uninstalled_at.is_(None),
+        Machine.deleted_at.is_(None),
+    ]
+    if q:
+        conditions.append(SoftwareRecord.name.ilike(f"%{q}%"))
+    if publisher:
+        conditions.append(SoftwareRecord.publisher.ilike(f"%{publisher}%"))
+
+    status = SignatureRecord.status
+    # case(...) instead of count(...).filter(...) so the conditional counts stay
+    # portable to older SQLite (no FILTER clause) as well as Postgres.
+    row = (
+        await session.execute(
+            select(
+                func.count(func.distinct(SoftwareRecord.name)),
+                func.count(),
+                func.sum(case((status == "valid", 1), else_=0)),
+                func.sum(case(((status == "unsigned") | (status.is_(None)), 1), else_=0)),
+                func.sum(case((status == "invalid", 1), else_=0)),
+            )
+            .select_from(SoftwareRecord)
+            .join(Machine, Machine.id == SoftwareRecord.machine_id)
+            .outerjoin(SignatureRecord, SignatureRecord.id == SoftwareRecord.signature_id)
+            .where(*conditions)
+        )
+    ).one()
+
+    unique_apps, total_installs, valid, unsigned, invalid = row
+    return {
+        "unique_apps": int(unique_apps or 0),
+        "total_installs": int(total_installs or 0),
+        "valid": int(valid or 0),
+        "unsigned": int(unsigned or 0),
+        "invalid": int(invalid or 0),
+    }
+
+
+async def top_software(
+    session: AsyncSession, *, limit: int = 10, risk: bool = False
+) -> list[dict[str, object]]:
+    """Top-N software by fleet spread. With ``risk=True`` the ranking is limited
+    to apps that look untrustworthy by signature (unsigned / no signature /
+    invalid) — the security-posture cut of "what's spreading that we can't
+    vouch for", rather than the plain most-installed list.
+    """
     install_count = func.count(func.distinct(SoftwareRecord.machine_id))
+    conditions: list[ColumnElement[bool]] = [
+        SoftwareRecord.uninstalled_at.is_(None),
+        Machine.deleted_at.is_(None),
+    ]
+    stmt = (
+        select(SoftwareRecord.name, func.max(SoftwareRecord.publisher), install_count)
+        .join(Machine, Machine.id == SoftwareRecord.machine_id)
+        .outerjoin(SignatureRecord, SignatureRecord.id == SoftwareRecord.signature_id)
+    )
+    if risk:
+        status = SignatureRecord.status
+        conditions.append(
+            (status == "unsigned") | (status == "invalid") | (status.is_(None))
+        )
     rows = (
         await session.execute(
-            select(SoftwareRecord.name, func.max(SoftwareRecord.publisher), install_count)
-            .join(Machine, Machine.id == SoftwareRecord.machine_id)
-            .where(
-                SoftwareRecord.uninstalled_at.is_(None),
-                Machine.deleted_at.is_(None),
-            )
+            stmt.where(*conditions)
             .group_by(SoftwareRecord.name)
             .order_by(install_count.desc(), SoftwareRecord.name)
             .limit(limit)
@@ -366,3 +472,135 @@ async def compare(
         "only_in_b": only_in_b,
         "version_diff": version_diff,
     }
+
+
+# ── Recently-installed feed + trust verdict (security posture) ───────────────
+
+
+def trust_verdict(signature_status: str | None, *, blacklisted: bool = False) -> str:
+    """Map existing safety signals to a 3-level trust label for the
+    "recently installed apps" feed. Pure — unit-tested without a DB.
+
+    - ``risky``      — name matches a blacklist entry (explicitly disallowed)
+    - ``trusted``    — signed by a valid, current certificate
+    - ``suspicious`` — anything else: unsigned / invalid / expired / unknown /
+      no signature at all
+
+    Blacklist wins over a valid signature: a disallowed app is risky even if
+    it is correctly signed.
+    """
+    if blacklisted:
+        return "risky"
+    if signature_status == "valid":
+        return "trusted"
+    return "suspicious"
+
+
+def _glob(pattern: str) -> str:
+    """SQL LIKE wildcard → fnmatch wildcard (same convention as license match)."""
+    return pattern.replace("%", "*").replace("_", "?").lower()
+
+
+def _is_blacklisted(name: str, publisher: str | None, blacklist: list[BlacklistEntry]) -> bool:
+    """True if (name, publisher) matches any blacklist entry. A publisher
+    pattern, when present, must also match; otherwise the name match suffices.
+    """
+    n = name.lower()
+    pub = (publisher or "").lower()
+    for entry in blacklist:
+        if not fnmatch.fnmatch(n, _glob(entry.name_pattern)):
+            continue
+        if entry.publisher_pattern and not fnmatch.fnmatch(pub, _glob(entry.publisher_pattern)):
+            continue
+        return True
+    return False
+
+
+async def recent_installs(
+    session: AsyncSession,
+    *,
+    machine_id: int | None = None,
+    days: int | None = 30,
+    from_date: date | None = None,
+    to_date: date | None = None,
+    limit: int = 100,
+) -> list[dict[str, object]]:
+    """Feed of apps that newly appeared (or were updated) on the fleet, newest
+    first, each enriched with provenance (accurate install time) + a trust
+    verdict. Built from the existing software_history diff (event installed/
+    updated) joined to the current software_record for signature + timing.
+
+    Time window: an explicit ``from_date``/``to_date`` calendar range (inclusive,
+    interpreted in UTC) takes precedence; otherwise fall back to the rolling
+    ``days`` lookback. Filtering is on ``occurred_at`` — when the agent observed
+    the install/update event — to keep the feed consistent with the ``days``
+    preset.
+    """
+    conditions: list[ColumnElement[bool]] = [
+        SoftwareHistory.event.in_(("installed", "updated")),
+        Machine.deleted_at.is_(None),
+    ]
+    if machine_id is not None:
+        conditions.append(SoftwareHistory.machine_id == machine_id)
+
+    if from_date is not None or to_date is not None:
+        # Explicit calendar range overrides the rolling `days` window.
+        if from_date is not None:
+            start = datetime.combine(from_date, time.min, tzinfo=UTC)
+            conditions.append(SoftwareHistory.occurred_at >= start)
+        if to_date is not None:
+            # Inclusive of the whole `to_date` day → strictly before the next day.
+            end = datetime.combine(to_date + timedelta(days=1), time.min, tzinfo=UTC)
+            conditions.append(SoftwareHistory.occurred_at < end)
+    elif days is not None:
+        conditions.append(SoftwareHistory.occurred_at >= datetime.now(tz=UTC) - timedelta(days=days))
+
+    rows = (
+        await session.execute(
+            select(
+                SoftwareHistory,
+                Machine.uuid,
+                Machine.hostname,
+                Machine.display_name,
+                SoftwareRecord.publisher,
+                SoftwareRecord.install_date,
+                SoftwareRecord.install_datetime,
+                SignatureRecord.status,
+            )
+            .join(Machine, Machine.id == SoftwareHistory.machine_id)
+            .outerjoin(
+                SoftwareRecord,
+                and_(
+                    SoftwareRecord.machine_id == SoftwareHistory.machine_id,
+                    SoftwareRecord.name == SoftwareHistory.software_name,
+                    SoftwareRecord.version == SoftwareHistory.software_version,
+                ),
+            )
+            .outerjoin(SignatureRecord, SignatureRecord.id == SoftwareRecord.signature_id)
+            .where(*conditions)
+            .order_by(SoftwareHistory.occurred_at.desc(), SoftwareHistory.id.desc())
+            .limit(limit)
+        )
+    ).all()
+
+    blacklist = list((await session.execute(select(BlacklistEntry))).scalars().all())
+
+    items: list[dict[str, object]] = []
+    for hist, m_uuid, hostname, display_name, publisher, inst_date, inst_dt, sig_status in rows:
+        blacklisted = _is_blacklisted(hist.software_name, publisher, blacklist)
+        items.append(
+            {
+                "machine_uuid": m_uuid,
+                "machine_name": display_name or hostname,
+                "name": hist.software_name,
+                "version": hist.software_version,
+                "event": hist.event,  # installed | updated
+                "publisher": publisher,
+                "detected_at": hist.occurred_at,  # when our agent first saw it
+                "installed_at": inst_dt,  # accurate install moment (best-effort)
+                "install_date": inst_date,  # registry date-only fallback
+                "signature_status": sig_status,
+                "trust": trust_verdict(sig_status, blacklisted=blacklisted),
+            }
+        )
+    return items

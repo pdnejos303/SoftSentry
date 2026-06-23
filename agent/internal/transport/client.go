@@ -27,6 +27,17 @@ import (
 // build tooling (Makefile / build.ps1) จะ stamp ค่านี้และเขียน manifest ที่ตรงกัน
 var Version = "0.1.0"
 
+// BuildStamp คือ "ลายนิ้วมือของ build" ที่เปลี่ยนทุกครั้งที่ build (ค่า default = "dev"
+// สำหรับ build ใน editor) build-publish.sh จะ stamp เป็น UTC timestamp ของตอน build ผ่าน
+//
+//	go build -ldflags "-X github.com/softsentry/agent/internal/transport.BuildStamp=20260623T052800Z"
+//
+// และเขียนค่าเดียวกันลง manifest.json → backend เสิร์ฟต่อ → หน้า deploy โชว์ค่านี้
+// installer wizard ก็โชว์ค่านี้บนหน้าแรกด้วย ดังนั้นถ้า "ค่าบนหน้า deploy" = "ค่าบน
+// หน้าแรกของตัวที่โหลดมารัน" → ยืนยันได้ 100% ว่าตัวที่โหลด = ตัวที่ build จาก source
+// ล่าสุด ไม่ใช่ของเก่าค้าง (เพราะ Version ถูก fix เป็น 0.1.0 เลยใช้เทียบความสดไม่ได้)
+var BuildStamp = "dev"
+
 // Client รวม net/http พร้อม timeout และ helper เฉพาะของ SoftSentry
 type Client struct {
 	baseURL    string       // URL ฐานของ backend เช่น "http://192.168.1.88:47800" (ไม่มี trailing slash)
@@ -76,11 +87,11 @@ func (c *Client) do(
 // doWithHeaders ส่ง HTTP request พร้อม optional custom headers
 // และ decode response JSON ลงใน out ถ้ากำหนดไว้
 func (c *Client) doWithHeaders(
-	ctx context.Context,         // context สำหรับ timeout/cancellation
-	method, path string,         // HTTP method และ path ของ endpoint
-	body any,                    // request body (nil ถ้าไม่มี body)
-	out any,                     // pointer สำหรับรับ response JSON (nil ถ้าไม่ต้องการ)
-	headers map[string]string,   // custom headers พิเศษเพิ่มเติม เช่น Idempotency-Key
+	ctx context.Context, // context สำหรับ timeout/cancellation
+	method, path string, // HTTP method และ path ของ endpoint
+	body any, // request body (nil ถ้าไม่มี body)
+	out any, // pointer สำหรับรับ response JSON (nil ถ้าไม่ต้องการ)
+	headers map[string]string, // custom headers พิเศษเพิ่มเติม เช่น Idempotency-Key
 ) error {
 	// เตรียม request body โดย marshal เป็น JSON ถ้ามี body
 	var bodyReader io.Reader
@@ -191,14 +202,18 @@ type AgentUpdate struct {
 	Version     string `json:"version"`      // version string ของ binary ใหม่ เช่น "0.2.0"
 	DownloadURL string `json:"download_url"` // path สำหรับดาวน์โหลด binary เช่น "/agent-binaries/..."
 	SHA256      string `json:"sha256"`       // checksum SHA-256 ของ binary สำหรับยืนยันความถูกต้อง
+	// Forced = true เมื่อ admin สั่ง "Update agent now" จาก dashboard: agent ต้อง
+	// apply แม้ปิด auto-update / version เท่าเดิม / เคยลง SHA นี้แล้ว (loop-breaker)
+	// แต่ยังตรวจ SHA-256 เสมอ. ปกติ (version-compare path) field นี้ไม่มา = false
+	Forced bool `json:"forced"`
 }
 
 // HeartbeatResponse รวม flag ต่างๆ ที่ server ตอบกลับมาจาก heartbeat (protocol §2)
 // AgentUpdateAvailable เป็น nil เมื่อ server ไม่มี update ให้
 type HeartbeatResponse struct {
-	ConfigChanged        bool         `json:"config_changed"`          // true ถ้า config เปลี่ยนและต้อง reload
-	ManualScanRequested  bool         `json:"manual_scan_requested"`   // true ถ้า IT admin กด scan ทันที
-	AgentUpdateAvailable *AgentUpdate `json:"agent_update_available"`  // ข้อมูล update ถ้ามี หรือ nil
+	ConfigChanged        bool         `json:"config_changed"`         // true ถ้า config เปลี่ยนและต้อง reload
+	ManualScanRequested  bool         `json:"manual_scan_requested"`  // true ถ้า IT admin กด scan ทันที
+	AgentUpdateAvailable *AgentUpdate `json:"agent_update_available"` // ข้อมูล update ถ้ามี หรือ nil
 }
 
 // ScanProgress คือ snapshot ความคืบหน้าการสแกนที่แนบไปกับ heartbeat เพื่อให้

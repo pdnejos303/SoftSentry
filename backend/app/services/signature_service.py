@@ -13,7 +13,7 @@ import uuid as uuid_lib
 from datetime import UTC, date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ColumnElement, func, select
+from sqlalchemy import ColumnElement, func, select, or_
 
 from app.models.alert import OPEN_STATUSES, STATUS_RESOLVED, Alert
 from app.models.machine import Machine
@@ -177,7 +177,14 @@ async def list_signatures(
         Machine.deleted_at.is_(None),
     ]
     if statuses:
-        conds.append(SignatureRecord.status.in_(statuses))
+        real = [s for s in statuses if s != "unknown"]
+        status_conds: list[ColumnElement[bool]] = []
+        if real:
+            status_conds.append(SignatureRecord.status.in_(real))
+        if "unknown" in statuses:
+            status_conds.append(SignatureRecord.id.is_(None))
+            status_conds.append(SignatureRecord.status == "unknown")
+        conds.append(or_(*status_conds))
     if publisher:
         conds.append(SoftwareRecord.publisher.ilike(f"%{publisher}%"))
     if q:
@@ -185,7 +192,7 @@ async def list_signatures(
 
     base = (
         select(SoftwareRecord, SignatureRecord, Machine.uuid, Machine.hostname)
-        .join(SignatureRecord, SignatureRecord.id == SoftwareRecord.signature_id)
+        .outerjoin(SignatureRecord, SignatureRecord.id == SoftwareRecord.signature_id)
         .join(Machine, Machine.id == SoftwareRecord.machine_id)
         .where(*conds)
     )
@@ -206,9 +213,9 @@ async def list_signatures(
             "publisher": sw.publisher,
             "machine_uuid": m_uuid,
             "machine_hostname": hostname,
-            "status": sig.status,
-            "signer": sig.signer,
-            "cert_valid_to": sig.cert_valid_to,
+            "status": sig.status if sig is not None else "unknown",
+            "signer": sig.signer if sig is not None else None,
+            "cert_valid_to": sig.cert_valid_to if sig is not None else None,
         }
         for sw, sig, m_uuid, hostname in rows
     ]

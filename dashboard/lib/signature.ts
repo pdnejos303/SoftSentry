@@ -55,7 +55,7 @@ export function useSignatureStats() {
 
 // ── Pure helpers (unit-tested in signature.test.ts) ───────────────────────────
 
-export const SIGNATURE_STATUSES = ["valid", "expired", "invalid", "unsigned"] as const;
+export const SIGNATURE_STATUSES = ["valid", "expired", "invalid", "unsigned", "unknown"] as const;
 
 const COLORS: Record<string, string> = {
   valid: "hsl(142 71% 45%)", // green

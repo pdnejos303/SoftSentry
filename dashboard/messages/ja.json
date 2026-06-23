@@ -422,6 +422,7 @@
     "title": "署名",
     "subtitle": "フリート全体のソフトウェアのデジタル署名ステータス",
     "statsTitle": "署名の分布",
+    "statsTotal": "合計",
     "searchPlaceholder": "ソフトウェアを検索...",
     "clearFilter": "すべて",
     "empty": "ソフトウェアが見つかりません",

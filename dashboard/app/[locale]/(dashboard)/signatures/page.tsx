@@ -71,15 +71,7 @@ export default function SignaturesPage() {
 
       <SignatureStatsWidget onSelect={selectStatus} />
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <SignatureStatusFilter
-          selected={statuses}
-          onToggle={toggleStatus}
-          onClear={() => {
-            setPage(1);
-            setStatuses([]);
-          }}
-        />
+      <div className="flex flex-wrap items-center gap-3">
         <Input
           placeholder={t("searchPlaceholder")}
           value={q}
@@ -88,6 +80,14 @@ export default function SignaturesPage() {
             setPage(1);
           }}
           className="max-w-xs"
+        />
+        <SignatureStatusFilter
+          selected={statuses}
+          onToggle={toggleStatus}
+          onClear={() => {
+            setPage(1);
+            setStatuses([]);
+          }}
         />
       </div>
 

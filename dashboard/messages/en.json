@@ -425,6 +425,7 @@
     "title": "Signatures",
     "subtitle": "Digital signature status of software across the fleet",
     "statsTitle": "Signature distribution",
+    "statsTotal": "Total",
     "searchPlaceholder": "Search software...",
     "clearFilter": "All",
     "empty": "No software found",

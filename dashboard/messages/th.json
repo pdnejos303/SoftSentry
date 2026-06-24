@@ -131,8 +131,22 @@
     "prev": "ก่อนหน้า",
     "next": "ถัดไป",
     "pageInfo": "หน้า {page} จาก {total} · {count} เครื่อง",
+    "resultCount": "{count} เครื่อง",
     "delete": "ลบ",
     "rename": "เปลี่ยนชื่อ",
+    "emptyFiltered": "ไม่มีเครื่องที่ตรงกับตัวกรอง",
+    "clearFilters": "ล้างตัวกรอง",
+    "emptyHint": "ยังไม่มี endpoint ลงทะเบียนเข้ามา",
+    "deployCta": "ติดตั้ง agent",
+    "summary": {
+      "total": "ทั้งหมด",
+      "online": "ออนไลน์",
+      "offline": "ออฟไลน์",
+      "criticalCves": "CVE ร้ายแรง"
+    },
+    "posture": {
+      "clear": "ปลอดภัย"
+    },
     "status": {
       "all": "ทั้งหมด",
       "online": "ออนไลน์",
@@ -150,6 +164,8 @@
       "owner": "เจ้าของ",
       "os": "ระบบปฏิบัติการ",
       "status": "สถานะ",
+      "posture": "ความปลอดภัย",
+      "updates": "อัปเดต",
       "server": "เซิร์ฟเวอร์",
       "software": "ซอฟต์แวร์",
       "lastSeen": "เห็นล่าสุด",
@@ -336,6 +352,11 @@
     "downloadStarted": "เริ่มดาวน์โหลดแล้ว",
     "appName": "SoftSentry Agent",
     "heroTagline": "ติดตั้ง agent บนเครื่อง endpoint ได้ในคลิกเดียว",
+    "buildReady": "บิลด์พร้อมใช้",
+    "buildPending": "ยังไม่มีบิลด์",
+    "provenanceTitle": "รายละเอียดบิลด์",
+    "howItWorks": "ขั้นตอนการทำงาน",
+    "platform": "แพลตฟอร์ม",
     "meta": {
       "version": "เวอร์ชัน",
       "build": "บิลด์",

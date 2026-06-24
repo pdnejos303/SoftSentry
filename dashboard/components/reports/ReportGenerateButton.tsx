@@ -6,7 +6,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useGenerateReport } from "@/lib/reports";
 import type { ReportFormat, ReportType } from "@/lib/types";
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import {
@@ -21,8 +21,15 @@ import {
  * type selector is then hidden (spec 8.4). */
 export function ReportGenerateButton({
   machineUuid,
+  variant = "default",
+  size = "sm",
+  className,
 }: {
   machineUuid?: string;
+  /** Override the trigger's look so it can sit inside a ButtonGroup. */
+  variant?: ButtonProps["variant"];
+  size?: ButtonProps["size"];
+  className?: string;
 }) {
   const t = useTranslations("reports");
   const [open, setOpen] = useState(false);
@@ -46,7 +53,7 @@ export function ReportGenerateButton({
 
   return (
     <>
-      <Button size="sm" onClick={() => setOpen(true)}>
+      <Button variant={variant} size={size} className={className} onClick={() => setOpen(true)}>
         <FileText className="mr-2 h-4 w-4" />
         {t("generate")}
       </Button>

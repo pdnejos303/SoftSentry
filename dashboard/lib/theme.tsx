@@ -11,14 +11,25 @@ import {
 
 // Lightweight light/dark theme manager — no external dependency.
 //
-// The class is set BEFORE first paint by an inline script in the locale layout
-// <head> (see app/[locale]/layout.tsx) to avoid a flash of the wrong theme.
-// This provider then keeps React state in sync for the toggle UI and persists
-// the user's explicit choice.
+// The class is rendered on the SERVER from the `ss-theme` cookie (see
+// app/[locale]/layout.tsx), so it survives locale switches that re-render
+// <html>. This provider keeps React state in sync for the toggle UI and
+// persists the user's choice to BOTH the cookie (so the server can read it) and
+// localStorage (legacy / belt-and-suspenders).
 
 export type Theme = "light" | "dark";
 
 const STORAGE_KEY = "ss-theme";
+
+// A year; mirrors the class the server renders so no flash on reload/navigation.
+function persist(theme: Theme) {
+  try {
+    document.cookie = `${STORAGE_KEY}=${theme}; path=/; max-age=31536000; samesite=lax`;
+    localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    // Private mode / storage disabled — theme still applies for this session.
+  }
+}
 
 interface ThemeContextValue {
   theme: Theme;
@@ -42,19 +53,19 @@ function readInitialTheme(): Theme {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
 
-  // Adopt whatever the anti-FOUC script already applied to <html>.
+  // Adopt whatever the server/anti-FOUC script already applied to <html>, and
+  // make sure the cookie mirrors it — this migrates legacy users who only have
+  // the theme in localStorage so the server can render the right class next time.
   useEffect(() => {
-    setThemeState(readInitialTheme());
+    const initial = readInitialTheme();
+    setThemeState(initial);
+    persist(initial);
   }, []);
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
     document.documentElement.classList.toggle("dark", next === "dark");
-    try {
-      localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      // Private mode / storage disabled — theme still applies for this session.
-    }
+    persist(next);
   }, []);
 
   const toggle = useCallback(() => {

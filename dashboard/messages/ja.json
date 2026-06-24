@@ -128,8 +128,22 @@
     "prev": "前へ",
     "next": "次へ",
     "pageInfo": "{total} ページ中 {page} ページ · {count} 台のマシン",
+    "resultCount": "{count} 台",
     "delete": "削除",
     "rename": "名前を変更",
+    "emptyFiltered": "条件に一致するマシンがありません",
+    "clearFilters": "フィルターをクリア",
+    "emptyHint": "登録済みのエンドポイントはまだありません。",
+    "deployCta": "エージェントを配布",
+    "summary": {
+      "total": "合計",
+      "online": "オンライン",
+      "offline": "オフライン",
+      "criticalCves": "重大な CVE"
+    },
+    "posture": {
+      "clear": "問題なし"
+    },
     "status": {
       "all": "すべて",
       "online": "オンライン",
@@ -147,6 +161,8 @@
       "owner": "所有者",
       "os": "OS",
       "status": "ステータス",
+      "posture": "セキュリティ",
+      "updates": "更新",
       "server": "サーバー",
       "software": "ソフトウェア",
       "lastSeen": "最終確認",
@@ -333,6 +349,11 @@
     "downloadStarted": "ダウンロードを開始しました",
     "appName": "SoftSentry Agent",
     "heroTagline": "ワンクリックでエンドポイントにエージェントを導入",
+    "buildReady": "ビルド準備完了",
+    "buildPending": "ビルドなし",
+    "provenanceTitle": "ビルド情報",
+    "howItWorks": "導入の流れ",
+    "platform": "プラットフォーム",
     "meta": {
       "version": "バージョン",
       "build": "ビルド",

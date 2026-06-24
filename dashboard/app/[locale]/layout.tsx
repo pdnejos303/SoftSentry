@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Sarabun } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, getTranslations } from "next-intl/server";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Providers } from "../providers";
@@ -52,22 +53,33 @@ export default async function LocaleLayout({
     notFound();
   }
   const messages = await getMessages();
+
+  // Render the theme class on the SERVER from the persisted cookie. <html> lives
+  // in this [locale] layout (there is no root layout), so switching language
+  // re-renders <html> from the server payload — if the `dark` class were only
+  // applied imperatively (script/ThemeProvider) it would be wiped on every
+  // locale switch, flashing the page back to light. Rendering it here keeps it
+  // present in every render. The inline script below still covers the very first
+  // visit (no cookie yet) using the system preference.
+  const isDark = cookies().get("ss-theme")?.value === "dark";
+
   return (
     <html
       lang={locale}
-      className={fontVariables}
+      className={`${fontVariables}${isDark ? " dark" : ""}`}
       style={jpFontVars}
       suppressHydrationWarning
     >
       <head>
         {/*
-          Apply the persisted (or system-preferred) theme before first paint so
-          the SOC night surface never flashes light. Kept dependency-free and
-          inline; the ThemeProvider adopts whatever class this sets.
+          First-visit anti-FOUC: when no explicit theme cookie exists yet, apply
+          the system preference before first paint. When a cookie IS set, the
+          server already rendered the right class above and this just reaffirms
+          it. Dependency-free and inline.
         */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('ss-theme');if(!t){t=window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';}if(t==='dark'){document.documentElement.classList.add('dark');}}catch(e){}})();`,
+            __html: `(function(){try{var m=document.cookie.match(/(?:^|; )ss-theme=(dark|light)/);var t=m?m[1]:(localStorage.getItem('ss-theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'));document.documentElement.classList.toggle('dark',t==='dark');}catch(e){}})();`,
           }}
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />

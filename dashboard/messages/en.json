@@ -131,8 +131,22 @@
     "prev": "Previous",
     "next": "Next",
     "pageInfo": "Page {page} of {total} · {count} machines",
+    "resultCount": "{count, plural, one {# machine} other {# machines}}",
     "delete": "Delete",
     "rename": "Rename",
+    "emptyFiltered": "No machines match these filters",
+    "clearFilters": "Clear filters",
+    "emptyHint": "No endpoints have enrolled yet.",
+    "deployCta": "Deploy an agent",
+    "summary": {
+      "total": "Total",
+      "online": "Online",
+      "offline": "Offline",
+      "criticalCves": "Critical CVEs"
+    },
+    "posture": {
+      "clear": "Clear"
+    },
     "status": {
       "all": "All",
       "online": "Online",
@@ -150,6 +164,8 @@
       "owner": "Owner",
       "os": "OS",
       "status": "Status",
+      "posture": "Posture",
+      "updates": "Updates",
       "server": "Server",
       "software": "Software",
       "lastSeen": "Last seen",
@@ -336,6 +352,11 @@
     "downloadStarted": "Download started",
     "appName": "SoftSentry Agent",
     "heroTagline": "Install the agent on an endpoint in one click",
+    "buildReady": "Build ready",
+    "buildPending": "No build yet",
+    "provenanceTitle": "Build details",
+    "howItWorks": "How it works",
+    "platform": "Platform",
     "meta": {
       "version": "Version",
       "build": "Build",

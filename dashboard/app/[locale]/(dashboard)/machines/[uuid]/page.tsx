@@ -33,8 +33,10 @@ import {
   useTriggerScan,
   useTriggerUpdate,
 } from "@/lib/inventory";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -118,33 +120,44 @@ export default function MachineDetailPage() {
             {machine.os} {machine.os_version} · {machine.arch} · agent {machine.agent_version}
           </p>
         </div>
-        <div className="flex gap-2">
-          <ReportGenerateButton machineUuid={uuid} />
-          <Button onClick={onTriggerScan} disabled={trigger.isPending}>
-            <RefreshCw className="mr-2 h-4 w-4" />
-            {t("triggerScan")}
-          </Button>
-          {isAdmin && (
+        <div className="flex flex-wrap items-center gap-2">
+          {/* One clean cluster for the endpoint's run-actions. */}
+          <ButtonGroup>
+            <ReportGenerateButton machineUuid={uuid} variant="ghost" size="sm" />
             <Button
-              variant="outline"
-              onClick={onTriggerUpdate}
-              disabled={triggerUpdate.isPending}
+              variant="ghost"
+              size="sm"
+              onClick={onTriggerScan}
+              disabled={trigger.isPending}
             >
-              <DownloadCloud className="mr-2 h-4 w-4" />
-              {t("triggerUpdate")}
+              <RefreshCw className={cn("mr-2 h-4 w-4", trigger.isPending && "animate-spin")} />
+              {t("triggerScan")}
             </Button>
-          )}
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onTriggerUpdate}
+                disabled={triggerUpdate.isPending}
+              >
+                <DownloadCloud className="mr-2 h-4 w-4" />
+                {t("triggerUpdate")}
+              </Button>
+            )}
+          </ButtonGroup>
+
+          {/* Management actions stay separate — Delete keeps its risk colour. */}
           {isAdmin && (
-            <Button variant="outline" onClick={() => setRenameOpen(true)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              {tm("rename")}
-            </Button>
-          )}
-          {isAdmin && (
-            <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              {tm("delete")}
-            </Button>
+            <>
+              <Button variant="outline" size="sm" onClick={() => setRenameOpen(true)}>
+                <Pencil className="mr-2 h-4 w-4" />
+                {tm("rename")}
+              </Button>
+              <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                {tm("delete")}
+              </Button>
+            </>
           )}
         </div>
       </div>

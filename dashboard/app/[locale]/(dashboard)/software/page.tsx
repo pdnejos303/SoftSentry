@@ -294,8 +294,17 @@ function SoftwareInventory() {
         </CardContent>
       </Card>
 
-      {/* Filter row: signature segmented control + name search. */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
+      {/* Filter row: name search on the left, signature segmented control next to it. */}
+      <div className="flex flex-wrap items-center gap-4">
+        <Input
+          placeholder={t("searchPlaceholder")}
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setPage(1);
+          }}
+          className="max-w-xs"
+        />
         <div className="flex flex-wrap gap-1">
           {SIG_FILTERS.map((s) => (
             <Button
@@ -308,15 +317,6 @@ function SoftwareInventory() {
             </Button>
           ))}
         </div>
-        <Input
-          placeholder={t("searchPlaceholder")}
-          value={q}
-          onChange={(e) => {
-            setQ(e.target.value);
-            setPage(1);
-          }}
-          className="max-w-xs"
-        />
       </div>
 
       <div className="rounded-lg border">

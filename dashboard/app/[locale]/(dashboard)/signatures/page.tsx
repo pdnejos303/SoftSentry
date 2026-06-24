@@ -8,7 +8,7 @@ import { SignatureDetailModal } from "@/components/signatures/SignatureDetailMod
 import { SignatureStatsWidget } from "@/components/signatures/SignatureStatsWidget";
 import { SignatureStatusFilter } from "@/components/signatures/SignatureStatusFilter";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Pagination } from "@/components/ui/pagination";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -143,24 +143,12 @@ export default function SignaturesPage() {
           <span className="text-muted-foreground">
             {t("pageInfo", { page: data.page, total: data.total_pages, count: data.total })}
           </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              {t("prev")}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page >= data.total_pages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              {t("next")}
-            </Button>
-          </div>
+          <Pagination
+            page={page}
+            totalPages={data.total_pages}
+            onChange={setPage}
+            labels={{ prev: t("prev"), next: t("next"), goToPage: t("goToPage") }}
+          />
         </div>
       )}
 

@@ -41,12 +41,19 @@ async def recent_installs(
     to_date: Annotated[
         date | None, Query(description="Inclusive end of an explicit calendar range (UTC)")
     ] = None,
+    all_time: Annotated[
+        bool, Query(description="Ignore the time window — newest installs across all history")
+    ] = False,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
 ) -> RecentInstallList:
     if from_date is not None and to_date is not None and from_date > to_date:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "from_date must not be after to_date")
     items = await software_service.recent_installs(
-        session, days=days, from_date=from_date, to_date=to_date, limit=limit
+        session,
+        days=None if all_time else days,
+        from_date=from_date,
+        to_date=to_date,
+        limit=limit,
     )
     return RecentInstallList(items=items, total=len(items))
 

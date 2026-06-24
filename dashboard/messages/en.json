@@ -161,7 +161,7 @@
       "displayName": "Display name",
       "owner": "Owner",
       "ownerPlaceholder": "e.g. Somchai (IT)",
-      "tags": "Tags",  
+      "tags": "Tags",
       "tagsPlaceholder": "comma-separated, e.g. finance, laptop",
       "cancel": "Cancel",
       "save": "Save",
@@ -390,12 +390,21 @@
     "subtitle": "New and updated apps across the fleet, with how trustworthy each one looks",
     "empty": "No new installs in the selected period",
     "approx": "(approx.)",
+    "prev": "Previous",
+    "next": "Next",
+    "goToPage": "Go to page",
+    "pageInfo": "Page {page} of {total} · {count} installs",
     "filter": {
       "period": "Period",
       "lastDays": "Last {days} days",
+      "allTime": "All time",
+      "all": "All",
       "custom": "Custom range",
       "from": "From",
-      "to": "To"
+      "to": "To",
+      "search": "Search…",
+      "clear": "Clear",
+      "noResults": "No results"
     },
     "col": {
       "app": "App",
@@ -468,29 +477,29 @@
     }
   },
   "softwareDetail": {
-    "tabs": { 
-      "detail": "Detail", 
-      "machines": "Machines" 
+    "tabs": {
+      "detail": "Detail",
+      "machines": "Machines"
     },
     "installedOn": "Installed on {count} machines",
     "notFound": "Software not found",
     "notFoundHint": "No installed software matches this name.",
     "overviewTitle": "Overview",
     "versionsTitle": "Versions by install count",
-    "field": { 
-      "publisher": "Publisher", 
+    "field": {
+      "publisher": "Publisher",
       "installs": "Installs",
-      "signature": "Signature", 
-      "license": "License" 
+      "signature": "Signature",
+      "license": "License"
     },
-    "col": { 
-      "version": "Version", 
+    "col": {
+      "version": "Version",
       "count": "Installs",
       "hostname": "Hostname",
-      "owner": "Owner", 
+      "owner": "Owner",
       "installDate": "Install date",
-      "signature": "Signature", 
-      "status": "Status" 
+      "signature": "Signature",
+      "status": "Status"
     },
     "noMachines": "No machines have this software",
     "totalMachines": "{count} machines",
@@ -510,6 +519,7 @@
     "empty": "No software found",
     "prev": "Previous",
     "next": "Next",
+    "goToPage": "Go to page",
     "pageInfo": "Page {page} of {total} · {count} entries",
     "status": {
       "valid": "Valid",

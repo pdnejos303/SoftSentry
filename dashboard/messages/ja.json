@@ -120,7 +120,7 @@
     "pageInfo": "{total} ページ中 {page} ページ · {count} 台のマシン",
     "delete": "削除",
     "rename": "名前を変更",
-    "edit": "編集", 
+    "edit": "編集",
     "status": {
       "all": "すべて",
       "online": "オンライン",
@@ -158,7 +158,7 @@
       "displayName": "表示名",
       "owner": "所有者",
       "ownerPlaceholder": "例: Somchai (IT)",
-      "tags": "タグ",  
+      "tags": "タグ",
       "tagsPlaceholder": "カンマ区切りで入力してください（例：finance, laptop）",
       "cancel": "キャンセル",
       "save": "保存",
@@ -387,12 +387,21 @@
     "subtitle": "フリート全体で新たに追加・更新されたアプリと、その信頼度",
     "empty": "選択期間内に新規インストールはありません",
     "approx": "（概算）",
+    "prev": "前へ",
+    "next": "次へ",
+    "goToPage": "ページへ移動",
+    "pageInfo": "{total} ページ中 {page} ページ · {count} 件",
     "filter": {
       "period": "期間",
       "lastDays": "過去{days}日間",
+      "allTime": "全期間",
+      "all": "すべて",
       "custom": "期間を指定",
       "from": "開始日",
-      "to": "終了日"
+      "to": "終了日",
+      "search": "検索…",
+      "clear": "クリア",
+      "noResults": "該当なし"
     },
     "col": {
       "app": "アプリ",
@@ -465,29 +474,29 @@
     }
   },
   "softwareDetail": {
-    "tabs": { 
-      "detail": "詳細", 
-      "machines": "マシン" 
+    "tabs": {
+      "detail": "詳細",
+      "machines": "マシン"
     },
     "installedOn": "{count} 台のマシンにインストール済み",
     "notFound": "ソフトウェアが見つかりません",
     "notFoundHint": "この名前に一致するインストール済みソフトウェアはありません。",
     "overviewTitle": "概要",
     "versionsTitle": "インストール数別バージョン",
-    "field": { 
-      "publisher": "発行元", 
+    "field": {
+      "publisher": "発行元",
       "installs": "インストール数",
-      "signature": "署名", 
-      "license": "ライセンス" 
+      "signature": "署名",
+      "license": "ライセンス"
     },
-    "col": { 
-      "version": "バージョン", 
-      "count": "インストール数", 
+    "col": {
+      "version": "バージョン",
+      "count": "インストール数",
       "hostname": "ホスト名",
-      "owner": "所有者", 
+      "owner": "所有者",
       "installDate": "インストール日",
-      "signature": "署名", 
-      "status": "ステータス" 
+      "signature": "署名",
+      "status": "ステータス"
     },
     "noMachines": "このソフトウェアがインストールされているマシンはありません",
     "totalMachines": "{count} 台のマシン",
@@ -507,6 +516,7 @@
     "empty": "ソフトウェアが見つかりません",
     "prev": "前へ",
     "next": "次へ",
+    "goToPage": "ページへ移動",
     "pageInfo": "{total} ページ中 {page} ページ · {count} 件",
     "status": {
       "valid": "有効",

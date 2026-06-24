@@ -161,7 +161,7 @@
       "displayName": "ชื่อที่แสดง",
       "owner": "เจ้าของ",
       "ownerPlaceholder": "เช่น สมชาย (ฝ่าย IT)",
-      "tags": "แท็ก",  
+      "tags": "แท็ก",
       "tagsPlaceholder": "คั่นด้วยจุลภาค เช่น การเงิน, โน้ตบุ๊ก",
       "cancel": "ยกเลิก",
       "save": "บันทึก",
@@ -390,12 +390,21 @@
     "subtitle": "โปรแกรมที่เพิ่งติดตั้งหรืออัปเดตทั่วทั้งระบบ พร้อมระดับความน่าเชื่อถือ",
     "empty": "ไม่มีการติดตั้งใหม่ในช่วงเวลาที่เลือก",
     "approx": "(โดยประมาณ)",
+    "prev": "ก่อนหน้า",
+    "next": "ถัดไป",
+    "goToPage": "ไปที่หน้า",
+    "pageInfo": "หน้า {page} จาก {total} · {count} รายการ",
     "filter": {
       "period": "ช่วงเวลา",
       "lastDays": "{days} วันล่าสุด",
+      "allTime": "ทั้งหมด",
+      "all": "ทั้งหมด",
       "custom": "กำหนดเอง",
       "from": "ตั้งแต่",
-      "to": "ถึง"
+      "to": "ถึง",
+      "search": "ค้นหา…",
+      "clear": "ล้าง",
+      "noResults": "ไม่พบรายการ"
     },
     "col": {
       "app": "โปรแกรม",
@@ -468,29 +477,29 @@
     }
   },
   "softwareDetail": {
-    "tabs": { 
-      "detail": "รายละเอียด", 
-      "machines": "เครื่อง" 
+    "tabs": {
+      "detail": "รายละเอียด",
+      "machines": "เครื่อง"
     },
     "installedOn": "ติดตั้งบน {count} เครื่อง",
     "notFound": "ไม่พบซอฟต์แวร์",
     "notFoundHint": "ไม่มีซอฟต์แวร์ที่ติดตั้งตรงกับชื่อนี้",
     "overviewTitle": "ภาพรวม",
     "versionsTitle": "เวอร์ชันตามจำนวนการติดตั้ง",
-    "field": { 
-      "publisher": "ผู้เผยแพร่", 
+    "field": {
+      "publisher": "ผู้เผยแพร่",
       "installs": "จำนวนติดตั้ง",
-      "signature": "ลายเซ็น", 
-      "license": "ไลเซนส์" 
+      "signature": "ลายเซ็น",
+      "license": "ไลเซนส์"
     },
-    "col": { 
-      "version": "เวอร์ชัน", 
-      "count": "จำนวนติดตั้ง", 
+    "col": {
+      "version": "เวอร์ชัน",
+      "count": "จำนวนติดตั้ง",
       "hostname": "ชื่อเครื่อง",
-      "owner": "เจ้าของ", 
+      "owner": "เจ้าของ",
       "installDate": "วันที่ติดตั้ง",
-      "signature": "ลายเซ็น", 
-      "status": "สถานะ" 
+      "signature": "ลายเซ็น",
+      "status": "สถานะ"
     },
     "noMachines": "ไม่มีเครื่องใดติดตั้งซอฟต์แวร์นี้",
     "totalMachines": "{count} เครื่อง",
@@ -510,6 +519,7 @@
     "empty": "ไม่พบซอฟต์แวร์",
     "prev": "ก่อนหน้า",
     "next": "ถัดไป",
+    "goToPage": "ไปที่หน้า",
     "pageInfo": "หน้า {page} จาก {total} · {count} รายการ",
     "status": {
       "valid": "ลงนามถูกต้อง",

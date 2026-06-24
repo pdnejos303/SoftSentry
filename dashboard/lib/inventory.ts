@@ -220,6 +220,7 @@ export function useRecentInstalls(
     days?: number;
     from_date?: string; // YYYY-MM-DD — overrides `days` when set
     to_date?: string; // YYYY-MM-DD
+    all_time?: boolean; // ignore the time window entirely
     limit?: number;
   } = {},
 ) {

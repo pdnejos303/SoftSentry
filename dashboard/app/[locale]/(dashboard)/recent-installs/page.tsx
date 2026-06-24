@@ -1,13 +1,16 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { Pagination } from "@/components/ui/pagination";
 import { signatureVariant, trustVariant, useRecentInstalls } from "@/lib/inventory";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ColumnFilter, type FilterOption } from "@/components/inventory/ColumnFilter";
+import type { RecentInstallItem } from "@/lib/types";
 import {
   Table,
   TableBody,
@@ -48,20 +51,54 @@ function relativeAge(iso: string, locale: string): string {
 }
 
 const PRESETS = [7, 30, 90, 365] as const;
-type Mode = "preset" | "custom";
+const PAGE_SIZE = 25;
+type Mode = "preset" | "custom" | "all";
+
+// Columns that get a header filter. When/Age are date-based and excluded.
+type ColKey = "app" | "machine" | "event" | "signature" | "trust";
+const FILTER_COLS: ColKey[] = ["app", "machine", "event", "signature", "trust"];
+// Enum columns list values in a meaningful order; text columns sort alphabetically.
+const ENUM_ORDER: Partial<Record<ColKey, string[]>> = {
+  event: ["installed", "updated"],
+  signature: ["valid", "unsigned", "expired", "invalid", "unknown"],
+  trust: ["trusted", "suspicious", "risky"],
+};
+
+function colValue(it: RecentInstallItem, key: ColKey): string {
+  switch (key) {
+    case "app":
+      return it.name;
+    case "machine":
+      return it.machine_name;
+    case "event":
+      return it.event;
+    case "signature":
+      return it.signature_status ?? "";
+    case "trust":
+      return it.trust;
+  }
+}
 
 export default function RecentInstallsPage() {
   const t = useTranslations("recentInstalls");
   const locale = useLocale();
 
-  const [mode, setMode] = useState<Mode>("preset");
+  const [mode, setMode] = useState<Mode>("all");
   const [days, setDays] = useState<number>(30);
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
+  const [page, setPage] = useState(1);
+  // Per-column header filters: column key → selected values (union within a column).
+  const [colFilters, setColFilters] = useState<Record<string, string[]>>({});
+  const setCol = (key: ColKey, next: string[]) =>
+    setColFilters((prev) => ({ ...prev, [key]: next }));
 
   // A picked calendar range wins over the rolling preset; if custom is selected
   // but no date entered yet, keep showing the last-30-day default.
   const query = useMemo(() => {
+    if (mode === "all") {
+      return { all_time: true, limit: 200 };
+    }
     if (mode === "custom" && (from || to)) {
       return { from_date: from || undefined, to_date: to || undefined, limit: 200 };
     }
@@ -69,6 +106,11 @@ export default function RecentInstallsPage() {
   }, [mode, from, to, days]);
 
   const { data, isLoading } = useRecentInstalls(query);
+
+  // Changing the filter resets to the first page (the 30s poll keeps the page).
+  useEffect(() => {
+    setPage(1);
+  }, [mode, days, from, to, colFilters]);
 
   const fmt = (iso: string, dateOnly: boolean) =>
     new Date(iso).toLocaleString(locale, {
@@ -78,6 +120,53 @@ export default function RecentInstallsPage() {
       ...(dateOnly ? {} : { hour: "2-digit", minute: "2-digit" }),
     });
 
+  const rows = useMemo(() => data?.items ?? [], [data]);
+  const items = rows.filter((it) =>
+    FILTER_COLS.every((key) => {
+      const sel = colFilters[key] ?? [];
+      return sel.length === 0 || sel.includes(colValue(it, key));
+    }),
+  );
+  const totalPages = Math.ceil(items.length / PAGE_SIZE);
+  const pageItems = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  // Distinct values per column, drawn from the full time-window result so the
+  // option list stays stable while you narrow other columns.
+  const columnOptions = useMemo(() => {
+    const label = (key: ColKey, v: string) => {
+      if (key === "event") return t(`event.${v}`);
+      if (key === "signature") return t(`sig.${v}`);
+      if (key === "trust") return t(`trust.${v}`);
+      return v;
+    };
+    const out = {} as Record<ColKey, FilterOption[]>;
+    for (const key of FILTER_COLS) {
+      const present = new Set<string>();
+      for (const it of rows) {
+        const v = colValue(it, key);
+        if (v) present.add(v);
+      }
+      const order = ENUM_ORDER[key];
+      const values = order
+        ? order.filter((v) => present.has(v))
+        : [...present].sort((a, b) => a.localeCompare(b));
+      out[key] = values.map((v) => ({ value: v, label: label(key, v) }));
+    }
+    return out;
+  }, [rows, t]);
+
+  const filterHead = (key: ColKey) => (
+    <ColumnFilter
+      title={t(`col.${key}`)}
+      options={columnOptions[key]}
+      selected={colFilters[key] ?? []}
+      onChange={(next) => setCol(key, next)}
+      searchPlaceholder={t("filter.search")}
+      clearLabel={t("filter.clear")}
+      noResultsLabel={t("filter.noResults")}
+    />
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -85,31 +174,37 @@ export default function RecentInstallsPage() {
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      {/* Time-window filter: a preset rolling window, or an explicit range. */}
+      {/* Time-window filter: a segmented control of rolling presets plus an
+          explicit custom range. Event/trust/etc. now filter from the column headers. */}
       <div className="flex flex-wrap items-end gap-3">
-        <div className="space-y-1">
-          <Label htmlFor="period">{t("filter.period")}</Label>
-          <Select
-            id="period"
-            className="w-44"
-            value={mode === "custom" ? "custom" : String(days)}
-            onChange={(e) => {
-              const v = e.target.value;
-              if (v === "custom") {
-                setMode("custom");
-              } else {
-                setMode("preset");
-                setDays(Number(v));
-              }
-            }}
+        <div className="flex flex-wrap gap-1">
+          <Button
+            size="sm"
+            variant={mode === "all" ? "default" : "outline"}
+            onClick={() => setMode("all")}
           >
-            {PRESETS.map((d) => (
-              <option key={d} value={d}>
-                {t("filter.lastDays", { days: d })}
-              </option>
-            ))}
-            <option value="custom">{t("filter.custom")}</option>
-          </Select>
+            {t("filter.allTime")}
+          </Button>
+          {PRESETS.map((d) => (
+            <Button
+              key={d}
+              size="sm"
+              variant={mode === "preset" && days === d ? "default" : "outline"}
+              onClick={() => {
+                setMode("preset");
+                setDays(d);
+              }}
+            >
+              {t("filter.lastDays", { days: d })}
+            </Button>
+          ))}
+          <Button
+            size="sm"
+            variant={mode === "custom" ? "default" : "outline"}
+            onClick={() => setMode("custom")}
+          >
+            {t("filter.custom")}
+          </Button>
         </div>
 
         {mode === "custom" && (
@@ -144,13 +239,13 @@ export default function RecentInstallsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t("col.app")}</TableHead>
-              <TableHead>{t("col.machine")}</TableHead>
-              <TableHead>{t("col.event")}</TableHead>
+              <TableHead>{filterHead("app")}</TableHead>
+              <TableHead>{filterHead("machine")}</TableHead>
+              <TableHead>{filterHead("event")}</TableHead>
               <TableHead>{t("col.when")}</TableHead>
               <TableHead>{t("col.age")}</TableHead>
-              <TableHead>{t("col.signature")}</TableHead>
-              <TableHead>{t("col.trust")}</TableHead>
+              <TableHead>{filterHead("signature")}</TableHead>
+              <TableHead>{filterHead("trust")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -161,14 +256,14 @@ export default function RecentInstallsPage() {
                 </TableCell>
               </TableRow>
             )}
-            {data?.items.length === 0 && (
+            {!isLoading && items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="py-6 text-center text-muted-foreground">
                   {t("empty")}
                 </TableCell>
               </TableRow>
             )}
-            {data?.items.map((item, i) => {
+            {pageItems.map((item, i) => {
               const w = whenInstalled(item);
               return (
                 <TableRow key={`${item.machine_uuid}-${item.name}-${item.version}-${i}`}>
@@ -212,6 +307,20 @@ export default function RecentInstallsPage() {
           </TableBody>
         </Table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">
+            {t("pageInfo", { page, total: totalPages, count: items.length })}
+          </span>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onChange={setPage}
+            labels={{ prev: t("prev"), next: t("next"), goToPage: t("goToPage") }}
+          />
+        </div>
+      )}
     </div>
   );
 }

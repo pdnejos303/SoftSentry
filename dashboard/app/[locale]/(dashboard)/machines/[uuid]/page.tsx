@@ -11,6 +11,8 @@ import { machineLabel } from "@/lib/machine";
 import { DeleteMachineDialog } from "@/components/machines/DeleteMachineDialog";
 import { RenameMachineDialog } from "@/components/machines/RenameMachineDialog";
 import { ScanProgressBar } from "@/components/machines/ScanProgressBar";
+import { HardwareTab } from "@/components/machines/HardwareTab";
+import { WindowsUpdateCard } from "@/components/machines/WindowsUpdateCard";
 import { useVulnerabilityGroups } from "@/lib/vulnerability";
 import type { VulnerabilityItem } from "@/lib/types";
 import { RiskScoreCard } from "@/components/dashboard/RiskScoreCard";
@@ -23,6 +25,7 @@ import {
   licenseVariant,
   signatureVariant,
   statusVariant,
+  wuVariant,
   useMachine,
   useMachineHistory,
   useMachineScans,
@@ -98,11 +101,16 @@ export default function MachineDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-2xl font-bold">{machineLabel(machine)}</h1>
             <Badge variant={statusVariant(machine.status)}>
               {tm(`status.${machine.status}`)}
             </Badge>
+            {machine.wu_status && (
+              <Badge variant={wuVariant(machine.wu_status, machine.wu_pending_count ?? 0)}>
+                {t(`wu.status.${machine.wu_status}`)}
+              </Badge>
+            )}
           </div>
           <p className="text-sm text-muted-foreground">
             {machine.display_name && machine.display_name.trim() ? `${machine.hostname} · ` : ""}
@@ -181,6 +189,7 @@ export default function MachineDetailPage() {
       <Tabs defaultValue="overview">
         <TabsList>
           <TabsTrigger value="overview">{t("tabs.overview")}</TabsTrigger>
+          <TabsTrigger value="hardware">{t("tabs.hardware")}</TabsTrigger>
           <TabsTrigger value="software">{t("tabs.software")}</TabsTrigger>
           <TabsTrigger value="vulnerabilities">{t("tabs.vulnerabilities")}</TabsTrigger>
           <TabsTrigger value="history">{t("tabs.history")}</TabsTrigger>
@@ -189,6 +198,9 @@ export default function MachineDetailPage() {
 
         <TabsContent value="overview">
           <OverviewTab machine={machine} />
+        </TabsContent>
+        <TabsContent value="hardware">
+          <HardwareTab machine={machine} />
         </TabsContent>
         <TabsContent value="software">
           <SoftwareTab uuid={uuid} />
@@ -212,6 +224,12 @@ function OverviewTab({ machine }: { machine: ReturnType<typeof useMachine>["data
   if (!machine) return null;
   const facts: [string, string][] = [
     [t("field.owner"), machine.owner || "—"],
+    [t("field.model"), machine.model || "—"],
+    [t("field.cpu"), machine.cpu_model || "—"],
+    [
+      t("field.ram"),
+      machine.ram_total_mb ? `${(machine.ram_total_mb / 1024).toFixed(0)} GB` : "—",
+    ],
     [t("field.software"), String(machine.software_count)],
     [t("field.tags"), machine.tags.join(", ") || "—"],
     [t("field.enrolled"), new Date(machine.enrolled_at).toLocaleString()],
@@ -226,23 +244,26 @@ function OverviewTab({ machine }: { machine: ReturnType<typeof useMachine>["data
     [t("field.server"), machine.reported_server_url || "—"],
   ];
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">{t("tabs.overview")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <dl className="grid grid-cols-1 gap-x-8 gap-y-3">
-            {facts.map(([label, value]) => (
-              <div key={label} className="flex justify-between border-b py-2 text-sm">
-                <dt className="text-muted-foreground">{label}</dt>
-                <dd className="font-medium">{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </CardContent>
-      </Card>
-      <RiskScoreCard machineUuid={machine.uuid} />
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t("tabs.overview")}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid grid-cols-1 gap-x-8 gap-y-3">
+              {facts.map(([label, value]) => (
+                <div key={label} className="flex justify-between border-b py-2 text-sm">
+                  <dt className="text-muted-foreground">{label}</dt>
+                  <dd className="font-medium">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </CardContent>
+        </Card>
+        <RiskScoreCard machineUuid={machine.uuid} />
+      </div>
+      <WindowsUpdateCard wu={machine.update_status} />
     </div>
   );
 }

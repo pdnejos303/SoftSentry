@@ -21,6 +21,14 @@ export interface ScanProgress {
   updated_at: string | null;
 }
 
+// Windows Update posture — up_to_date / updates_pending / reboot_pending / unknown.
+export type WUStatus =
+  | "up_to_date"
+  | "updates_pending"
+  | "reboot_pending"
+  | "unknown"
+  | string;
+
 export interface MachineListItem {
   uuid: string;
   hostname: string;
@@ -42,11 +50,136 @@ export interface MachineListItem {
   risk_score: number;
   // Live scan progress; null when the machine is idle / has never scanned.
   scan_progress: ScanProgress | null;
+  // Device + Windows Update summary (null until a compatible agent reports them).
+  model: string | null;
+  manufacturer: string | null;
+  wu_status: WUStatus | null;
+  wu_pending_count: number | null;
+}
+
+// ── device inventory (machine detail) ─────────────────────────────────────────
+// Mirrors backend DeviceIn blobs. All fields optional — a partial collection or
+// an older agent fills only what it could read.
+
+export interface DeviceSystem {
+  manufacturer?: string;
+  model?: string;
+  serial_number?: string;
+  system_type?: string;
+  domain?: string;
+  total_ram_mb?: number;
+}
+
+export interface DeviceCpu {
+  model?: string;
+  manufacturer?: string;
+  cores?: number;
+  logical_count?: number;
+  clock_mhz?: number;
+  architecture?: string;
+}
+
+export interface DeviceMemoryModule {
+  capacity_mb?: number;
+  speed_mhz?: number;
+  manufacturer?: string;
+  part_number?: string;
+  slot?: string;
+}
+
+export interface DeviceMemory {
+  total_mb?: number;
+  modules?: DeviceMemoryModule[];
+}
+
+export interface DeviceDisk {
+  model?: string;
+  size_gb?: number;
+  media_type?: string;
+  interface_type?: string;
+  serial?: string;
+}
+
+export interface DeviceGpu {
+  name?: string;
+  driver_version?: string;
+  vram_mb?: number;
+}
+
+export interface DeviceNic {
+  name?: string;
+  mac?: string;
+  type?: string;
+}
+
+export interface DeviceFirmware {
+  bios_vendor?: string;
+  bios_version?: string;
+  bios_date?: string;
+  motherboard?: string;
+  board_serial?: string;
+}
+
+export interface DeviceSecurity {
+  secure_boot?: string;
+  tpm_present?: boolean;
+  tpm_enabled?: boolean;
+  tpm_version?: string;
+}
+
+export interface DeviceBattery {
+  name?: string;
+  charge_percent?: number;
+  status?: string;
+}
+
+export interface DeviceMonitor {
+  name?: string;
+  width?: number;
+  height?: number;
+}
+
+export interface DeviceInfo {
+  system?: DeviceSystem;
+  cpu?: DeviceCpu;
+  memory?: DeviceMemory;
+  disks?: DeviceDisk[];
+  gpus?: DeviceGpu[];
+  network?: DeviceNic[];
+  firmware?: DeviceFirmware;
+  security?: DeviceSecurity;
+  battery?: DeviceBattery | null;
+  monitors?: DeviceMonitor[];
+}
+
+export interface PendingUpdate {
+  kb?: string;
+  title?: string;
+  security?: boolean;
+  severity?: string;
+}
+
+export interface WindowsUpdateStatus {
+  status: WUStatus;
+  pending_count: number;
+  security_pending: number;
+  reboot_pending: boolean;
+  last_installed_kb?: string;
+  last_installed_at?: string;
+  last_checked_at?: string;
+  source?: string;
+  pending?: PendingUpdate[];
 }
 
 export interface MachineDetail extends MachineListItem {
   arch: string;
   enrolled_at: string;
+  // Full hardware inventory + Windows Update blobs (null until a compatible scan).
+  device_info: DeviceInfo | null;
+  update_status: WindowsUpdateStatus | null;
+  cpu_model: string | null;
+  ram_total_mb: number | null;
+  wu_checked_at: string | null;
 }
 
 // Admin edit (PATCH /machines/{uuid}) — partial; omitted fields are left as-is.

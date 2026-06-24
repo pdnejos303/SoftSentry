@@ -250,6 +250,11 @@
     "downloadStarted": "เริ่มดาวน์โหลดแล้ว",
     "appName": "SoftSentry Agent",
     "heroTagline": "ติดตั้ง agent บนเครื่อง endpoint ได้ในคลิกเดียว",
+    "meta": {
+      "version": "เวอร์ชัน",
+      "build": "บิลด์",
+      "checksum": "เช็กซัม"
+    },
     "step1": "ดาวน์โหลด",
     "step2": "ดับเบิลคลิกเพื่อติดตั้ง",
     "step3": "ขึ้นใน dashboard ภายใน ~1 นาที",
@@ -391,13 +396,43 @@
     "title": "ติดตั้งใหม่ล่าสุด",
     "subtitle": "โปรแกรมที่เพิ่งติดตั้งหรืออัปเดตทั่วทั้งระบบ พร้อมระดับความน่าเชื่อถือ",
     "empty": "ไม่มีการติดตั้งใหม่ในช่วงเวลาที่เลือก",
+    "emptyFiltered": "ไม่มีการติดตั้งที่ตรงกับตัวกรองปัจจุบัน",
     "approx": "(โดยประมาณ)",
+    "quick": {
+      "label": "ตัวกรองด่วน",
+      "attention": "ต้องตรวจสอบ",
+      "unsigned": "ไม่มีลายเซ็น",
+      "newOnly": "เฉพาะติดตั้งใหม่"
+    },
     "filter": {
+      "searchLabel": "ค้นหา",
+      "searchPlaceholder": "ชื่อโปรแกรม…",
+      "machine": "เครื่อง",
+      "allMachines": "ทุกเครื่อง",
       "period": "ช่วงเวลา",
       "lastDays": "{days} วันล่าสุด",
       "custom": "กำหนดเอง",
       "from": "ตั้งแต่",
-      "to": "ถึง"
+      "to": "ถึง",
+      "change": "การเปลี่ยนแปลง",
+      "allChanges": "ทุกการเปลี่ยนแปลง",
+      "signature": "ลายเซ็น",
+      "allSignatures": "ทุกลายเซ็น",
+      "trust": "ความน่าเชื่อถือ",
+      "allTrust": "ทุกระดับ",
+      "trustAttention": "ต้องตรวจสอบ",
+      "clearAll": "ล้างทั้งหมด"
+    },
+    "chip": {
+      "machine": "เครื่อง: {value}",
+      "search": "ค้นหา: {value}",
+      "change": "การเปลี่ยนแปลง: {value}",
+      "signature": "ลายเซ็น: {value}",
+      "trust": "ความน่าเชื่อถือ: {value}"
+    },
+    "count": {
+      "results": "{n, plural, =0 {ไม่พบรายการ} other {# รายการ}}",
+      "loading": "กำลังโหลด…"
     },
     "col": {
       "app": "โปรแกรม",

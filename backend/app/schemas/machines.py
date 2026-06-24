@@ -49,11 +49,24 @@ class MachineListItem(BaseModel):
     # Live scan progress (None when idle / never scanned) so the list and detail
     # views can render a progress bar that updates as heartbeats arrive.
     scan_progress: ScanProgress | None = None
+    # Lightweight device + Windows Update summary for the list/cards (full detail
+    # is on MachineDetail). All None until a compatible agent reports them.
+    model: str | None = None
+    manufacturer: str | None = None
+    wu_status: str | None = None
+    wu_pending_count: int | None = None
 
 
 class MachineDetail(MachineListItem):
     arch: str
     enrolled_at: datetime
+    # Full hardware inventory + Windows Update blobs (None until a compatible scan
+    # reports them; macOS leaves them None this round).
+    device_info: dict | None = None
+    update_status: dict | None = None
+    cpu_model: str | None = None
+    ram_total_mb: int | None = None
+    wu_checked_at: datetime | None = None
 
 
 class MachineList(BaseModel):

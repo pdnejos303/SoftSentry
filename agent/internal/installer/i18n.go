@@ -72,6 +72,7 @@ type wizText struct {
 	closeBtn string
 
 	languageLabel string // ป้ายกำกับกล่องเลือกภาษา
+	stepIndicator string // รูปแบบป้ายบอกขั้น เช่น "ขั้นที่ %d จาก %d" (2 อาร์กิวเมนต์: ขั้นปัจจุบัน, ทั้งหมด)
 
 	// หน้า 1 — ยินดีต้อนรับ
 	welcomeHeading string
@@ -115,6 +116,7 @@ var wizTexts = map[Lang]wizText{
 		cancel:          "ยกเลิก",
 		closeBtn:        "ปิด",
 		languageLabel:   "ภาษา",
+		stepIndicator:   "ขั้นที่ %d จาก %d",
 		welcomeHeading:  "ยินดีต้อนรับสู่ SoftSentry Agent",
 		welcomeIntro:    "ตัวช่วยนี้จะติดตั้ง SoftSentry Agent บนเครื่องนี้\nกด \"ถัดไป\" เพื่อดูรายละเอียดก่อนเริ่มติดตั้ง",
 		consentHeading:  "สิ่งที่จะเกิดขึ้นบนเครื่องนี้",
@@ -149,6 +151,7 @@ var wizTexts = map[Lang]wizText{
 		cancel:          "Cancel",
 		closeBtn:        "Close",
 		languageLabel:   "Language",
+		stepIndicator:   "Step %d of %d",
 		welcomeHeading:  "Welcome to SoftSentry Agent",
 		welcomeIntro:    "This wizard will install SoftSentry Agent on this computer.\nClick \"Next\" to review the details before installing.",
 		consentHeading:  "What will happen on this computer",
@@ -183,6 +186,7 @@ var wizTexts = map[Lang]wizText{
 		cancel:          "キャンセル",
 		closeBtn:        "閉じる",
 		languageLabel:   "言語",
+		stepIndicator:   "ステップ %d/%d",
 		welcomeHeading:  "SoftSentry Agent へようこそ",
 		welcomeIntro:    "このウィザードは SoftSentry Agent をこのコンピューターにインストールします。\n「次へ」をクリックして、インストール前に詳細を確認してください。",
 		consentHeading:  "このコンピューターで行われる処理",

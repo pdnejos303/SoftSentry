@@ -20,12 +20,48 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from app.models.machine import Machine
-    from app.schemas.scans import ScanIn, SignatureIn, SoftwareIn
+    from app.schemas.scans import DeviceIn, ScanIn, SignatureIn, SoftwareIn
 
 
 def _norm(value: str | None) -> str | None:
     """Registry/plist values often carry stray whitespace — trim it."""
     return value.strip() if value else value
+
+
+def _cap(value: str | None, length: int) -> str | None:
+    """Clamp a string to a column's length so an over-long WMI value can't break
+    the insert. None passes through unchanged."""
+    if value is None:
+        return None
+    value = value.strip()
+    return value[:length] if value else None
+
+
+def _apply_device(machine: Machine, device: DeviceIn | None) -> None:
+    """Store the hardware inventory + Windows Update posture from a scan.
+
+    Splits the report into two blobs — ``device_info`` (hardware) and
+    ``update_status`` (Windows Update) — and denormalizes the high-value fields
+    into scalar columns so list/detail views can show & sort them cheaply. No-op
+    when the agent didn't report a device (older agents / macOS this round), so a
+    prior report is left intact rather than wiped.
+    """
+    if device is None:
+        return
+    data = device.model_dump(mode="json")
+    machine.update_status = data.pop("windows_update", None)
+    machine.device_info = data
+
+    machine.model = _cap(device.system.model, 255)
+    machine.manufacturer = _cap(device.system.manufacturer, 255)
+    machine.cpu_model = _cap(device.cpu.model, 255)
+    machine.ram_total_mb = device.system.total_ram_mb or device.memory.total_mb or None
+
+    wu = device.windows_update
+    if wu is not None:
+        machine.wu_status = _cap(wu.status, 20)
+        machine.wu_pending_count = wu.pending_count
+        machine.wu_checked_at = wu.last_checked_at
 
 
 async def _upsert_signature(
@@ -167,6 +203,7 @@ async def process_scan(
     machine.last_scan_at = payload.completed_at
     machine.last_seen_at = now
     machine.status = "online"
+    _apply_device(machine, payload.device)
     cfg = await session.get(AgentConfig, machine.id)
     if cfg is not None:
         cfg.manual_scan_requested = False

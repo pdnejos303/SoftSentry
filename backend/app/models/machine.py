@@ -12,6 +12,8 @@ from app.models.base import Base, TimestampMixin, UuidMixin
 
 # JSONB on Postgres (GIN-indexable), plain JSON on other backends (e.g. SQLite in tests).
 JsonList = JSON().with_variant(JSONB, "postgresql")
+# Same backend split for object/dict-shaped columns (device_info / update_status).
+JsonObject = JSON().with_variant(JSONB, "postgresql")
 
 
 class Machine(Base, UuidMixin, TimestampMixin):
@@ -55,4 +57,20 @@ class Machine(Base, UuidMixin, TimestampMixin):
     scan_total: Mapped[int | None] = mapped_column(Integer)
     scan_current_path: Mapped[str | None] = mapped_column(String(512))
     scan_progress_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Hardware inventory + Windows Update posture, refreshed on each compatible
+    # scan (Phase 6). Full detail lives in two JSON blobs; the scalars beside them
+    # are denormalized from the blobs so the list/detail views can show & sort on
+    # the high-value fields without parsing JSON. All nullable: machines scanned
+    # before this feature — or whose agent can't collect (macOS this round) —
+    # leave them NULL.
+    device_info: Mapped[dict | None] = mapped_column(JsonObject)
+    update_status: Mapped[dict | None] = mapped_column(JsonObject)
+    model: Mapped[str | None] = mapped_column(String(255))
+    manufacturer: Mapped[str | None] = mapped_column(String(255))
+    cpu_model: Mapped[str | None] = mapped_column(String(255))
+    ram_total_mb: Mapped[int | None] = mapped_column(Integer)
+    # Windows Update summary — up_to_date / updates_pending / reboot_pending / unknown.
+    wu_status: Mapped[str | None] = mapped_column(String(20))
+    wu_pending_count: Mapped[int | None] = mapped_column(Integer)
+    wu_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

@@ -152,6 +152,10 @@ def _to_item(machine: Machine, now: datetime, software_count: int) -> dict[str, 
         "software_count": software_count,
         "risk_score": machine.risk_score,
         "scan_progress": _scan_progress(machine),
+        "model": machine.model,
+        "manufacturer": machine.manufacturer,
+        "wu_status": machine.wu_status,
+        "wu_pending_count": machine.wu_pending_count,
     }
 
 
@@ -191,6 +195,12 @@ async def machine_detail(session: AsyncSession, machine: Machine) -> dict[str, o
         "medium": breakdown["cve_medium"],
         "low": breakdown["cve_low"],
     }
+    # Full hardware + Windows Update detail (detail view only).
+    item["device_info"] = machine.device_info
+    item["update_status"] = machine.update_status
+    item["cpu_model"] = machine.cpu_model
+    item["ram_total_mb"] = machine.ram_total_mb
+    item["wu_checked_at"] = machine.wu_checked_at
     return item
 
 

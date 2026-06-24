@@ -208,6 +208,11 @@ export function useRecentInstalls(
     days?: number;
     from_date?: string; // YYYY-MM-DD — overrides `days` when set
     to_date?: string; // YYYY-MM-DD
+    machine_uuid?: string; // only events on this endpoint
+    q?: string; // substring match on the app name
+    event?: "installed" | "updated"; // change-type filter
+    signature_status?: "valid" | "unsigned" | "invalid" | "expired" | "unknown";
+    trust?: "trusted" | "suspicious" | "risky" | "attention"; // attention = not trusted
     limit?: number;
   } = {},
 ) {
@@ -240,6 +245,24 @@ export function statusVariant(status: string): "success" | "warning" | "muted" {
   if (status === "online") return "success";
   if (status === "stale") return "warning";
   return "muted";
+}
+
+// Windows Update posture as a risk signal: up-to-date = green, pending = amber,
+// reboot/critical-pending = red, unknown = neutral grey.
+export function wuVariant(
+  status: string | null | undefined,
+  securityPending = 0,
+): "success" | "warning" | "danger" | "muted" {
+  switch (status) {
+    case "up_to_date":
+      return "success";
+    case "reboot_pending":
+      return "danger";
+    case "updates_pending":
+      return securityPending > 0 ? "danger" : "warning";
+    default:
+      return "muted"; // unknown / not yet reported
+  }
 }
 
 export function licenseVariant(

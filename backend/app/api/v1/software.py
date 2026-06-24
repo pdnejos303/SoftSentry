@@ -5,6 +5,7 @@ Aggregate inventory view, top-N widget, and two-machine comparison.
 
 from __future__ import annotations
 
+import uuid as uuid_lib
 from datetime import date
 from typing import Annotated
 
@@ -39,12 +40,40 @@ async def recent_installs(
     to_date: Annotated[
         date | None, Query(description="Inclusive end of an explicit calendar range (UTC)")
     ] = None,
+    machine_uuid: Annotated[
+        uuid_lib.UUID | None, Query(description="Only events on this endpoint")
+    ] = None,
+    q: Annotated[str | None, Query(description="Substring match on the app name")] = None,
+    event: Annotated[str | None, Query(pattern="^(installed|updated)$")] = None,
+    signature_status: Annotated[
+        str | None, Query(pattern="^(valid|unsigned|invalid|expired|unknown)$")
+    ] = None,
+    trust: Annotated[
+        str | None, Query(pattern="^(trusted|suspicious|risky|attention)$")
+    ] = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 100,
 ) -> RecentInstallList:
     if from_date is not None and to_date is not None and from_date > to_date:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "from_date must not be after to_date")
+
+    machine_id: int | None = None
+    if machine_uuid is not None:
+        machine = await machine_service.get_machine(session, machine_uuid)
+        if machine is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Machine not found")
+        machine_id = machine.id
+
     items = await software_service.recent_installs(
-        session, days=days, from_date=from_date, to_date=to_date, limit=limit
+        session,
+        machine_id=machine_id,
+        q=q,
+        event=event,
+        signature_status=signature_status,
+        trust=trust,
+        days=days,
+        from_date=from_date,
+        to_date=to_date,
+        limit=limit,
     )
     return RecentInstallList(items=items, total=len(items))
 

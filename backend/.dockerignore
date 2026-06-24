@@ -1,0 +1,32 @@
+# Build context hygiene — Dockerfile copies only pyproject.toml/app/alembic,
+# so everything below is dead weight (~255MB) that would otherwise be tar'd and
+# shipped to the daemon on every `compose build` of backend AND worker.
+
+# Python virtualenv — rebuilt inside the image via `uv sync`
+.venv
+
+# Tool/test caches
+.mypy_cache
+.pytest_cache
+.ruff_cache
+__pycache__
+*.pyc
+.coverage
+htmlcov
+
+# Local dev artifacts (not part of the image)
+softsentry_local.db
+*.sqlite
+*.sqlite3
+agent-binaries
+reports
+
+# VCS / editor / docs (Dockerfile copies README.md explicitly, keep it available
+# by NOT excluding *.md broadly — only exclude editor/VCS noise)
+.git
+.gitignore
+.vscode
+.idea
+
+# Local run helpers
+run-local.ps1

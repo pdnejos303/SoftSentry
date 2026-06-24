@@ -522,10 +522,38 @@ def _is_blacklisted(name: str, publisher: str | None, blacklist: list[BlacklistE
     return False
 
 
+# Upper bound on rows pulled from the DB when a `trust` filter is active. Trust
+# depends on the blacklist (not expressible in SQL), so it is applied in Python
+# after the fetch; we over-fetch up to this cap, then truncate to `limit`. Large
+# enough that the recent-install feed for any realistic window fits inside it.
+_TRUST_FETCH_CAP = 1000
+
+
+def _recent_event_condition(event: str | None) -> ColumnElement[bool]:
+    """SQL predicate for the change-type filter. ``None`` keeps both installs and
+    updates; a specific value narrows to just that change."""
+    if event in ("installed", "updated"):
+        return SoftwareHistory.event == event
+    return SoftwareHistory.event.in_(("installed", "updated"))
+
+
+def _trust_matches(trust_filter: str, item_trust: str) -> bool:
+    """Whether a row's computed trust verdict satisfies the UI filter.
+    ``attention`` is the security shortcut for "anything not fully trusted"
+    (suspicious **or** risky) — the default view an admin triages from."""
+    if trust_filter == "attention":
+        return item_trust != "trusted"
+    return item_trust == trust_filter
+
+
 async def recent_installs(
     session: AsyncSession,
     *,
     machine_id: int | None = None,
+    q: str | None = None,
+    event: str | None = None,
+    signature_status: str | None = None,
+    trust: str | None = None,
     days: int | None = 30,
     from_date: date | None = None,
     to_date: date | None = None,
@@ -536,6 +564,15 @@ async def recent_installs(
     verdict. Built from the existing software_history diff (event installed/
     updated) joined to the current software_record for signature + timing.
 
+    Filters (all optional, combine with AND):
+    - ``machine_id`` — only events on one endpoint.
+    - ``q`` — substring match on the app name.
+    - ``event`` — narrow to ``installed`` or ``updated`` only.
+    - ``signature_status`` — ``valid`` / ``unsigned`` / ``invalid`` / ... where
+      ``unsigned`` folds in rows with no signature record at all (NULL status).
+    - ``trust`` — ``trusted`` / ``suspicious`` / ``risky`` / ``attention``
+      (= not trusted). Applied in Python because trust depends on the blacklist.
+
     Time window: an explicit ``from_date``/``to_date`` calendar range (inclusive,
     interpreted in UTC) takes precedence; otherwise fall back to the rolling
     ``days`` lookback. Filtering is on ``occurred_at`` — when the agent observed
@@ -543,11 +580,15 @@ async def recent_installs(
     preset.
     """
     conditions: list[ColumnElement[bool]] = [
-        SoftwareHistory.event.in_(("installed", "updated")),
+        _recent_event_condition(event),
         Machine.deleted_at.is_(None),
     ]
     if machine_id is not None:
         conditions.append(SoftwareHistory.machine_id == machine_id)
+    if q:
+        conditions.append(SoftwareHistory.software_name.ilike(f"%{q}%"))
+    if signature_status:
+        conditions.append(_sig_condition(signature_status))
 
     if from_date is not None or to_date is not None:
         # Explicit calendar range overrides the rolling `days` window.
@@ -585,7 +626,9 @@ async def recent_installs(
             .outerjoin(SignatureRecord, SignatureRecord.id == SoftwareRecord.signature_id)
             .where(*conditions)
             .order_by(SoftwareHistory.occurred_at.desc(), SoftwareHistory.id.desc())
-            .limit(limit)
+            # Over-fetch when a trust filter is active so the Python-side trust
+            # filter (below) can still return up to `limit` matching rows.
+            .limit(limit if trust is None else _TRUST_FETCH_CAP)
         )
     ).all()
 
@@ -594,6 +637,9 @@ async def recent_installs(
     items: list[dict[str, object]] = []
     for hist, m_uuid, hostname, display_name, publisher, inst_date, inst_dt, sig_status in rows:
         blacklisted = _is_blacklisted(hist.software_name, publisher, blacklist)
+        verdict = trust_verdict(sig_status, blacklisted=blacklisted)
+        if trust is not None and not _trust_matches(trust, verdict):
+            continue
         items.append(
             {
                 "machine_uuid": m_uuid,
@@ -606,7 +652,9 @@ async def recent_installs(
                 "installed_at": inst_dt,  # accurate install moment (best-effort)
                 "install_date": inst_date,  # registry date-only fallback
                 "signature_status": sig_status,
-                "trust": trust_verdict(sig_status, blacklisted=blacklisted),
+                "trust": verdict,
             }
         )
+        if len(items) >= limit:
+            break
     return items

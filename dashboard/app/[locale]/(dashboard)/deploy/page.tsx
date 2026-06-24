@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
@@ -12,8 +12,8 @@ import {
   Pencil,
   Plus,
   ShieldAlert,
-  ShieldCheck,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import {
   defaultServerUrl,
@@ -141,41 +141,63 @@ export default function DeployPage() {
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      {/* Primary flow — a polished hero: one click to get the installable agent. */}
-      <Card className="relative overflow-hidden">
-        {/* subtle gradient accent at the top to lift the hero off the page */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-primary/10 to-transparent" />
-        <CardContent className="relative space-y-6 pt-6">
-          {/* header: product icon + name + the version actually being served */}
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <ShieldCheck className="h-6 w-6" />
-              </div>
-              <div>
-                <h2 className="text-lg font-semibold leading-tight">{t("appName")}</h2>
-                <p className="text-sm text-muted-foreground">{t("heroTagline")}</p>
-              </div>
+      {/* Primary flow — a quiet "deployment console" panel: one click to get the
+          installable agent. Hairline-divided regions instead of a floating hero;
+          color is reserved for the served-build signal and the one real CTA. */}
+      <section className="overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm">
+        {/* Header: agent identity + the build actually being served, treated as
+            authoritative machine data (mono provenance, not a decorative pill). */}
+        <div className="flex flex-col gap-5 border-b p-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              {/* color = signal: a verified build is being served (green) vs. none yet (grey) */}
+              <span
+                className={cn(
+                  "h-1.5 w-1.5 shrink-0 rounded-full",
+                  binary ? "bg-success" : "bg-muted-foreground/40",
+                )}
+                aria-hidden
+              />
+              <h2 className="text-base font-semibold leading-none">{t("appName")}</h2>
             </div>
-            {binary && (
-              // version ถูก fix เป็น v0.1.0 เสมอ จึงบอกความสดไม่ได้ — แสดง "build stamp"
-              // (UTC timestamp ของตอน build, เปลี่ยนทุก build) ซึ่ง bake อยู่ใน binary และ
-              // โชว์ค่าเดียวกันเป๊ะบน "หน้าแรกของ installer ที่โหลดไปรัน" → admin เทียบสอง
-              // ค่านี้ได้ตรงๆ: ตรงกัน = ตัวที่รัน = บิลด์ล่าสุดนี้จริง ไม่ใช่ของเก่าค้าง
-              // (sha256 7 ตัวแรกแสดงเป็น fingerprint สำรองที่ตรงกับ manifest/volume)
-              <Badge variant="secondary" className="shrink-0 font-mono">
-                v{binary.version} · {binary.os}
-                {binary.build_stamp ? ` · build ${binary.build_stamp}` : ""}
-                {binary.sha256 ? ` (${binary.sha256.slice(0, 7)})` : ""}
-              </Badge>
-            )}
+            <p className="text-sm text-muted-foreground">{t("heroTagline")}</p>
           </div>
 
-          {/* the one big call to action, with the callback server tucked beneath it */}
-          <div className="flex flex-col items-center gap-3 py-1">
+          {binary && (
+            // version ถูก fix เป็น v0.1.0 เสมอ จึงบอกความสดไม่ได้ — แสดง "build stamp"
+            // (UTC timestamp ตอน build, เปลี่ยนทุก build) ที่ bake อยู่ใน binary และโชว์ค่า
+            // เดียวกันเป๊ะบน "หน้าแรกของ installer ที่โหลดไปรัน" → admin เทียบได้ตรงๆ ว่าตัว
+            // ที่รัน = บิลด์ล่าสุดนี้จริง (checksum = fingerprint สำรองที่ตรงกับ manifest/volume)
+            <dl className="grid shrink-0 grid-cols-[auto_auto] items-baseline gap-x-4 gap-y-1.5 sm:justify-end">
+              <dt className="text-xs text-muted-foreground">{t("meta.version")}</dt>
+              <dd className="text-right font-mono text-xs tabular-nums text-foreground">
+                v{binary.version} · {binary.os}
+              </dd>
+              {binary.build_stamp && (
+                <>
+                  <dt className="text-xs text-muted-foreground">{t("meta.build")}</dt>
+                  <dd className="text-right font-mono text-xs tabular-nums text-foreground">
+                    {binary.build_stamp}
+                  </dd>
+                </>
+              )}
+              {binary.sha256 && (
+                <>
+                  <dt className="text-xs text-muted-foreground">{t("meta.checksum")}</dt>
+                  <dd className="text-right font-mono text-xs text-foreground">
+                    {binary.sha256.slice(0, 12)}
+                  </dd>
+                </>
+              )}
+            </dl>
+          )}
+        </div>
+
+        {/* Action: the one real call to action + the callback server beside it. */}
+        <div className="space-y-3 p-6">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
             <Button
               size="lg"
-              className="h-12 px-8 text-base"
               onClick={onDownload}
               disabled={create.isPending}
             >
@@ -188,7 +210,7 @@ export default function DeployPage() {
             </Button>
 
             {editingServer ? (
-              <div className="w-full max-w-md space-y-1">
+              <div className="w-full max-w-md space-y-1 sm:flex-1">
                 <Label htmlFor="dl-server" className="sr-only">
                   {t("server")}
                 </Label>
@@ -200,43 +222,43 @@ export default function DeployPage() {
                   placeholder="http://192.168.1.10:8001"
                   autoFocus
                 />
-                <p className="text-xs text-muted-foreground">{t("serverHint")}</p>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={() => setEditingServer(true)}
-                className="inline-flex max-w-full items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                className="inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
               >
-                <span>{t("server")}:</span>
+                <span className="shrink-0">{t("server")}:</span>
                 <span className="truncate font-mono text-foreground">{server || "—"}</span>
                 <Pencil className="h-3 w-3 shrink-0" />
               </button>
             )}
           </div>
+          <p className="max-w-prose text-sm text-muted-foreground">{t("downloadHint")}</p>
+        </div>
 
-          {/* what happens after they click — three plain steps */}
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-lg border bg-muted/30 p-4">
-            {[t("step1"), t("step2"), t("step3")].map((label, i) => (
-              <Fragment key={i}>
-                <div className="flex items-center gap-2">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-semibold text-primary-foreground">
-                    {i + 1}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{label}</span>
-                </div>
-                {i < 2 && <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/50" />}
-              </Fragment>
-            ))}
-          </div>
+        {/* What happens after they click — three quiet, numbered steps. */}
+        <ol className="flex flex-col gap-4 border-t px-6 py-5 sm:flex-row sm:items-center sm:gap-2">
+          {[t("step1"), t("step2"), t("step3")].map((label, i) => (
+            <li key={i} className="flex flex-1 items-center gap-3">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border font-mono text-[11px] tabular-nums text-muted-foreground">
+                {i + 1}
+              </span>
+              <span className="text-sm leading-snug text-foreground">{label}</span>
+              {i < 2 && (
+                <ArrowRight className="ml-auto hidden h-4 w-4 shrink-0 text-muted-foreground/40 sm:block" />
+              )}
+            </li>
+          ))}
+        </ol>
 
-          {/* SmartScreen heads-up (the installer isn't code-signed yet) */}
-          <div className="flex items-start gap-2 text-xs text-muted-foreground">
-            <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-            <span>{t("smartScreen")}</span>
-          </div>
-        </CardContent>
-      </Card>
+        {/* SmartScreen heads-up (the installer isn't code-signed yet). */}
+        <div className="flex items-start gap-2 border-t px-6 py-4 text-xs text-muted-foreground">
+          <ShieldAlert className="mt-px h-4 w-4 shrink-0 text-warning" />
+          <span className="max-w-prose">{t("smartScreen")}</span>
+        </div>
+      </section>
 
       {/* Advanced — manual deployment links + management, hidden by default. */}
       <div>
@@ -388,7 +410,7 @@ export default function DeployPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="text-red-600"
+                                className="text-destructive hover:text-destructive"
                                 onClick={() => onRevoke(tok.uuid)}
                                 disabled={revoke.isPending}
                               >

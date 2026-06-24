@@ -13,9 +13,7 @@ package installer
 
 import (
 	"fmt"
-	"os"
 	"strings"
-	"time"
 	"unsafe"
 
 	"github.com/lxn/walk"
@@ -104,6 +102,7 @@ type wizardUI struct {
 	backBtn   *walk.PushButton
 	nextBtn   *walk.PushButton
 	cancelBtn *walk.PushButton
+	stepLbl   *walk.Label // "ขั้นที่ N จาก M" ชิดซ้ายบน — บอกตำแหน่งในวิซาร์ด
 	langLbl   *walk.Label
 	langCombo *walk.ComboBox
 
@@ -152,6 +151,9 @@ func RunWizard(serverURL string, defaultLang Lang, defaultDir string) (WizardRes
 				Background: SystemColorBrush{Color: walk.SysColorBtnFace},
 				Layout:     HBox{MarginsZero: true, Spacing: 6},
 				Children: []Widget{
+					// ป้ายบอกขั้นชิดซ้าย — ถ่วงสมดุลกับกล่องเลือกภาษาทางขวา
+					// (ข้อความตั้งจริงใน updateNav ตามขั้น/ภาษาปัจจุบัน)
+					Label{AssignTo: &ui.stepLbl, Text: ""},
 					HSpacer{},
 					Label{AssignTo: &ui.langLbl, Text: t.languageLabel + ":"},
 					ComboBox{
@@ -224,23 +226,6 @@ func RunWizard(serverURL string, defaultLang Lang, defaultDir string) (WizardRes
 		redrawFull(ui.content.Handle())
 	})
 
-	// DEBUG (ชั่วคราว): ตั้ง WIZ_AUTOCYCLE เพื่อให้สลับภาษาเองทุก ~700ms — ใช้ทำซ้ำ
-	// อาการ "ตัวอักษรซ้อน" แล้ว screenshot ตรวจ (ลบออกหลังดีบั๊กเสร็จ)
-	if os.Getenv("WIZ_AUTOCYCLE") != "" {
-		go func() {
-			for i := 0; ; i++ {
-				time.Sleep(700 * time.Millisecond)
-				if os.Getenv("WIZ_STEPS") != "" {
-					s := i % wizardStepCount
-					ui.mw.Synchronize(func() { ui.showStep(s) })
-					continue
-				}
-				n := i % len(wizardLangs)
-				ui.mw.Synchronize(func() { ui.langCombo.SetCurrentIndex(n) })
-			}
-		}()
-	}
-
 	ui.showStep(0)
 	ui.mw.Show()
 	ui.mw.Run()
@@ -260,6 +245,9 @@ func (ui *wizardUI) refreshChrome() {
 // กลายเป็น "ติดตั้ง" ที่หน้าสุดท้าย และถูก disable ในหน้า consent จนกว่าจะติ๊กยินยอม
 func (ui *wizardUI) updateNav() {
 	t := textFor(ui.lang)
+	// ป้าย "ขั้นที่ N จาก M" (อัปเดตทั้งตอนเปลี่ยน step และตอนสลับภาษา เพราะ
+	// updateNav ถูกเรียกจากทั้ง showStep และ refreshChrome)
+	ui.stepLbl.SetText(fmt.Sprintf(t.stepIndicator, ui.step+1, wizardStepCount))
 	ui.backBtn.SetText(t.back)
 	ui.backBtn.SetEnabled(ui.step > 0)
 	if ui.step == wizardStepCount-1 {
@@ -362,17 +350,7 @@ func (ui *wizardUI) buildWelcome() {
 		Background: SystemColorBrush{Color: walk.SysColorBtnFace},
 		Layout:     VBox{Margins: Margins{Left: 12, Top: 20, Right: 12, Bottom: 8}, Spacing: 14},
 		Children: []Widget{
-			// ───────────────────────────────────────────────────────────────────
-			// ⚠️ MARKER ชั่วคราว (build-stamp ที่อ่านออก): บอก "การแก้ครั้งล่าสุด" ที่อยู่ใน
-			// binary ตัวนี้ — ถ้าเห็นข้อความนี้บนหน้าแรก = ตัวที่รันถูก build ใหม่จาก source
-			// ล่าสุดจริง (ไม่ใช่ของเก่าค้าง). เปลี่ยนข้อความทุกครั้งที่แก้บั๊กใหม่ เพื่อยืนยันว่า
-			// agent-builder rebuild แล้ว — ลบทั้ง Label นี้ทิ้งได้เมื่อไม่ต้องใช้ตรวจ build อีก
-			Label{
-				Text:      "แก้แล้ว: เปลี่ยนภาษาไม่เพิ่มพาเนลซ้อน (ลบตัวเก่าครบ)",
-				Font:      Font{PointSize: 13, Bold: true},
-				TextColor: walk.RGB(0xD0, 0x21, 0x21),
-			},
-			Label{Text: t.welcomeHeading, Font: Font{PointSize: 17, Bold: true}},
+			Label{Text: t.welcomeHeading, Font: Font{PointSize: 15, Bold: true}},
 			Label{Text: crlf(t.welcomeIntro), Font: Font{PointSize: 11}},
 			// ดันเนื้อหาขึ้นชิดบน — VSpacer เดียวด้านล่าง (ไม่ใช่สองตัวคร่อมที่ทำให้
 			// ข้อความลอยกลางจอเกิดช่องว่างเยอะ)
@@ -402,7 +380,7 @@ func (ui *wizardUI) buildConsent() {
 		Background: SystemColorBrush{Color: walk.SysColorBtnFace},
 		Layout:     VBox{Margins: Margins{Left: 12, Top: 16, Right: 12, Bottom: 8}, Spacing: 12},
 		Children: []Widget{
-			Label{Text: t.consentHeading, Font: Font{PointSize: 14, Bold: true}},
+			Label{Text: t.consentHeading, Font: Font{PointSize: 15, Bold: true}},
 			// TextEdit เป็น widget ที่ยืดได้ → กินพื้นที่ที่เหลือทั้งหมดและ reflow
 			// ตามขนาดหน้าต่าง (MinSize กันไม่ให้เตี้ยจนต้องเลื่อนทันที)
 			TextEdit{
@@ -435,7 +413,7 @@ func (ui *wizardUI) buildLocation() {
 		Background: SystemColorBrush{Color: walk.SysColorBtnFace},
 		Layout:     VBox{Margins: Margins{Left: 12, Top: 20, Right: 12, Bottom: 8}, Spacing: 10},
 		Children: []Widget{
-			Label{Text: t.locationHeading, Font: Font{PointSize: 14, Bold: true}},
+			Label{Text: t.locationHeading, Font: Font{PointSize: 15, Bold: true}},
 			Label{Text: t.locationLabel},
 			Composite{
 				MaxSize: Size{Height: 40},

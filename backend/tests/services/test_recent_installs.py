@@ -130,6 +130,67 @@ async def test_recent_installs_blacklisted_is_risky(session):
 
 
 @pytest.mark.asyncio
+async def test_recent_installs_filters(session):
+    """The feed honours the machine / app-name / change / signature / trust
+    filters, individually and combined."""
+    pc1 = await _make_machine(session, "PC-101")
+    pc2 = await _make_machine(session, "PC-102")
+
+    await scan_service.process_scan(
+        session=session,
+        machine=pc1,
+        payload=_scan(
+            _sw("Chrome", "120", signature=SignatureIn(status="valid")),
+            _sw("RandomTool", "1.0", signature=SignatureIn(status="unsigned")),
+        ),
+    )
+    await scan_service.process_scan(
+        session=session,
+        machine=pc2,
+        payload=_scan(_sw("Slack", "5.0", signature=SignatureIn(status="valid"))),
+    )
+    # Update Chrome on PC-101 → an "updated" event.
+    await scan_service.process_scan(
+        session=session,
+        machine=pc1,
+        payload=_scan(
+            _sw("Chrome", "121", signature=SignatureIn(status="valid")),
+            _sw("RandomTool", "1.0", signature=SignatureIn(status="unsigned")),
+        ),
+    )
+
+    # machine filter → only PC-101's apps
+    only_pc1 = await software_service.recent_installs(session, machine_id=pc1.id)
+    assert {i["name"] for i in only_pc1} <= {"Chrome", "RandomTool"}
+    assert all(i["machine_name"] == "PC-101" for i in only_pc1)
+
+    # name search
+    named = await software_service.recent_installs(session, q="rand")
+    assert {i["name"] for i in named} == {"RandomTool"}
+
+    # change-type filter → only updates
+    updated = await software_service.recent_installs(session, event="updated")
+    assert all(i["event"] == "updated" for i in updated)
+    assert any(i["name"] == "Chrome" for i in updated)
+
+    # signature filter → unsigned only (folds NULL)
+    unsigned = await software_service.recent_installs(session, signature_status="unsigned")
+    assert {i["name"] for i in unsigned} == {"RandomTool"}
+
+    # trust filter → "attention" = anything not trusted
+    attention = await software_service.recent_installs(session, trust="attention")
+    assert all(i["trust"] != "trusted" for i in attention)
+    assert any(i["name"] == "RandomTool" for i in attention)
+    assert all(i["name"] != "Slack" for i in attention)  # Slack is validly signed
+
+    # combined: PC-101 + suspicious
+    combined = await software_service.recent_installs(
+        session, machine_id=pc1.id, trust="suspicious"
+    )
+    assert {i["name"] for i in combined} == {"RandomTool"}
+
+
+@pytest.mark.asyncio
 async def test_recent_installs_explicit_date_range(session):
     """from_date/to_date select an exact calendar window (on the event's
     occurred_at) and override the rolling `days` lookback."""

@@ -300,6 +300,133 @@ type ScanRequest struct {
 	ScanType    string         `json:"scan_type"`         // ประเภทการสแกน เช่น "full"
 	Trigger     string         `json:"trigger,omitempty"` // สาเหตุที่สแกน เช่น "scheduled", "manual" (ถ้ามี)
 	Software    []SoftwareItem `json:"software"`          // รายการ software ทั้งหมดที่สแกนได้
+	Device      *DeviceInfo    `json:"device,omitempty"`  // ข้อมูลฮาร์ดแวร์ + Windows Update (omit ถ้าเก็บไม่ได้)
+}
+
+// DeviceInfo ตรงกับ backend DeviceIn schema — ข้อมูลฮาร์ดแวร์/สเปคและสถานะ
+// Windows Update ของเครื่อง (typed mirror ของ device.Info ฝั่ง agent)
+type DeviceInfo struct {
+	System        DeviceSystem    `json:"system"`                   // รุ่น/ผู้ผลิต/serial/RAM รวม
+	CPU           DeviceCPU       `json:"cpu"`                      // รุ่น/cores/clock
+	Memory        DeviceMemory    `json:"memory"`                   // RAM รวม + ราย DIMM
+	Disks         []DeviceDisk    `json:"disks,omitempty"`          // ไดรฟ์เก็บข้อมูล
+	GPUs          []DeviceGPU     `json:"gpus,omitempty"`           // การ์ดจอ
+	Network       []DeviceNIC     `json:"network,omitempty"`        // การ์ดเครือข่าย (MAC)
+	Firmware      DeviceFirmware  `json:"firmware"`                 // BIOS/UEFI + motherboard
+	Security      DeviceSecurity  `json:"security"`                 // Secure Boot + TPM
+	Battery       *DeviceBattery  `json:"battery,omitempty"`        // แบต (nil ถ้าเป็น desktop)
+	Monitors      []DeviceMonitor `json:"monitors,omitempty"`       // จอที่เชื่อมต่อ
+	WindowsUpdate *DeviceWU       `json:"windows_update,omitempty"` // สถานะ Windows Update
+}
+
+// DeviceSystem mirror ของ device.System
+type DeviceSystem struct {
+	Manufacturer string `json:"manufacturer,omitempty"`
+	Model        string `json:"model,omitempty"`
+	SerialNumber string `json:"serial_number,omitempty"`
+	SystemType   string `json:"system_type,omitempty"`
+	Domain       string `json:"domain,omitempty"`
+	TotalRAMMB   int64  `json:"total_ram_mb,omitempty"`
+}
+
+// DeviceCPU mirror ของ device.CPU
+type DeviceCPU struct {
+	Model        string `json:"model,omitempty"`
+	Manufacturer string `json:"manufacturer,omitempty"`
+	Cores        int    `json:"cores,omitempty"`
+	LogicalCount int    `json:"logical_count,omitempty"`
+	ClockMHz     int    `json:"clock_mhz,omitempty"`
+	Architecture string `json:"architecture,omitempty"`
+}
+
+// DeviceMemory mirror ของ device.Memory
+type DeviceMemory struct {
+	TotalMB int64                `json:"total_mb,omitempty"`
+	Modules []DeviceMemoryModule `json:"modules,omitempty"`
+}
+
+// DeviceMemoryModule mirror ของ device.MemoryModule
+type DeviceMemoryModule struct {
+	CapacityMB   int64  `json:"capacity_mb,omitempty"`
+	SpeedMHz     int    `json:"speed_mhz,omitempty"`
+	Manufacturer string `json:"manufacturer,omitempty"`
+	PartNumber   string `json:"part_number,omitempty"`
+	Slot         string `json:"slot,omitempty"`
+}
+
+// DeviceDisk mirror ของ device.Disk
+type DeviceDisk struct {
+	Model         string `json:"model,omitempty"`
+	SizeGB        int64  `json:"size_gb,omitempty"`
+	MediaType     string `json:"media_type,omitempty"`
+	InterfaceType string `json:"interface_type,omitempty"`
+	Serial        string `json:"serial,omitempty"`
+}
+
+// DeviceGPU mirror ของ device.GPU
+type DeviceGPU struct {
+	Name      string `json:"name,omitempty"`
+	DriverVer string `json:"driver_version,omitempty"`
+	VRAMMB    int64  `json:"vram_mb,omitempty"`
+}
+
+// DeviceNIC mirror ของ device.NetworkAdapter
+type DeviceNIC struct {
+	Name string `json:"name,omitempty"`
+	MAC  string `json:"mac,omitempty"`
+	Type string `json:"type,omitempty"`
+}
+
+// DeviceFirmware mirror ของ device.Firmware
+type DeviceFirmware struct {
+	BIOSVendor  string `json:"bios_vendor,omitempty"`
+	BIOSVersion string `json:"bios_version,omitempty"`
+	BIOSDate    string `json:"bios_date,omitempty"`
+	Motherboard string `json:"motherboard,omitempty"`
+	BoardSerial string `json:"board_serial,omitempty"`
+}
+
+// DeviceSecurity mirror ของ device.Security
+type DeviceSecurity struct {
+	SecureBoot string `json:"secure_boot,omitempty"`
+	TPMPresent bool   `json:"tpm_present"`
+	TPMEnabled bool   `json:"tpm_enabled"`
+	TPMVersion string `json:"tpm_version,omitempty"`
+}
+
+// DeviceBattery mirror ของ device.Battery
+type DeviceBattery struct {
+	Name          string `json:"name,omitempty"`
+	ChargePercent int    `json:"charge_percent,omitempty"`
+	Status        string `json:"status,omitempty"`
+}
+
+// DeviceMonitor mirror ของ device.Monitor
+type DeviceMonitor struct {
+	Name   string `json:"name,omitempty"`
+	Width  int    `json:"width,omitempty"`
+	Height int    `json:"height,omitempty"`
+}
+
+// DeviceWU mirror ของ device.WindowsUpdate
+type DeviceWU struct {
+	Status          string             `json:"status"`
+	PendingCount    int                `json:"pending_count"`
+	SecurityPending int                `json:"security_pending"`
+	RebootPending   bool               `json:"reboot_pending"`
+	LastInstalledKB string             `json:"last_installed_kb,omitempty"`
+	LastInstalledAt string             `json:"last_installed_at,omitempty"`
+	LastCheckedAt   string             `json:"last_checked_at,omitempty"`
+	Source          string             `json:"source,omitempty"`
+	Pending         []DevicePendingKB  `json:"pending,omitempty"`
+}
+
+// DevicePendingKB mirror ของ device.PendingUpdate
+type DevicePendingKB struct {
+	KB       string `json:"kb,omitempty"`
+	Title    string `json:"title,omitempty"`
+	Security bool   `json:"security"`
+	Severity string `json:"severity,omitempty"`
 }
 
 // ScanAccepted คือ response 202 ที่ server ตอบกลับมาหลังรับ scan สำเร็จ

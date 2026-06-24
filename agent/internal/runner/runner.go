@@ -20,6 +20,7 @@ import (
 	"time"    // ใช้คำนวณ interval, timeout และ uptime ของ agent
 
 	"github.com/softsentry/agent/internal/config"    // ใช้โหลด config ที่ enroll ไว้ (server URL, auto-update flag)
+	"github.com/softsentry/agent/internal/device"    // ใช้เก็บข้อมูลฮาร์ดแวร์ + Windows Update
 	"github.com/softsentry/agent/internal/queue"     // ใช้บัฟเฟอร์ retry สำหรับการอัปโหลดที่ล้มเหลว
 	"github.com/softsentry/agent/internal/scanner"   // ใช้สแกน software inventory บนเครื่อง
 	"github.com/softsentry/agent/internal/schedule"  // ใช้คำนวณว่าถึงเวลาสแกนครั้งถัดไปหรือยัง
@@ -617,6 +618,17 @@ func (r *loop) scanAndUpload(ctx context.Context, trigger string) error {
 
 	// แปลงผลสแกนเป็น payload สำหรับส่ง
 	req := toScanRequest(res, trigger)
+
+	// เก็บข้อมูลฮาร์ดแวร์ + Windows Update แนบไปกับ scan — best-effort: ให้ timeout
+	// เฉพาะ (กัน WUA online scan ค้าง) และไม่ทำให้ scan ล้มแม้เก็บไม่ได้ บนแพลตฟอร์ม
+	// ที่ยังไม่รองรับ (เช่น macOS) device.Collect คืน Supported=false → ไม่แนบ field
+	devCtx, devCancel := context.WithTimeout(ctx, 4*time.Minute)
+	info := device.Collect(devCtx)
+	devCancel()
+	if info.Supported {
+		req.Device = deviceToWire(info)
+	}
+
 	// สร้าง Idempotency-Key ที่คงที่ตลอดทั้งความพยายามครั้งแรกและการ retry ทุกครั้ง
 	key := queue.NewKey() // ใช้ key เดิมสำหรับทั้ง live try และ retry เพื่อป้องกันการ insert ซ้ำ
 

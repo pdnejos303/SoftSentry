@@ -250,6 +250,11 @@
     "downloadStarted": "Download started",
     "appName": "SoftSentry Agent",
     "heroTagline": "Install the agent on an endpoint in one click",
+    "meta": {
+      "version": "Version",
+      "build": "Build",
+      "checksum": "Checksum"
+    },
     "step1": "Download",
     "step2": "Double-click to install",
     "step3": "Appears in the dashboard within ~1 min",
@@ -391,13 +396,43 @@
     "title": "Recently installed",
     "subtitle": "New and updated apps across the fleet, with how trustworthy each one looks",
     "empty": "No new installs in the selected period",
+    "emptyFiltered": "No installs match the current filters",
     "approx": "(approx.)",
+    "quick": {
+      "label": "Quick filters",
+      "attention": "Needs attention",
+      "unsigned": "Unsigned",
+      "newOnly": "New installs only"
+    },
     "filter": {
+      "searchLabel": "Search",
+      "searchPlaceholder": "App name…",
+      "machine": "Machine",
+      "allMachines": "All machines",
       "period": "Period",
       "lastDays": "Last {days} days",
       "custom": "Custom range",
       "from": "From",
-      "to": "To"
+      "to": "To",
+      "change": "Change",
+      "allChanges": "All changes",
+      "signature": "Signature",
+      "allSignatures": "All signatures",
+      "trust": "Trust",
+      "allTrust": "All trust levels",
+      "trustAttention": "Needs attention",
+      "clearAll": "Clear all"
+    },
+    "chip": {
+      "machine": "Machine: {value}",
+      "search": "Search: {value}",
+      "change": "Change: {value}",
+      "signature": "Signature: {value}",
+      "trust": "Trust: {value}"
+    },
+    "count": {
+      "results": "{n, plural, =0 {No results} one {# result} other {# results}}",
+      "loading": "Loading…"
     },
     "col": {
       "app": "App",

@@ -58,6 +58,10 @@ export function VulnSummaryWidget({
         ) : (
           <div className="chart-split-body">
             <div className="relative w-full max-w-[240px] shrink-0">
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-2xl font-bold tabular-nums">{data.total}</span>
+                <span className="text-xs text-muted-foreground">{t("totalVulns")}</span>
+              </div>
               <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie
@@ -83,10 +87,6 @@ export function VulnSummaryWidget({
                   <Tooltip content={renderTooltip} />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-2xl font-bold tabular-nums">{data.total}</span>
-                <span className="text-xs text-muted-foreground">{t("totalVulns")}</span>
-              </div>
             </div>
 
             <ul className="w-full space-y-1">
@@ -95,17 +95,26 @@ export function VulnSummaryWidget({
                   <button
                     type="button"
                     onClick={() => onSelect?.(s.severity)}
-                    className="flex w-full items-center justify-between gap-3 rounded px-2 py-1.5 text-sm transition-colors hover:bg-muted"
+                    className="flex w-full flex-col gap-1.5 rounded px-2 py-1.5 text-sm transition-colors hover:bg-muted"
                   >
-                    <span className="flex items-center gap-2">
+                    <span className="flex w-full items-center gap-2">
                       <span
-                        className="h-3 w-3 rounded-sm"
+                        className="h-3 w-3 shrink-0 rounded-sm"
                         style={{ background: severityColor(s.severity) }}
                       />
-                      {label(s.severity)}
+                      <span>{label(s.severity)}</span>
+                      <span className="tabular-nums text-muted-foreground">
+                        · {s.count} · {s.percentage}%
+                      </span>
                     </span>
-                    <span className="tabular-nums text-muted-foreground">
-                      {s.count} · {s.percentage}%
+                    <span className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <span
+                        className="block h-full rounded-full"
+                        style={{
+                          width: `${s.percentage}%`,
+                          background: severityColor(s.severity),
+                        }}
+                      />
                     </span>
                   </button>
                 </li>

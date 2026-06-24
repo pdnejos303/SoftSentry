@@ -197,7 +197,8 @@
       "software": "ซอฟต์แวร์",
       "vulnerabilities": "ช่องโหว่",
       "history": "ประวัติ",
-      "scans": "การสแกน"
+      "scans": "การสแกน",
+      "hardware": "ฮาร์ดแวร์"
     },
     "field": {
       "owner": "เจ้าของ",
@@ -207,7 +208,10 @@
       "lastSeen": "เห็นล่าสุด",
       "lastScan": "สแกนล่าสุด",
       "server": "เซิร์ฟเวอร์",
-      "riskScore": "คะแนนความเสี่ยง"
+      "riskScore": "คะแนนความเสี่ยง",
+      "model": "รุ่นเครื่อง",
+      "cpu": "CPU",
+      "ram": "หน่วยความจำ"
     },
     "sig": {
       "all": "ทั้งหมด",
@@ -238,6 +242,88 @@
       "over_used": "ใช้เกินสิทธิ์",
       "expiring_soon": "ใกล้หมดอายุ",
       "expired": "หมดอายุ"
+    },
+    "hw": {
+      "none": "ยังไม่มีข้อมูลฮาร์ดแวร์ที่รายงานเข้ามา",
+      "system": "ระบบ",
+      "manufacturer": "ผู้ผลิต",
+      "model": "รุ่น",
+      "serial": "หมายเลขเครื่อง",
+      "systemType": "ประเภทระบบ",
+      "domain": "โดเมน",
+      "ram": "หน่วยความจำ",
+      "cpu": "หน่วยประมวลผล",
+      "cpuModel": "รุ่น",
+      "vendor": "ผู้ผลิต",
+      "cores": "คอร์",
+      "threads": "เธรด",
+      "clock": "ความเร็วสูงสุด",
+      "arch": "สถาปัตยกรรม",
+      "memory": "หน่วยความจำ",
+      "ramTotal": "รวม",
+      "storage": "ที่เก็บข้อมูล",
+      "media": {
+        "ssd": "SSD",
+        "hdd": "HDD",
+        "scm": "SCM"
+      },
+      "graphics": "กราฟิก",
+      "network": "เครือข่าย",
+      "firmwareSecurity": "เฟิร์มแวร์และความปลอดภัย",
+      "biosVendor": "ผู้ผลิต BIOS",
+      "biosVersion": "เวอร์ชัน BIOS",
+      "biosDate": "วันที่ BIOS",
+      "motherboard": "เมนบอร์ด",
+      "boardSerial": "ซีเรียลบอร์ด",
+      "secureBootLabel": "Secure Boot",
+      "secureBoot": {
+        "enabled": "เปิดใช้งาน",
+        "disabled": "ปิดใช้งาน",
+        "unsupported": "ไม่รองรับ",
+        "unknown": "ไม่ทราบ"
+      },
+      "tpm": "TPM",
+      "tpmPresent": "มี",
+      "tpmDisabled": "ปิดอยู่",
+      "tpmAbsent": "ไม่มี",
+      "displays": "จอแสดงผล",
+      "display": "จอ",
+      "battery": "แบตเตอรี่",
+      "batteryName": "แบตเตอรี่",
+      "charge": "ประจุ",
+      "batteryStatus": "สถานะ",
+      "batStatus": {
+        "discharging": "กำลังใช้แบต",
+        "ac": "เสียบไฟอยู่",
+        "fully_charged": "ชาร์จเต็ม",
+        "low": "ต่ำ",
+        "critical": "วิกฤต",
+        "unknown": "ไม่ทราบ"
+      }
+    },
+    "wu": {
+      "title": "Windows Update",
+      "none": "ยังไม่มีข้อมูล Windows Update ที่รายงานเข้ามา",
+      "pending": "อัปเดตที่ค้าง",
+      "securityPending": "อัปเดตด้านความปลอดภัย",
+      "rebootPending": "รอรีสตาร์ท",
+      "yes": "ใช่",
+      "no": "ไม่",
+      "lastInstalled": "KB ล่าสุดที่ติดตั้ง",
+      "lastInstalledAt": "ติดตั้งล่าสุด",
+      "lastChecked": "ตรวจล่าสุด",
+      "security": "ความปลอดภัย",
+      "status": {
+        "up_to_date": "เป็นปัจจุบัน",
+        "updates_pending": "มีอัปเดตค้าง",
+        "reboot_pending": "รอรีสตาร์ท",
+        "unknown": "ไม่ทราบ"
+      },
+      "col": {
+        "kb": "KB",
+        "title": "ชื่อ",
+        "severity": "ความรุนแรง"
+      }
     }
   },
   "deploy": {

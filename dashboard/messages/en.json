@@ -197,7 +197,8 @@
       "software": "Software",
       "vulnerabilities": "Vulnerabilities",
       "history": "History",
-      "scans": "Scans"
+      "scans": "Scans",
+      "hardware": "Hardware"
     },
     "field": {
       "owner": "Owner",
@@ -207,7 +208,10 @@
       "lastSeen": "Last seen",
       "lastScan": "Last scan",
       "server": "Server",
-      "riskScore": "Risk score"
+      "riskScore": "Risk score",
+      "model": "Model",
+      "cpu": "CPU",
+      "ram": "Memory"
     },
     "sig": {
       "all": "All",
@@ -238,6 +242,88 @@
       "over_used": "Over used",
       "expiring_soon": "Expiring soon",
       "expired": "Expired"
+    },
+    "hw": {
+      "none": "No hardware data reported yet.",
+      "system": "System",
+      "manufacturer": "Manufacturer",
+      "model": "Model",
+      "serial": "Serial number",
+      "systemType": "System type",
+      "domain": "Domain",
+      "ram": "Memory",
+      "cpu": "Processor",
+      "cpuModel": "Model",
+      "vendor": "Vendor",
+      "cores": "Cores",
+      "threads": "Threads",
+      "clock": "Max clock",
+      "arch": "Architecture",
+      "memory": "Memory",
+      "ramTotal": "Total",
+      "storage": "Storage",
+      "media": {
+        "ssd": "SSD",
+        "hdd": "HDD",
+        "scm": "SCM"
+      },
+      "graphics": "Graphics",
+      "network": "Network",
+      "firmwareSecurity": "Firmware & Security",
+      "biosVendor": "BIOS vendor",
+      "biosVersion": "BIOS version",
+      "biosDate": "BIOS date",
+      "motherboard": "Motherboard",
+      "boardSerial": "Board serial",
+      "secureBootLabel": "Secure Boot",
+      "secureBoot": {
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "unsupported": "Unsupported",
+        "unknown": "Unknown"
+      },
+      "tpm": "TPM",
+      "tpmPresent": "Present",
+      "tpmDisabled": "disabled",
+      "tpmAbsent": "Not present",
+      "displays": "Displays",
+      "display": "Display",
+      "battery": "Battery",
+      "batteryName": "Battery",
+      "charge": "Charge",
+      "batteryStatus": "Status",
+      "batStatus": {
+        "discharging": "Discharging",
+        "ac": "On AC",
+        "fully_charged": "Fully charged",
+        "low": "Low",
+        "critical": "Critical",
+        "unknown": "Unknown"
+      }
+    },
+    "wu": {
+      "title": "Windows Update",
+      "none": "No Windows Update data reported yet.",
+      "pending": "Pending updates",
+      "securityPending": "Security updates",
+      "rebootPending": "Reboot pending",
+      "yes": "Yes",
+      "no": "No",
+      "lastInstalled": "Last installed KB",
+      "lastInstalledAt": "Last installed",
+      "lastChecked": "Last checked",
+      "security": "Security",
+      "status": {
+        "up_to_date": "Up to date",
+        "updates_pending": "Updates pending",
+        "reboot_pending": "Reboot pending",
+        "unknown": "Unknown"
+      },
+      "col": {
+        "kb": "KB",
+        "title": "Title",
+        "severity": "Severity"
+      }
     }
   },
   "deploy": {

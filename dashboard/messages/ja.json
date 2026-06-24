@@ -194,7 +194,8 @@
       "software": "ソフトウェア",
       "vulnerabilities": "脆弱性",
       "history": "履歴",
-      "scans": "スキャン"
+      "scans": "スキャン",
+      "hardware": "ハードウェア"
     },
     "field": {
       "owner": "所有者",
@@ -204,7 +205,10 @@
       "lastSeen": "最終確認",
       "lastScan": "最終スキャン",
       "server": "サーバー",
-      "riskScore": "リスクスコア"
+      "riskScore": "リスクスコア",
+      "model": "モデル",
+      "cpu": "CPU",
+      "ram": "メモリ"
     },
     "sig": {
       "all": "すべて",
@@ -235,6 +239,88 @@
       "over_used": "超過使用",
       "expiring_soon": "期限切れ間近",
       "expired": "期限切れ"
+    },
+    "hw": {
+      "none": "ハードウェア情報はまだ報告されていません。",
+      "system": "システム",
+      "manufacturer": "メーカー",
+      "model": "モデル",
+      "serial": "シリアル番号",
+      "systemType": "システムタイプ",
+      "domain": "ドメイン",
+      "ram": "メモリ",
+      "cpu": "プロセッサ",
+      "cpuModel": "モデル",
+      "vendor": "ベンダー",
+      "cores": "コア",
+      "threads": "スレッド",
+      "clock": "最大クロック",
+      "arch": "アーキテクチャ",
+      "memory": "メモリ",
+      "ramTotal": "合計",
+      "storage": "ストレージ",
+      "media": {
+        "ssd": "SSD",
+        "hdd": "HDD",
+        "scm": "SCM"
+      },
+      "graphics": "グラフィックス",
+      "network": "ネットワーク",
+      "firmwareSecurity": "ファームウェアとセキュリティ",
+      "biosVendor": "BIOS ベンダー",
+      "biosVersion": "BIOS バージョン",
+      "biosDate": "BIOS 日付",
+      "motherboard": "マザーボード",
+      "boardSerial": "ボードシリアル",
+      "secureBootLabel": "セキュアブート",
+      "secureBoot": {
+        "enabled": "有効",
+        "disabled": "無効",
+        "unsupported": "非対応",
+        "unknown": "不明"
+      },
+      "tpm": "TPM",
+      "tpmPresent": "あり",
+      "tpmDisabled": "無効",
+      "tpmAbsent": "なし",
+      "displays": "ディスプレイ",
+      "display": "ディスプレイ",
+      "battery": "バッテリー",
+      "batteryName": "バッテリー",
+      "charge": "充電",
+      "batteryStatus": "状態",
+      "batStatus": {
+        "discharging": "放電中",
+        "ac": "AC 電源",
+        "fully_charged": "満充電",
+        "low": "低",
+        "critical": "危険",
+        "unknown": "不明"
+      }
+    },
+    "wu": {
+      "title": "Windows Update",
+      "none": "Windows Update 情報はまだ報告されていません。",
+      "pending": "保留中の更新",
+      "securityPending": "セキュリティ更新",
+      "rebootPending": "再起動待ち",
+      "yes": "はい",
+      "no": "いいえ",
+      "lastInstalled": "最後にインストールした KB",
+      "lastInstalledAt": "最終インストール",
+      "lastChecked": "最終チェック",
+      "security": "セキュリティ",
+      "status": {
+        "up_to_date": "最新",
+        "updates_pending": "更新あり",
+        "reboot_pending": "再起動待ち",
+        "unknown": "不明"
+      },
+      "col": {
+        "kb": "KB",
+        "title": "タイトル",
+        "severity": "重大度"
+      }
     }
   },
   "deploy": {

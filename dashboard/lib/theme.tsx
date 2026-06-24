@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { usePathname } from "next/navigation";
 
 // Lightweight light/dark theme manager — no external dependency.
 //
@@ -32,20 +33,34 @@ const ThemeContext = createContext<ThemeContextValue>({
   toggle: () => {},
 });
 
-function readInitialTheme(): Theme {
-  if (typeof document !== "undefined") {
-    return document.documentElement.classList.contains("dark") ? "dark" : "light";
+// The persisted choice (or system preference) — the durable source of truth.
+// We don't read the <html> class here because a client navigation (e.g. a
+// locale switch re-rendering the root layout) can transiently drop it.
+function readStoredTheme(): Theme {
+  try {
+    const v = localStorage.getItem(STORAGE_KEY);
+    if (v === "dark" || v === "light") return v;
+  } catch {
+    // storage unavailable — fall through to the system preference
+  }
+  if (typeof window !== "undefined") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   }
   return "light";
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
+  const pathname = usePathname();
 
-  // Adopt whatever the anti-FOUC script already applied to <html>.
+  // Re-assert the theme on mount AND after every navigation: switching locale
+  // re-renders the root layout, which can wipe the imperatively-set <html>
+  // class. Reading from storage (not the DOM) restores the user's real choice.
   useEffect(() => {
-    setThemeState(readInitialTheme());
-  }, []);
+    const stored = readStoredTheme();
+    setThemeState(stored);
+    document.documentElement.classList.toggle("dark", stored === "dark");
+  }, [pathname]);
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);

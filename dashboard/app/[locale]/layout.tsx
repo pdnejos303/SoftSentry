@@ -53,12 +53,7 @@ export default async function LocaleLayout({
   }
   const messages = await getMessages();
   return (
-    <html
-      lang={locale}
-      className={fontVariables}
-      style={jpFontVars}
-      suppressHydrationWarning
-    >
+    <html lang={locale} style={jpFontVars} suppressHydrationWarning>
       <head>
         {/*
           Apply the persisted (or system-preferred) theme before first paint so
@@ -78,7 +73,7 @@ export default async function LocaleLayout({
         />
         <link rel="stylesheet" href={jpFontStylesheet} />
       </head>
-      <body className="font-sans">
+      <body className={`font-sans ${fontVariables}`}>
         <NextIntlClientProvider messages={messages}>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>

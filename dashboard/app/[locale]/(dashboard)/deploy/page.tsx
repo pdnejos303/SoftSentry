@@ -140,136 +140,108 @@ export default function DeployPage() {
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      {/* Primary flow — deliberately borderless and airy. No enclosing card: the
-          download is the single focal point, carried by whitespace and one
-          hairline rule. Saturated color is spent only on the served-build signal
-          dot and the one real CTA; the build it serves reads as exact machine
-          data (mono), tucked to the right so the eye lands on the action first. */}
-      <section className="space-y-9 py-2">
-        {/* Identity + the build actually being served. */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2.5">
-              {/* color = signal: a verified build is being served (green) vs. none yet (grey) */}
-              <span
-                className={cn(
-                  "h-1.5 w-1.5 shrink-0 rounded-full",
-                  binary ? "bg-success" : "bg-muted-foreground/40",
-                )}
-                aria-hidden
-              />
-              <h2 className="text-sm font-semibold leading-none tracking-tight">
-                {t("appName")}
-              </h2>
-            </div>
-            <p className="text-sm text-muted-foreground">{t("heroTagline")}</p>
+      {/* Primary flow — one centered focal panel. A single beautiful action; the
+          rest (provenance, steps, the SmartScreen heads-up) drops to quiet
+          footnotes so nothing competes with the download. */}
+      <section className="rounded-xl border bg-card px-6 py-14">
+        <div className="mx-auto flex max-w-sm flex-col items-center gap-6 text-center">
+          {/* identity + served-build signal: green = a verified build is ready. */}
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "h-1.5 w-1.5 shrink-0 rounded-full",
+                binary ? "bg-success" : "bg-muted-foreground/40",
+              )}
+              aria-hidden
+            />
+            <span className="text-sm font-medium text-muted-foreground">{t("appName")}</span>
           </div>
 
+          {/* the one action — large, with a soft ease-out lift on hover/focus. */}
+          <Button
+            size="lg"
+            onClick={onDownload}
+            disabled={create.isPending}
+            className="h-12 px-8 text-base shadow-sm transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-md focus-visible:-translate-y-0.5"
+          >
+            {create.isPending ? (
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-5 w-5" />
+            )}
+            {t("downloadButton")}
+          </Button>
+
+          {/* callback server — subtle, click to edit inline. */}
+          {editingServer ? (
+            <div className="w-full max-w-xs">
+              <Label htmlFor="dl-server" className="sr-only">
+                {t("server")}
+              </Label>
+              <Input
+                id="dl-server"
+                value={server}
+                onChange={(e) => setServer(e.target.value)}
+                onBlur={() => setEditingServer(false)}
+                placeholder="http://192.168.1.10:8001"
+                className="text-center"
+                autoFocus
+              />
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setEditingServer(true)}
+              className="inline-flex max-w-full items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <span className="shrink-0">{t("server")}:</span>
+              <span className="truncate font-mono text-foreground">{server || "—"}</span>
+              <Pencil className="h-3 w-3 shrink-0" />
+            </button>
+          )}
+
+          {/* build provenance — one quiet mono line (the build stamp changes every
+              build and matches the installer's first screen, so admins can verify
+              the running agent is this build). */}
           {binary && (
-            // version ถูก fix เป็น v0.1.0 เสมอ จึงบอกความสดไม่ได้ — แสดง "build stamp"
-            // (UTC timestamp ตอน build, เปลี่ยนทุก build) ที่ bake อยู่ใน binary และโชว์ค่า
-            // เดียวกันเป๊ะบน "หน้าแรกของ installer ที่โหลดไปรัน" → admin เทียบได้ตรงๆ ว่าตัว
-            // ที่รัน = บิลด์ล่าสุดนี้จริง (checksum = fingerprint สำรองที่ตรงกับ manifest/volume)
-            <dl className="flex flex-col gap-1 text-xs sm:items-end">
-              <div className="flex items-baseline gap-2.5">
-                <dt className="text-muted-foreground">{t("meta.version")}</dt>
-                <dd className="font-mono tabular-nums text-foreground">
-                  v{binary.version} · {binary.os}
-                </dd>
-              </div>
-              {binary.build_stamp && (
-                <div className="flex items-baseline gap-2.5">
-                  <dt className="text-muted-foreground">{t("meta.build")}</dt>
-                  <dd className="font-mono tabular-nums text-foreground">{binary.build_stamp}</dd>
-                </div>
-              )}
-              {binary.sha256 && (
-                <div className="flex items-baseline gap-2.5">
-                  <dt className="text-muted-foreground">{t("meta.checksum")}</dt>
-                  <dd className="font-mono text-foreground">{binary.sha256.slice(0, 12)}</dd>
-                </div>
-              )}
-            </dl>
+            <p className="font-mono text-xs tabular-nums text-muted-foreground">
+              v{binary.version}
+              {binary.build_stamp ? ` · ${binary.build_stamp}` : ""}
+            </p>
           )}
         </div>
-
-        {/* The one real call to action + the callback server beside it. */}
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-            <Button size="lg" onClick={onDownload} disabled={create.isPending}>
-              {create.isPending ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              ) : (
-                <Download className="mr-2 h-5 w-5" />
-              )}
-              {t("downloadButton")}
-            </Button>
-
-            {editingServer ? (
-              <div className="w-full max-w-md space-y-1 sm:flex-1">
-                <Label htmlFor="dl-server" className="sr-only">
-                  {t("server")}
-                </Label>
-                <Input
-                  id="dl-server"
-                  value={server}
-                  onChange={(e) => setServer(e.target.value)}
-                  onBlur={() => setEditingServer(false)}
-                  placeholder="http://192.168.1.10:8001"
-                  autoFocus
-                />
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setEditingServer(true)}
-                className="inline-flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <span className="shrink-0">{t("server")}:</span>
-                <span className="truncate font-mono text-foreground">{server || "—"}</span>
-                <Pencil className="h-3 w-3 shrink-0" />
-              </button>
-            )}
-          </div>
-          <p className="max-w-prose text-sm text-muted-foreground">{t("downloadHint")}</p>
-        </div>
-
-        {/* What happens after they click — a thin numbered sequence, separated by
-            hairline rules instead of boxed in cards. */}
-        <ol className="flex flex-col divide-y border-t border-b sm:flex-row sm:divide-x sm:divide-y-0">
-          {[t("step1"), t("step2"), t("step3")].map((label, i) => (
-            <li key={i} className="flex flex-1 items-center gap-3 py-3.5 sm:px-5 sm:first:pl-0">
-              <span className="font-mono text-xs tabular-nums text-muted-foreground">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <span className="text-sm leading-snug text-foreground">{label}</span>
-            </li>
-          ))}
-        </ol>
-
-        {/* SmartScreen heads-up (the installer isn't code-signed yet) — a footnote. */}
-        <p className="flex items-start gap-2 text-xs text-muted-foreground">
-          <ShieldAlert className="mt-px h-4 w-4 shrink-0 text-warning" />
-          <span className="max-w-prose">{t("smartScreen")}</span>
-        </p>
       </section>
+
+      {/* What happens after the click + the SmartScreen heads-up — compact
+          footnotes under the card, not blocks of their own. */}
+      <div className="space-y-1.5 text-center">
+        <p className="text-xs text-muted-foreground">
+          {t("step1")} → {t("step2")} → {t("step3")}
+        </p>
+        <p className="inline-flex items-start gap-1.5 text-xs text-muted-foreground">
+          <ShieldAlert className="mt-px h-3.5 w-3.5 shrink-0 text-warning" />
+          <span className="max-w-prose text-left">{t("smartScreen")}</span>
+        </p>
+      </div>
 
       {/* Advanced — manual deployment links + management, kept below the fold:
           a top rule and extra space set it apart from the one-click path. */}
-      <div className="border-t pt-6">
+      {/* Advanced — manual deployment links, tucked away as a small centered link
+          so the one-click path stands alone. */}
+      <div className="flex flex-col items-center pt-4">
         <button
           type="button"
           onClick={() => setShowAdvanced((v) => !v)}
-          className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground/70 transition-colors hover:text-foreground"
         >
           <ChevronDown
-            className={`h-4 w-4 transition-transform ${showAdvanced ? "rotate-180" : ""}`}
+            className={`h-3.5 w-3.5 transition-transform ${showAdvanced ? "rotate-180" : ""}`}
           />
           {t("advanced")}
         </button>
 
         {showAdvanced && (
-          <div className="mt-4 space-y-6">
+          <div className="mt-6 w-full space-y-6 border-t pt-6">
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">{t("createTitle")}</CardTitle>

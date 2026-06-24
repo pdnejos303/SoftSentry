@@ -1,0 +1,15 @@
+# กันปัญหา line-ending ข้ามเครื่อง (เครื่องเรา build ผ่าน แต่ server exit 2)
+#
+# ไฟล์เหล่านี้ถูก bind-mount/COPY เข้าไปรันใน Linux container (alpine/busybox sh).
+# ถ้าเครื่องไหนตั้ง core.autocrlf=true (default ของ Git for Windows) จะ checkout
+# เป็น CRLF → `set -eu\r` → busybox มองเป็น "illegal option" → build ล้ม.
+# eol=lf บังคับให้ทุก checkout ได้ LF เสมอ ไม่ขึ้นกับ config ของแต่ละเครื่อง.
+
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+*.Dockerfile text eol=lf
+
+# ไฟล์ Windows-specific คงไว้เป็น CRLF
+*.ps1       text eol=crlf
+*.bat       text eol=crlf
+*.cmd       text eol=crlf

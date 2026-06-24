@@ -15,7 +15,10 @@ WORKDIR /build
 # agent ไม่มี cgo → cross-compile GOOS=windows จาก Linux ได้ตรงๆ
 ENV CGO_ENABLED=0
 # rsrc: เครื่องมือ pure-Go ฝัง Windows manifest เข้า .syso (ทำงานบน Linux ได้)
-RUN go install github.com/akavel/rsrc@latest
+# pin version (ไม่ใช้ @latest) — reproducible + ไม่ re-resolve proxy ทุก image build
+RUN --mount=type=cache,target=/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    go install github.com/akavel/rsrc@v0.10.2
 # เก็บสำเนา build-publish.sh ไว้ใน image เป็น fallback (เผื่อรันโดยไม่ได้ bind-mount source)
 COPY build-publish.sh /usr/local/bin/build-publish.sh
 RUN chmod +x /usr/local/bin/build-publish.sh

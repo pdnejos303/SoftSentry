@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import {
-  ArrowRight,
   ChevronDown,
   Copy,
   Download,
@@ -141,14 +140,15 @@ export default function DeployPage() {
         <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      {/* Primary flow — a quiet "deployment console" panel: one click to get the
-          installable agent. Hairline-divided regions instead of a floating hero;
-          color is reserved for the served-build signal and the one real CTA. */}
-      <section className="overflow-hidden rounded-lg border bg-card text-card-foreground shadow-sm">
-        {/* Header: agent identity + the build actually being served, treated as
-            authoritative machine data (mono provenance, not a decorative pill). */}
-        <div className="flex flex-col gap-5 border-b p-6 sm:flex-row sm:items-start sm:justify-between">
-          <div className="space-y-1">
+      {/* Primary flow — deliberately borderless and airy. No enclosing card: the
+          download is the single focal point, carried by whitespace and one
+          hairline rule. Saturated color is spent only on the served-build signal
+          dot and the one real CTA; the build it serves reads as exact machine
+          data (mono), tucked to the right so the eye lands on the action first. */}
+      <section className="space-y-9 py-2">
+        {/* Identity + the build actually being served. */}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2.5">
               {/* color = signal: a verified build is being served (green) vs. none yet (grey) */}
               <span
@@ -158,7 +158,9 @@ export default function DeployPage() {
                 )}
                 aria-hidden
               />
-              <h2 className="text-base font-semibold leading-none">{t("appName")}</h2>
+              <h2 className="text-sm font-semibold leading-none tracking-tight">
+                {t("appName")}
+              </h2>
             </div>
             <p className="text-sm text-muted-foreground">{t("heroTagline")}</p>
           </div>
@@ -168,39 +170,33 @@ export default function DeployPage() {
             // (UTC timestamp ตอน build, เปลี่ยนทุก build) ที่ bake อยู่ใน binary และโชว์ค่า
             // เดียวกันเป๊ะบน "หน้าแรกของ installer ที่โหลดไปรัน" → admin เทียบได้ตรงๆ ว่าตัว
             // ที่รัน = บิลด์ล่าสุดนี้จริง (checksum = fingerprint สำรองที่ตรงกับ manifest/volume)
-            <dl className="grid shrink-0 grid-cols-[auto_auto] items-baseline gap-x-4 gap-y-1.5 sm:justify-end">
-              <dt className="text-xs text-muted-foreground">{t("meta.version")}</dt>
-              <dd className="text-right font-mono text-xs tabular-nums text-foreground">
-                v{binary.version} · {binary.os}
-              </dd>
+            <dl className="flex flex-col gap-1 text-xs sm:items-end">
+              <div className="flex items-baseline gap-2.5">
+                <dt className="text-muted-foreground">{t("meta.version")}</dt>
+                <dd className="font-mono tabular-nums text-foreground">
+                  v{binary.version} · {binary.os}
+                </dd>
+              </div>
               {binary.build_stamp && (
-                <>
-                  <dt className="text-xs text-muted-foreground">{t("meta.build")}</dt>
-                  <dd className="text-right font-mono text-xs tabular-nums text-foreground">
-                    {binary.build_stamp}
-                  </dd>
-                </>
+                <div className="flex items-baseline gap-2.5">
+                  <dt className="text-muted-foreground">{t("meta.build")}</dt>
+                  <dd className="font-mono tabular-nums text-foreground">{binary.build_stamp}</dd>
+                </div>
               )}
               {binary.sha256 && (
-                <>
-                  <dt className="text-xs text-muted-foreground">{t("meta.checksum")}</dt>
-                  <dd className="text-right font-mono text-xs text-foreground">
-                    {binary.sha256.slice(0, 12)}
-                  </dd>
-                </>
+                <div className="flex items-baseline gap-2.5">
+                  <dt className="text-muted-foreground">{t("meta.checksum")}</dt>
+                  <dd className="font-mono text-foreground">{binary.sha256.slice(0, 12)}</dd>
+                </div>
               )}
             </dl>
           )}
         </div>
 
-        {/* Action: the one real call to action + the callback server beside it. */}
-        <div className="space-y-3 p-6">
+        {/* The one real call to action + the callback server beside it. */}
+        <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-            <Button
-              size="lg"
-              onClick={onDownload}
-              disabled={create.isPending}
-            >
+            <Button size="lg" onClick={onDownload} disabled={create.isPending}>
               {create.isPending ? (
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               ) : (
@@ -238,30 +234,29 @@ export default function DeployPage() {
           <p className="max-w-prose text-sm text-muted-foreground">{t("downloadHint")}</p>
         </div>
 
-        {/* What happens after they click — three quiet, numbered steps. */}
-        <ol className="flex flex-col gap-4 border-t px-6 py-5 sm:flex-row sm:items-center sm:gap-2">
+        {/* What happens after they click — a thin numbered sequence, separated by
+            hairline rules instead of boxed in cards. */}
+        <ol className="flex flex-col divide-y border-t border-b sm:flex-row sm:divide-x sm:divide-y-0">
           {[t("step1"), t("step2"), t("step3")].map((label, i) => (
-            <li key={i} className="flex flex-1 items-center gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border font-mono text-[11px] tabular-nums text-muted-foreground">
-                {i + 1}
+            <li key={i} className="flex flex-1 items-center gap-3 py-3.5 sm:px-5 sm:first:pl-0">
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                {String(i + 1).padStart(2, "0")}
               </span>
               <span className="text-sm leading-snug text-foreground">{label}</span>
-              {i < 2 && (
-                <ArrowRight className="ml-auto hidden h-4 w-4 shrink-0 text-muted-foreground/40 sm:block" />
-              )}
             </li>
           ))}
         </ol>
 
-        {/* SmartScreen heads-up (the installer isn't code-signed yet). */}
-        <div className="flex items-start gap-2 border-t px-6 py-4 text-xs text-muted-foreground">
+        {/* SmartScreen heads-up (the installer isn't code-signed yet) — a footnote. */}
+        <p className="flex items-start gap-2 text-xs text-muted-foreground">
           <ShieldAlert className="mt-px h-4 w-4 shrink-0 text-warning" />
           <span className="max-w-prose">{t("smartScreen")}</span>
-        </div>
+        </p>
       </section>
 
-      {/* Advanced — manual deployment links + management, hidden by default. */}
-      <div>
+      {/* Advanced — manual deployment links + management, kept below the fold:
+          a top rule and extra space set it apart from the one-click path. */}
+      <div className="border-t pt-6">
         <button
           type="button"
           onClick={() => setShowAdvanced((v) => !v)}

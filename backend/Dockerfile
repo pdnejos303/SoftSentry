@@ -16,8 +16,12 @@ RUN pip install --no-cache-dir uv
 
 WORKDIR /app
 
-COPY pyproject.toml ./
-RUN uv sync --no-dev --no-install-project
+# Copy the lockfile too so `uv sync --frozen` installs the EXACT pinned versions
+# instead of re-resolving the dependency graph from PyPI on every build (faster +
+# reproducible). This deps layer is cached until pyproject.toml/uv.lock change.
+COPY pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
 
 COPY app ./app
 COPY alembic.ini ./alembic.ini
@@ -26,7 +30,8 @@ COPY alembic ./alembic
 # build (editable install below) fails without it.
 COPY README.md ./README.md
 
-RUN uv sync --no-dev
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
 
 # Runtime hardening: every `uv run` (this image's CMD, plus the compose backend
 # command and worker command) defaults to syncing the project environment first.
